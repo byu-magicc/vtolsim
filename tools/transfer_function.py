@@ -4,7 +4,7 @@ transfer function block (SISO)
 import numpy as np
 import matplotlib.pyplot as plt
 
-class transferFunction:
+class TransferFunction:
     def __init__(self, num, den, Ts):
         # expects num and den to be numpy arrays of shape (1,m) and (1,n)
         m = num.shape[1]
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     Ts = 0.01  # simulation step size
     num = np.array([[1, 2]])  # numerator polynomial
     den = np.array([[1, 4, 5, 6]])  # denominator polynomial (no leading 1: s^3+4s^2+5s+6)
-    system = transfer_function(num, den, Ts)
+    system = TransferFunction(num, den, Ts)
 
     # main simulation loop
     sim_time = 0.0

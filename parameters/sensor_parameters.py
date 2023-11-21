@@ -1,14 +1,16 @@
-import sys
-sys.path.append('..')
+"""
+- Edit history:
+    2/16/2019 - R.W. Beard
+"""
 import numpy as np
 
 #-------- Accelerometer --------
 accel_sigma = 0.0025*9.8  # standard deviation of accelerometers in m/s^2
 
 #-------- Rate Gyro --------
-gyro_x_bias = 0#np.radians(5*np.random.uniform(-1, 1))  # bias on x_gyro
-gyro_y_bias = 0#np.radians(5*np.random.uniform(-1, 1))  # bias on y_gyro
-gyro_z_bias = 0#np.radians(5*np.random.uniform(-1, 1))  # bias on z_gyro
+gyro_x_bias = 0  #np.radians(5*np.random.uniform(-1, 1))  # bias on x_gyro
+gyro_y_bias = 0  #np.radians(5*np.random.uniform(-1, 1))  # bias on y_gyro
+gyro_z_bias = 0  #np.radians(5*np.random.uniform(-1, 1))  # bias on z_gyro
 gyro_sigma = np.radians(0.13)  # standard deviation of gyros in rad/sec
 
 #-------- Pressure Sensor(Altitude) --------

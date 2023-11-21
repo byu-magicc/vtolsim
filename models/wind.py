@@ -2,23 +2,20 @@
 Class to determine wind velocity at any given moment,
 calculates a steady wind speed and uses a stochastic
 process to represent wind gusts. (Follows section 4.4 in uav book)
-    - Update history:
-        5/8/2019 - R.W. Beard
+- Edit history:
+    5/8/2019 - R.W. Beard
 """
-import sys
-sys.path.append('..')
 import numpy as np
 import parameters.simulation_parameters as SIM
-from tools.transfer_function import transferFunction
+from tools.transfer_function import TransferFunction
 
 
-class windSimulation:
+class WindSimulation:
     def __init__(self):
         Ts = SIM.ts_simulation
         # steady state wind defined in the inertial frame
         #self._steady_state = np.array([[0., 0., 0.]]).T
         self._steady_state = np.array([[0., 5., 0.]]).T
-
         #   Dryden gust model parameters (pg 56 UAV book)
         Va = 5 # must set Va to a constant value
         #
@@ -42,13 +39,13 @@ class windSimulation:
         b1 = Va/Lu
         b2 = Va/Lv
         b3 = Va/Lw
-        self.u_w = transferFunction(num=np.array([[a1]]),
+        self.u_w = TransferFunction(num=np.array([[a1]]),
                                      den=np.array([[1, b1]]),
                                      Ts=Ts)
-        self.v_w = transferFunction(num=np.array([[a2, a3]]),
+        self.v_w = TransferFunction(num=np.array([[a2, a3]]),
                                      den=np.array([[1, 2*b2, b2**2.0]]),
                                      Ts=Ts)
-        self.w_w = transferFunction(num=np.array([[a4, a5]]),
+        self.w_w = TransferFunction(num=np.array([[a4, a5]]),
                                      den=np.array([[1, 2*b3, b3**2.0]]),
                                      Ts=Ts)
 

@@ -1,14 +1,10 @@
 """
-msg_sensors
-    - messages type for output of sensors
-    
-part of mavsim_python
-    - Beard & McLain, PUP, 2012
-    - Last update:
-        2/16/2019 - RWB
+- messages type for output of sensors   
+- Edit history:
+    2/16/2019 - R.W. Beard
 """
 
-class msgSensors:
+class MsgSensors:
     def __init__(self):
         self.gyro_x = 0  # gyroscope along body x axis
         self.gyro_y = 0  # gyroscope along body y axis

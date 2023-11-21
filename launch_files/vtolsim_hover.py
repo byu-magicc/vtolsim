@@ -1,43 +1,45 @@
 """
-vtolsim_python
-    - Chapter 6 assignment for Beard & McLain, PUP, 2012
-    - Last Update:
-        2/5/2019 - RWB
+edit history
+    2/5/2019 - RWB
+    11/20/2023 - RWB
 """
-import sys
-sys.path.append('..')
-sys.path.append('../viewers')
+import os, sys
+# insert parent directory at beginning of python search path
+from pathlib import Path
+sys.path.insert(0,os.fspath(Path(__file__).parents[1]))
 import numpy as np
+import pyqtgraph as pg
 import parameters.simulation_parameters as SIM
+import parameters.convergence_parameters as VTOL
+from viewers.vtol_viewer import VtolViewer
+from viewers.data_viewer import DataViewer
+from models.vtol_dynamics import VtolDynamics
+from models.wind import WindSimulation
 
-from viewers.vtol_viewer import vtolViewer
-from viewers.data_viewer import dataViewer
-from viewers.controls_viewer import controlsViewer
-from dynamics.vtol_dynamics import vtolDynamics
-from dynamics.wind_simulation import windSimulation
-from dynamics.trim import compute_trim
-from hover_controller.hover_autopilot import hoverController
-from message_types.msg_controls import msgControls
-from tools.signals import signals
+# from message_types.msg_delta import MsgDelta
+
+# from dynamics.trim import compute_trim
+# from hover_controller.hover_autopilot import hoverController
+# from message_types.msg_controls import msgControls
+# from tools.signals import signals
 
 # initialize the visualization
-VIDEO = False  # True==write video, False==don't write video
-vtol_view = vtolViewer()  # initialize the vtol viewer
-data_view = dataViewer()  # initialize view of data plots
-controls_view = controlsViewer()
-
-delta = msgControls()
-
-if VIDEO == True:
-    from viewers.video_writer import videoWriter
-    video = videoWriter(video_name="chap6_video.avi",
-                         bounding_box=(0, 0, 1000, 1000),
-                         output_rate=SIM.ts_video)
+plot_app = pg.QtWidgets.QApplication([])
+vtol_view = VtolViewer(
+    app=plot_app, dt=SIM.ts_simulation,
+    plot_period=SIM.ts_plot_refresh)
+data_view = DataViewer(
+    app=plot_app,dt=SIM.ts_simulation, 
+    plot_period=SIM.ts_plot_refresh,
+    data_recording_period=SIM.ts_plot_record_data, 
+    time_window_length=30)  
 
 # initialize elements of the architecture
+vtol = VtolDynamics(SIM.ts_simulation)
 wind = windSimulation()
-vtol = vtolDynamics()
 ctrl = hoverController(SIM.ts_simulation)
+# delta = msgControls()
+# delta = MsgDelta()
 
 # autopilot commands
 from message_types.msg_autopilot import msgAutopilot
@@ -77,7 +79,6 @@ delta.servo_left = delta_trim.item(6)
 
 # initialize the simulation time
 sim_time = SIM.start_time
-
 # main simulation loop
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
@@ -90,26 +91,17 @@ while sim_time < SIM.end_time:
     commands.pn_command = pn_command.square(sim_time)
     commands.pe_command = pe_command.square(sim_time)
 
-
     #-------controller-------------
-    estimated_state = vtol.true_state  # uses true states in the control
+    estimated_state = vtol.state  # uses true states in the control
     delta, commanded_state = ctrl.update(commands, estimated_state)
-
-    #-------physical system-------------
-    current_wind = np.array([[0.0],[0.0],[0.0],[0.0],[0.0],[0.0]])#wind.update()  # get the new wind vector
-    vtol.update(delta, current_wind)  # propagate the vtol dynamics
-
-    #-------update viewer-------------
-    vtol_view.update(vtol.true_state)  # plot body of vtol
-    data_view.update(vtol.true_state, # true states
-                     estimated_state, # estimated states
-                     commanded_state, # commanded states
-                     SIM.ts_simulation)
-    controls_view.update(delta, SIM.ts_simulation)
-    if VIDEO == True: video.update(sim_time)
-
-    #-------increment time-------------
+    # -------physical system-------------
+    current_wind = wind.update()
+    vtol.update(delta, current_wind)
+    # -------update viewer-------------
+    vtol_view.update(vtol.state) 
+    data_view.update(vtol.state,  # true states
+                     estimated_state,  # estimated states
+                     commanded_state,  # commanded states
+                     delta)  # inputs to the vtol
+    # -------increment time-------------
     sim_time += SIM.ts_simulation
-
-if VIDEO == True: video.close()
-input("Press a key to exit")
