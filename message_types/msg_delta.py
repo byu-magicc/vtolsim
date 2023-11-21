@@ -1,32 +1,17 @@
-"""
-msg_delta
-    - messages type for input to the quadrotor
-    - Last update:
-        3/19/2020 - RWB
-"""
-import numpy as np
-
 class MsgDelta:
-    def __init__(self,
-                 force=0.0,
-                 torque=np.array([[0.], [0.], [0.]])
-                 ):
-        self.force = force # total force in -z direction
-        self.torque = torque  # torque in body frame
+    def __init__(self):
+        self.elevator = 0.0  # elevator
+        self.aileron = 0.0  # aileron
+        self.rudder = 0.0  # rudder
+        self.throttle_right = 0.0  # throttle for right motor 
+        self.throttle_left = 0.0  # throttle for left motor
+        self.throttle_rear = 0.0  # throttle for back motor
+        self.motor_right = 0.0  # right motor commanded angle
+        self.motor_left = 0.0  # left motor commanded angle
+        # self.elevon_right = 0.0  # right elevon angle in radians
+        # self.elevon_left = 0.0  # left elevon in radians
+        # # need to be able to command left and right motor angles
+        # self.servo_right = 0.0 # commanded right servo angle in radians
+        # self.servo_left = 0.0 # commanded left servo angle in radians
 
-    def to_array(self):
-        return np.array([[self.force],
-                         [self.torque.item(0)],
-                         [self.torque.item(1)],
-                         [self.torque.item(2)]])
-
-    def from_array(self, u):
-        self.force = u.item(0)
-        self.torque[0][0] = u.item(1)
-        self.torque[1][0] = u.item(2)
-        self.torque[2][0] = u.item(3)
-
-    def print(self):
-        print('force=', self.force,
-              'torque=', self.torque)
 
