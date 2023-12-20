@@ -177,10 +177,10 @@ class VtolDynamics:
         return the forces on the VTOL based on the state, wind, and control surfaces
         :return: Forces and torques on the VTOL np.matrix(Fx, Fy, Fz, Ml, Mn, Mm)
         """
-        u = self._state.item(3)
-        v = self._state.item(4)
-        w = self._state.item(5)
-        phi, theta, psi = quaternion_to_euler(self._state[6:10])
+        # u = self._state.item(3)
+        # v = self._state.item(4)
+        # w = self._state.item(5)
+        # phi, theta, psi = quaternion_to_euler(self._state[6:10])
         p = self._state.item(10)
         q = self._state.item(11)
         r = self._state.item(12)

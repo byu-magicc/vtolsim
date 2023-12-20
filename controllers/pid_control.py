@@ -4,11 +4,9 @@ pid_control
     - Last Update:
         2/6/2019 - RWB
 """
-import sys
 import numpy as np
-sys.path.append('..')
 
-class pidControl:
+class PidControl:
     def __init__(self, kp=0.0, ki=0.0, kd=0.0, Ts=0.01, sigma=0.05, limit=1.0, ispsi = False):
         self.kp = kp
         self.ki = ki
@@ -97,7 +95,7 @@ class pidControl:
             u_sat = u
         return u_sat
 
-class piControl:
+class PiControl:
     def __init__(self, kp=0.0, ki=0.0, Ts=0.01, limit=1.0):
         self.kp = kp
         self.ki = ki
@@ -107,7 +105,6 @@ class piControl:
         self.error_delay_1 = 0.0
 
     def update(self, y_ref, y):
-
         # compute the error
         error = y_ref - y
         # update the integrator using trapazoidal rule
@@ -137,7 +134,7 @@ class piControl:
             u_sat = u
         return u_sat
 
-class pdControlWithRate:
+class PdControlWithRate:
     # PD control with rate information
     # u = kp*(yref-y) - kd*ydot
     def __init__(self, kp=0.0, kd=0.0, limit=1.0):
