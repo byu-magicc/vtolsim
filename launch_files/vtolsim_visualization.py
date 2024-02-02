@@ -44,9 +44,9 @@ while sim_time < end_time:
     elif sim_time < 6*end_time/8:
         phi += 0.01*SIM.ts_simulation
     elif sim_time < 7*end_time/8:
-        state.rotor_angle_right += 0.01*SIM.ts_simulation
+        state.motor_angle[0,0] += 0.01*SIM.ts_simulation  # right motor
     else:
-        state.rotor_angle_left += 0.01*SIM.ts_simulation
+        state.motor_angle[1,0] += 0.01*SIM.ts_simulation  # left motor
     state.R = euler_to_rotation(phi, theta, psi)
 
     # -------update viewer and video-------------

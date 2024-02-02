@@ -8,11 +8,11 @@ part of mavsimPy
         1/14/2019 - RWB
 """
 import numpy as np
-from plotter import Plotter
+from viewers.plotter import Plotter
 from tools.wrap import wrap
 from tools.rotations import Quaternion2Euler
 
-class DataViewer:
+class dataViewer:
     def __init__(self, app,  dt = 0.01,
                  time_window_length = 30, # number of data points plotted at a time
                  plot_period = 0.2, # time interval between a plot update

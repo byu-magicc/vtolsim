@@ -1,13 +1,14 @@
 """
+vtolsim: drawing tools
+    - Beard & McLain, PUP, 2012
     - Update history:
         4/1/2019 - Randy Beard
         4/15/2019 - BGM
         5/3/2019 - Randy Beard
-        11/16/2023 - R. Beard
 """
+
 import numpy as np
 import pyqtgraph.opengl as gl
-from tools.rotations import euler_to_rotation
 
 
 class drawWaypoints():

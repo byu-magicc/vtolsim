@@ -11,7 +11,7 @@ from tools.rotations import euler_to_rotation
 
 
 class DrawVtol():
-    def __init__(self, state, window, scale=1):
+    def __init__(self, state, window, scale=0.75):
         """
         The input to this function is a (message) class with properties that define the state.
         The following properties are assumed:
@@ -169,7 +169,6 @@ class DrawVtol():
     def update(self, state):
         # NED coordinates of votl
         vtol_position = state.pos
-        # attitude of vtol as a rotation matrix R from body to inertial
         R_bi = state.R
         self.vtol_body = self.update_object(
             self.vtol_body,

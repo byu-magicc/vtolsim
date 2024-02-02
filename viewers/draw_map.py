@@ -1,16 +1,17 @@
 """
+vtolsim: drawing tools
+    - Beard & McLain, PUP, 2012
     - Update history:
         4/1/2019 - Randy Beard
         4/15/2019 - BGM
         5/3/2019 - Randy Beard
-        11/16/2023 - R. Beard
 """
+
 import numpy as np
 import pyqtgraph.opengl as gl
-from tools.rotations import euler_to_rotation
 
 
-class drawMap():
+class DrawMap():
     def __init__(self, map, window):
         self.window = window
         # draw map of the world: buildings
@@ -57,16 +58,16 @@ class drawMap():
                            [e + width / 2, n - width / 2, height],  # SE Higher 5
                            [e - width / 2, n - width / 2, height],  # SW Higher 6
                            [e - width / 2, n + width / 2, height]])  # NW Higher 7
-        mesh = np.array([[0], 3], 4],  # North Wall
-                         [7], 3], 4],  # North Wall
-                         [0], 1], 5],  # East Wall
-                         [0], 4], 5],  # East Wall
-                         [1], 2], 6],  # South Wall
-                         [1], 5], 6],  # South Wall
-                         [3], 2], 6],  # West Wall
-                         [3], 7], 6],  # West Wall
-                         [4], 7], 5],  # Top
-                         [7 5 6]]])  # Top
+        mesh = np.array([[points[0], points[3], points[4]],  # North Wall
+                         [points[7], points[3], points[4]],  # North Wall
+                         [points[0], points[1], points[5]],  # East Wall
+                         [points[0], points[4], points[5]],  # East Wall
+                         [points[1], points[2], points[6]],  # South Wall
+                         [points[1], points[5], points[6]],  # South Wall
+                         [points[3], points[2], points[6]],  # West Wall
+                         [points[3], points[7], points[6]],  # West Wall
+                         [points[4], points[7], points[5]],  # Top
+                         [points[7], points[5], points[6]]])  # Top
 
         #   define the colors for each face of triangular mesh
         red = np.array([1., 0., 0., 1])
@@ -85,4 +86,3 @@ class drawMap():
         meshColors[8] = yellow
         meshColors[9] = yellow
         return mesh, meshColors
-

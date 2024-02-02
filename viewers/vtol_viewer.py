@@ -3,11 +3,15 @@ vtol_viewer: simple vtol viewer
         4/1/2019 - R.W. Beard
         4/15/2019 - BGM
         5/3/2019 - R.W. Beard
-        11/16/2023 - R.W. Beard
+        1/31/2024 - RWB
 """
 import pyqtgraph.opengl as gl
 import pyqtgraph.Vector as Vector
 from viewers.draw_vtol import DrawVtol
+#from viewers.draw_vtol_convergence import DrawVtol
+import numpy as np
+from viewers.draw_trajectory import DrawTrajectory
+
 
 class VtolViewer():
     def __init__(self, app, dt = 0.01,
@@ -57,3 +61,7 @@ class VtolViewer():
 
     def close(self):
         self.window.close()
+
+    def addTrajectory(self, points):
+        blue = np.array([[30, 144, 255, 255]])/255.
+        self.trajectory = DrawTrajectory(points, blue, self.window)

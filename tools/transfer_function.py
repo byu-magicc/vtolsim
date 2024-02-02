@@ -50,7 +50,7 @@ if __name__ == "__main__":
     Ts = 0.01  # simulation step size
     num = np.array([[1, 2]])  # numerator polynomial
     den = np.array([[1, 4, 5, 6]])  # denominator polynomial (no leading 1: s^3+4s^2+5s+6)
-    system = TransferFunction(num, den, Ts)
+    system = transfer_function(num, den, Ts)
 
     # main simulation loop
     sim_time = 0.0

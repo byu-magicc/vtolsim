@@ -1,7 +1,11 @@
 """
-- messages type for output of sensors   
-- Edit history:
-    2/16/2019 - R.W. Beard
+msg_sensors
+    - messages type for output of sensors
+    
+part of mavsim_python
+    - Beard & McLain, PUP, 2012
+    - Last update:
+        2/16/2019 - RWB
 """
 
 class MsgSensors:
