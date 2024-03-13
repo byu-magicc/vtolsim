@@ -5,16 +5,27 @@ msg_controls
     - Last update:
         5/8/2019 - R.W. Beard
 """
-
+import numpy as np
 
 class MsgControls:
+    '''
+        Message class that defines the control inputs to the eVTOL
+
+        Attributes:
+            elevon_right: right elevon angle in radians
+            elevon_left: left elevon in radians
+            throttle_rear: throttle for rear rotor in [0, 1]
+            throttle_right: throttle for right rotor in [0, 1]
+            throttle_left:  throttle for left rotor in [0, 1]
+            servo_right: right servo angle in radians
+            servo_left: left servo angle in radians
+    '''
     def __init__(self):
-        self.elevon_right = 0.0  # right elevon angle in radians
-        self.elevon_left = 0.0  # left elevon in radians
-        self.throttle_rear = 0.0  # commanded throttle for rear rotor
-        self.throttle_right = 0.0  # commanded throttle for right rotor
-        self.throttle_left = 0.0  # commanded throttle for left rotor
-        # need to be able to command left and right motor angles
-        self.servo_right = 0.0 # commanded right servo angle in radians
-        self.servo_left = 0.0 # commanded left servo angle in radians
+        self.elevon_right = np.radians(0.0)  
+        self.elevon_left = np.radians(0.0)  
+        self.throttle_rear = float(0.0)  
+        self.throttle_right = float(0.0)  
+        self.throttle_left = float(0.0) 
+        self.servo_right = np.radians(0.0)
+        self.servo_left = np.radians(0.0)
 

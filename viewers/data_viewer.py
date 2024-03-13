@@ -30,12 +30,13 @@ class DataViewer:
         self._time = 0
         #define colors
         truth_color = (0,255,0)
-        truth_color_2 = (160,202,111)
-        truth_color_3 = (124,230,167)
+        #truth_color = (160,202,111)
+        #truth_color = (124,230,167)
         estimate_color = (255,0,0)
-        estimate_color_2 = (255,150,150)
-        estimate_color_3 = (255,154,111)
-        command_color = (0,0,255)
+        #estimate_color = (255,150,150)
+        #estimate_color = (255,154,111)
+        #command_color = (0,0,255)
+        command_color = (100,100,255)
         # define first row
         self._plotter.create_plot_widget(plot_id='north', xlabel='Time (s)', ylabel='north (m)',
                                         window_length=self._data_window_length)

@@ -37,11 +37,11 @@ class MsgState:
     def add_to_position(self, n=0, e=0, d=0):
         self.pos = self.pos + np.array([[n], [e], [d]])
 
-    def euler_angles(self):
+    def euler_angles(self)->tuple[float, float, float]:
         phi, theta, psi = rotation_to_euler(self.R)
         return phi, theta, psi
     
-    def old_format(self):    
+    def old_format(self)->MsgStateOld:    
         old = MsgStateOld()
         old.pn = self.pos[0,0]      # inertial north position in meters
         old.pe = self.pos[1,0]      # inertial east position in meters
@@ -57,8 +57,8 @@ class MsgState:
         old.q = self.omega[1,0]       # pitch rate in radians/sec
         old.r = self.omega[2,0]       # yaw rate in radians/sec
         old.Vg = self.Va      # groundspeed in meters/sec
-        old.gamma = self.phi + self.alpha   # flight path angle in radians
-        old.chi = np.atan2(self.vel[1,0], self.vel[0,0])     # course angle in radians
+        old.gamma = old.phi + self.alpha   # flight path angle in radians
+        old.chi = np.arctan2(self.vel[1,0], self.vel[0,0])     # course angle in radians
         old.wn = 0.      # inertial windspeed in north direction in meters/sec
         old.we = 0.      # inertial windspeed in east direction in meters/sec
         old.bx = self.gyro_bias[0,0]      # gyro bias along roll axis in radians/sec
