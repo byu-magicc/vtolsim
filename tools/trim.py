@@ -6,9 +6,11 @@ compute_trim
 """
 import numpy as np
 from scipy.optimize import minimize
-from tools.rotations import euler_to_quaternion
+from tools.rotations import euler_to_quaternion, quaternion_to_euler_vec
+from tools.jacobians import jacobian
 from message_types.msg_delta import MsgDelta
 from models.vtol_dynamics import VtolDynamics
+
 
 def compute_trim(vtol: VtolDynamics, 
                  Va: float, 
@@ -154,3 +156,125 @@ def trim_objective_fun(x, vtol, Va, gamma):
     tmp = xdot - f
     J = np.linalg.norm(tmp[2:15])**2.0
     return J
+
+
+def compute_ss_model(vtol, trim_state, trim_input):
+    x_euler = euler_state(trim_state)
+    A = df_dx(vtol, x_euler, trim_input)
+    B = df_du(vtol, x_euler, trim_input)
+    return A, B
+
+def euler_state(x_quat: np.ndarray)->np.ndarray:
+    '''
+        convert (15x1) Quaternion state:
+            x_quat = (pn, pe, pd, u, v, w, e0, e1, e2, e3, p, q, r, r_motor, l_motor)
+        to (14x1) Euler state:
+            x_euler = (pn, pe, pd, u, v, w, phi, theta, psi, p, q, r, r_motor, l_motor)
+    '''
+    x_euler = np.zeros((14,1))
+    x_euler[0:6] = np.copy(x_quat[0:6])  # copy position, velocity
+    Theta = quaternion_to_euler_vec(x_quat[6:10])
+    x_euler[6:9] = Theta
+    x_euler[9:14] = np.copy(x_quat[10:15]) # copy angular rate
+    return x_euler
+
+def quaternion_state(x_euler: np.ndarray)->np.ndarray:
+    '''
+        convert (14x1) Euler state:
+            x_euler = (pn, pe, pd, u, v, w, phi, theta, psi, p, q, r, r_motor, l_motor)
+        to (15x1) Quaternion state:
+            x_quat = (pn, pe, pd, u, v, w, e0, e1, e2, e3, p, q, r, r_motor, l_motor)
+    '''
+    x_quat = np.zeros((15,1))
+    x_quat[0:6] = np.copy(x_euler[0:6])  # copy position, velocity
+    phi = x_euler.item(6)
+    theta = x_euler.item(7)
+    psi = x_euler.item(8)
+    quat = euler_to_quaternion(phi, theta, psi)
+    x_quat[6:10] = quat
+    x_quat[10:15] = np.copy(x_euler[9:14]) # copy angular rate and motor angles
+    return x_quat
+
+def f_euler(vtol, x_euler, input):
+    # return 12x1 dynamics (as if state were Euler state)
+    # compute x_euler_dot = f_euler(x_euler, input) 
+    x_quat = quaternion_state(x_euler)
+    vtol._state = x_quat
+    vtol._update_velocity_data()
+    x_quat_dot = vtol._derivatives(x_quat, vtol._forces_moments(input), input)
+    # f_euler will be f, except for the attitude states
+    x_euler_dot = euler_state(x_quat_dot)
+    q = x_quat[6:10]
+    T = jacobian(quaternion_to_euler_vec, q)
+    x_euler_dot[6:9] = np.copy(T @ x_quat_dot[6:10])
+    return x_euler_dot
+
+def df_dx(vtol, x_euler, input):
+    '''take partial of f_euler with respect to x_euler'''
+    eps = 0.01  # deviation
+    A = np.zeros((14, 14))  # Jacobian of f wrt x
+    f = f_euler(vtol, x_euler, input)
+    for i in range(0, 14):
+        x_eps = np.copy(x_euler)
+        x_eps[i][0] += eps
+        f_eps = f_euler(vtol, x_eps, input)
+        df = (f_eps - f) / eps
+        A[:,i] = df[:,0]
+    return A
+
+def df_du(vtol, x_euler, delta):
+    '''take partial of f_euler with respect to delta'''
+    eps = 0.01  # deviation
+    B = np.zeros((14, 8))  # Jacobian of f wrt u
+    f = f_euler(vtol, x_euler, delta)
+
+    for i in range(0, 8):
+        delta_eps = delta.to_array()
+        delta_eps[i, 0] += eps
+        delta_eps_ = MsgDelta()
+        delta_eps_.from_array(delta_eps)
+        f_eps = f_euler(vtol, x_euler, delta_eps_)
+        df = (f_eps - f) / eps
+        B[:,i] = df[:,0]
+    return B
+
+def print_ss_model(filename, A, B, Va, gamma, trim_state, trim_input):
+    '''write state space model to file'''
+    n = B.shape[0]
+    m = B.shape[1]
+    input = trim_input.to_array()
+    # open file for writting
+    file = open('models/' + filename, 'w')
+    file.write('import numpy as np\n')
+    # write the airspeed
+    file.write('Va = %f\n' % Va)
+    # write the flight path angle
+    file.write('gamma = %f\n' % gamma)
+    # write the trim state
+    file.write('trim_state = np.array([[')
+    for i in range(0,n):
+        file.write('%f, ' % trim_state.item(i))  
+    file.write(']]).T\n')      
+    # write the trim input
+    file.write('trim_input = np.array([[')
+    for i in range(0,m):
+        file.write('%f, ' % input.item(i))  
+    file.write(']]).T\n')      
+    # write A
+    file.write('A = np.array([\n')
+    for i in range(0,n):
+        file.write('[')
+        for j in range(0,n-1):
+            file.write('%f, ' % A[i,j])
+        file.write('%f],\n' % A[i,n-1])
+    file.write('])\n')      
+    # write B
+    file.write('B = np.array([')
+    for i in range(0,n):
+        file.write('[')
+        for j in range(0,m-1):
+            file.write('%f, ' % B[i,j])
+        file.write('%f],\n' % B[i,m-1])
+    file.write('])\n')      
+    # close file
+    file.close()

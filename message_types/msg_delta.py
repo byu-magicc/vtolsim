@@ -86,5 +86,44 @@ class MsgDelta:
         delta[5,0] = self.throttle_rear
         delta[6,0] = self.motor_right
         delta[7,0] = self.motor_left
+        return delta
 
+    def __add__(self, other):
+        '''Overload the addition '+' operator'''
+        out = MsgDelta()
+        out.elevator = self.elevator + other.elevator
+        out.aileron = self.aileron + other.aileron  
+        out.rudder = self.rudder + other.rudder  
+        out.throttle_right = self.throttle_right + other.throttle_right  
+        out.throttle_left = self.throttle_left + other.throttle_left  
+        out.throttle_rear = self.throttle_rear + other.throttle_rear  
+        out.motor_right = self.motor_right + other.motor_right  
+        out.motor_left = self.motor_left + other.motor_left  
+        return out
+
+    def __sub__(self, other):
+        '''Overload the subtraction '-' operator'''
+        out = MsgDelta()
+        out.elevator = self.elevator - other.elevator
+        out.aileron = self.aileron - other.aileron  
+        out.rudder = self.rudder - other.rudder  
+        out.throttle_right = self.throttle_right - other.throttle_right  
+        out.throttle_left = self.throttle_left - other.throttle_left  
+        out.throttle_rear = self.throttle_rear - other.throttle_rear  
+        out.motor_right = self.motor_right - other.motor_right  
+        out.motor_left = self.motor_left - other.motor_left  
+        return out
+    
+    def __rmul__(self, other):
+        '''Overload right multiply by a scalar'''
+        out = MsgDelta()
+        out.elevator = other * self.elevator
+        out.aileron = other * self.aileron 
+        out.rudder = other * self.rudder  
+        out.throttle_right = other * self.throttle_right  
+        out.throttle_left = other * self.throttle_left  
+        out.throttle_rear = other * self.throttle_rear  
+        out.motor_right = other * self.motor_right  
+        out.motor_left = other * self.motor_left  
+        return out
 

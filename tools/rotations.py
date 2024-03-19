@@ -4,7 +4,7 @@ various tools to be used in mavPySim
 import numpy as np
 #import scipy.linalg as linalg
 
-def quaternion_to_euler(quaternion):
+def quaternion_to_euler(quaternion, vec: bool=False):
     """
     converts a quaternion attitude to an euler angle attitude
     :param quaternion: the quaternion to be converted to euler angles in a np.matrix
@@ -17,8 +17,22 @@ def quaternion_to_euler(quaternion):
     phi = np.arctan2(2.0 * (e0 * e1 + e2 * e3), e0**2.0 + e3**2.0 - e1**2.0 - e2**2.0)
     theta = np.arcsin(2.0 * (e0 * e2 - e1 * e3))
     psi = np.arctan2(2.0 * (e0 * e3 + e1 * e2), e0**2.0 + e1**2.0 - e2**2.0 - e3**2.0)
-
     return phi, theta, psi
+
+def quaternion_to_euler_vec(quaternion):
+    """
+    converts a quaternion attitude to an euler angle attitude
+    :param quaternion: the quaternion to be converted to euler angles in a np.matrix
+    :return: the euler angle equivalent (phi, theta, psi) in a np.array
+    """
+    e0 = quaternion.item(0)
+    e1 = quaternion.item(1)
+    e2 = quaternion.item(2)
+    e3 = quaternion.item(3)
+    phi = np.arctan2(2.0 * (e0 * e1 + e2 * e3), e0**2.0 + e3**2.0 - e1**2.0 - e2**2.0)
+    theta = np.arcsin(2.0 * (e0 * e2 - e1 * e3))
+    psi = np.arctan2(2.0 * (e0 * e3 + e1 * e2), e0**2.0 + e1**2.0 - e2**2.0 - e3**2.0)
+    return np.array([[phi], [theta], [psi]])
 
 def euler_to_quaternion(phi, theta, psi):
     """
