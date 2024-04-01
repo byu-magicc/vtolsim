@@ -9,6 +9,7 @@ sys.path.append('..')
 sys.path.append('../viewers')
 sys.path.append('../trajectorygenerator/scripts')
 import numpy as np
+import scipy as sp
 import matplotlib.pyplot as plt
 import time
 import parameters.simulation_parameters as SIM
