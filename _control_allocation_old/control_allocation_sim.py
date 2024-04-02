@@ -1,7 +1,11 @@
 #/usr/bin/python3
-import sys
+import os, sys
 sys.path.append('..')
 sys.path.append('../viewers')
+
+from pathlib import Path
+sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
+
 import numpy as np
 import parameters.simulation_parameters as SIM
 
@@ -9,16 +13,17 @@ import parameters.simulation_parameters as SIM
 from viewers.vtol_viewer import vtolViewer
 from viewers.data_viewer import dataViewer
 from viewers.controls_viewer import controlsViewer
-from dynamics.vtol_dynamics import vtolDynamics
-from dynamics.wind_simulation import windSimulation
+from models.vtol_dynamics import vtolDynamics
+from models.wind_simulation import windSimulation
 from message_types.msg_controls import msgControls
-from dynamics.compute_models import compute_tf_model
-from dynamics.trim import *
-from low_level_controller.rate_control import RateControl
-from low_level_controller.attitude_control import attitudeControl
-from control_allocation.control_allocation_cls import ControlAllocation
+#apparently this line is not needed for our purposes
+#from dynamics.compute_models import compute_tf_model
+from tools.trim import *
+from controllers.rate_control import RateControl
+from controllers.attitude_control import attitudeControl
+from _control_allocation_old.control_allocation_cls import ControlAllocation
 from tools.signals import signals
-from tools.msg_convert import *
+from message_types.msg_convert import *
 import time
 
 # initialize viewers
