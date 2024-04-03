@@ -9,15 +9,13 @@ sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
 import parameters.simulation_parameters as SIM
 
-
+#imports all the files from other parts of the code
 from viewers.vtol_viewer import vtolViewer
 from viewers.data_viewer import dataViewer
 from viewers.controls_viewer import controlsViewer
 from models.vtol_dynamics import vtolDynamics
 from models.wind_simulation import windSimulation
 from message_types.msg_controls import msgControls
-#apparently this line is not needed for our purposes
-#from dynamics.compute_models import compute_tf_model
 from tools.trim import *
 from controllers.rate_control import RateControl
 from controllers.attitude_control import attitudeControl
@@ -72,7 +70,7 @@ while sim_time < SIM.end_time:
     commanded_state = vtol.true_state  # commanded state is current state
 
     att_cmd = np.array(
-        [0., #np.array([phi_command.square(sim_time)
+        [0.0, #np.array([phi_command.square(sim_time)
         0.0, #theta_command.square(sim_time),
         0.0] #psi_command.square(sim_time)]
     )
