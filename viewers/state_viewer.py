@@ -10,7 +10,7 @@ part of mavsimPy
 import numpy as np
 from viewers.plotter import Plotter
 from tools.wrap import wrap
-from tools.rotations import Quaternion2Euler
+from tools.rotations import quaternion_to_euler
 
 class dataViewer:
     def __init__(self, app,  dt = 0.01,
@@ -119,7 +119,7 @@ class dataViewer:
         #add the true state data
         if true_state != None:
             # phi, theta, psi = rotation_to_euler(true_state.R)
-            phi, theta, psi = Quaternion2Euler(true_state[6:10])
+            phi, theta, psi = quaternion_to_euler(true_state[6:10])
             true_st_euler = np.concatenate((true_state[0:6], np.array([[phi, theta, psi]]).T, true_state[10:13]))
             true_st_euler = np.squeeze(true_st_euler)
             self._plotter.add_data_point(plot_id='north', data_label='north', xvalue=t, yvalue=true_state.pos[0,0])
@@ -140,11 +140,11 @@ class dataViewer:
         #convert quaternions to euler angles
 
 
-        phi, theta, psi = Quaternion2Euler(estimated_state[6:10])
+        phi, theta, psi = quaternion_to_euler(estimated_state[6:10])
         estimated_st_euler = np.concatenate((estimated_state[0:6], np.array([[phi, theta, psi]]).T, estimated_state[10:13]))
         estimated_st_euler = np.squeeze(estimated_st_euler)
 
-        phi, theta, psi = Quaternion2Euler(commanded_state[6:10])
+        phi, theta, psi = quaternion_to_euler(commanded_state[6:10])
         commanded_st_euler = np.concatenate((commanded_state[0:6], np.array([[phi, theta, psi]]).T))
         commanded_st_euler = np.squeeze(commanded_st_euler)
 

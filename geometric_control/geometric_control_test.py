@@ -1,18 +1,17 @@
-
-import sys
-sys.path.append('..')
-sys.path.append('../trajectorygenerator/scripts')
+import os, sys
+# insert parent directory at beginning of python search path
+from pathlib import Path
+sys.path.insert(0,os.fspath(Path(__file__).parents[1]))
 import numpy as np
 import matplotlib.pyplot as plt
-from tools.rotations import Euler2Quaternion, Euler2Rotation, Rotation2Quaternion, Quaternion2Euler, Rotation2Euler
-
+from tools.rotations import euler_to_rotation, rotation_to_euler, euler_to_quaternion
 from geometric_control.geometric_controller import GeometricController
 
 # trajectories
-from trajectory import Trajectory
-from sinusoidal_trajectory_member import SinusoidalTrajectoryMember
-from linear_trajectory_member import LinearTrajectoryMember
-import trajectory_plotter
+from planners.trajectorygenerator.scripts.trajectory import Trajectory
+from planners.trajectorygenerator.scripts.sinusoidal_trajectory_member import SinusoidalTrajectoryMember
+from planners.trajectorygenerator.scripts.linear_trajectory_member import LinearTrajectoryMember
+import planners.trajectorygenerator.scripts.trajectory_plotter as trajectory_plotter
 
 def main():
     # 5m radius slanted orbit
@@ -50,15 +49,15 @@ def main():
         pd_d1 = trajectory_flag_t[0:3,1]
         psi_d0 = trajectory_flag_t[3,0]
 
-        q_b2i = Euler2Quaternion(0., 0., psi_d0)
-        pd_d1_body = Euler2Rotation(0., 0., psi_d0).T @ pd_d1
+        q_b2i = euler_to_quaternion(0., 0., psi_d0)
+        pd_d1_body = euler_to_rotation(0., 0., psi_d0).T @ pd_d1
         
         state = np.concatenate([pd_d0, pd_d1_body, q_b2i.reshape(-1)])
-        Fi, Ri, omegai = gc.update(state, trajectory_flag_t)
+        Fi, Ri, omegai, pd, vd_b_pitch = gc.update(state, trajectory_flag_t)
 
         F[:,i] = Fi
 
-        phi, theta, psi = Rotation2Euler(Ri)
+        phi, theta, psi = rotation_to_euler(Ri)
 
         print("t = {}, \nR = {}".format(t[i], Ri))
 

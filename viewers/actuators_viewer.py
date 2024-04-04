@@ -11,7 +11,7 @@ part of mavsimPy
 from viewers.state_plotter.Plotter import Plotter
 from viewers.state_plotter.plotter_args import *
 
-class actuatorsViewer:
+class ActuatorsViewer:
     def __init__(self):
         time_window_length=100
         self.plotter = Plotter(plotting_frequency=100, # refresh plot every 100 time steps

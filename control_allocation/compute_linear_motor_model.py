@@ -3,16 +3,20 @@
     linear motor model.
 """
 #! /usr/bin/env python3
-import sys
-sys.path.append('..')
-sys.path.append('../viewers')
+# import sys
+# sys.path.append('..')
+# sys.path.append('../viewers')
+import os, sys
+from pathlib import Path
+sys.path.insert(0,os.fspath(Path(__file__).parents[1]))
 
-from tools.rotations import Quaternion2Euler, Quaternion2Rotation
-from tools.msg_convert import *
-from message_types.msg_controls import msgControls
-from dynamics.vtol_dynamics import vtolDynamics
-from dynamics.trim import *
+from tools.rotations import quaternion_to_rotation
+#from tools.msg_convert import *
+#from message_types.msg_controls import MsgControls
+from models.vtol_dynamics import VtolDynamics
+from tools.trim import *
 import parameters.convergence_parameters as VTOL
+import parameters.simulation_parameters as SIM
 import numpy as np
 np.set_printoptions(precision=4, linewidth=200, suppress=True)
 
@@ -54,13 +58,13 @@ def compute_K_least_squares(servo0_arr, Va_star=0.0, gamma_star=0.0):
 
 def compute_matrices(servo0, force_KT1eqKT2=False, Va_star=0.0, gamma_star=0.0):
     # initialize elements of the architecture
-    vtol = vtolDynamics()
+    vtol = VtolDynamics(SIM.ts_simulation)
 
     # use trim calculation to find hover for different desired rotor angles
     F = np.array([0., 0., -VTOL.mass * VTOL.gravity]) # inertial frame
 
-    state_trim, delta_trim = compute_trim(vtol, Va_star, gamma_star, servo0 = servo0)
-    R_b2i = Quaternion2Rotation(state_trim[6:10]) # body to inertial
+    state_trim, delta_trim = compute_trim(vtol, Va_star, gamma_star, motor0=servo0)
+    R_b2i = quaternion_to_rotation(state_trim[6:10]) # body to inertial
     delta, theta_r = split_delta_trim(delta_trim)
 
     vtol._state = state_trim

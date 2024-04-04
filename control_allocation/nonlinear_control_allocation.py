@@ -1,15 +1,13 @@
 import re
-import sys
-sys.path.append('..')
 import numpy as np
 from scipy.optimize import linprog, minimize, NonlinearConstraint
 
 import parameters.convergence_parameters as VTOL
 import parameters.control_allocation_parameters as CA
-from tools.msg_convert import *
-from message_types.msg_controls import msgControls
-from control_allocation.control_allocation_cls import ControlAllocation
-from tools.rotations import Quaternion2Euler
+#from tools.msg_convert import *
+from message_types.msg_controls import MsgControls
+from _control_allocation_old.control_allocation_cls import ControlAllocation
+#from tools.rotations import quaternion_to_euler
 
 CA_ROTOR_RIGHT = 0
 CA_ROTOR_LEFT = 1

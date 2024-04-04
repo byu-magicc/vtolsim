@@ -4,13 +4,11 @@ compute the optimal pitch for producing that force.
 """
 
 from os import error
-import sys
 import numpy as np
 import scipy.optimize as sco
 from enum import Enum
-sys.path.append('..')
 
-from tools.rotations import Quaternion2Rotation, vee
+from tools.rotations import quaternion_to_rotation, vee
 from tools.wrap import wrap
 import parameters.convergence_parameters as VTOL
 import parameters.optimal_pitch_parameters as OPT_PARAM

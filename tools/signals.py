@@ -7,7 +7,7 @@ mavsim_python
 import numpy as np
 import matplotlib.pyplot as plt
 
-class Signals:
+class SignalGenerator:
     def __init__(self,
                  amplitude=1.0,
                  frequency=1.0,

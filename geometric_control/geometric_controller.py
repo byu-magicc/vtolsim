@@ -2,18 +2,16 @@
 Geometric Controller for vtolsim
 """
 
-import sys
 import numpy as np
 from scipy.linalg import expm
-sys.path.append('..')
-from tools.rotations import Quaternion2Euler, Quaternion2Rotation, vee, hat
+from tools.rotations import quaternion_to_euler, quaternion_to_rotation, vee, hat
 import parameters.convergence_parameters as VTOL
 import parameters.geometric_control_parameters as GEOM
 from geometric_control.optimal_pitch import compute_thrust, find_pitch_thrust, find_thrust_from_theta
 
 
 class GeometricController:
-    def __init__(self, time_step, seed_optimizer=True, constrain_pitch_rate=True, theta_0=0.):
+    def __init__(self, time_step=0.01, seed_optimizer=True, constrain_pitch_rate=True, theta_0=0.):
         self.seed_optimizer = seed_optimizer
         self.constrain_pitch_rate = constrain_pitch_rate
 
@@ -68,7 +66,7 @@ class GeometricController:
 
         B = np.array([[1., 0.], [0., 0.], [0., 1.]])
         q_b2i = state[6:10].reshape(-1)
-        R_b2i = Quaternion2Rotation(q_b2i)
+        R_b2i = quaternion_to_rotation(q_b2i)
         T_d_in_b = B.T @ R_b2i.T @ R_d2i @ R_p2d @ B @ T_d_p
         # T_d_in_b = T_d_in_p
 
@@ -86,7 +84,7 @@ class GeometricController:
         # pi_d0 = true position in inertial frame, 0th derivative
         pi_d0 = state[0:3].reshape(-1)
         q_b2i = state[6:10].reshape(-1)
-        R_b2i = Quaternion2Rotation(q_b2i)
+        R_b2i = quaternion_to_rotation(q_b2i)
         pi_d1 = R_b2i @ state[3:6].reshape(-1)
 
         # pd_d0 = position desired, 0th derivative
@@ -179,7 +177,7 @@ class GeometricController:
 
 def attitude_controller(state, R_d2i, omega_d):
     q_b2i = state[6:10]
-    R_b2i = Quaternion2Rotation(q_b2i)
+    R_b2i = quaternion_to_rotation(q_b2i)
     R_d2b = R_b2i.T @ R_d2i
     if .5*(np.trace(np.eye(3) - R_d2b)) >= 2:
         print("Attitude controller assumptions violated")

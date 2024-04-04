@@ -47,13 +47,17 @@ while sim_time < SIM.end_time:
     #-------observer-------------
     measurements = vtol.sensors()  # get sensor measurements
     estimated_state = vtol._state  # estimated state is current state
+    
     # ------ Trajectory follower
     desired_state, desired_input = df_traj.desiredState_fromX(estimated_state[0:10])
+    
     #------- High Level controller-------------
     u = lqr_ctrl.update(estimated_state[0:10], desired_state, desired_input, df_traj)
+    
     #------- Low Level Controller -------------
     delta_old = low_ctrl.update(u[2:5], u[0:2], vtol.true_state.old_format())
     delta = MsgDelta(delta_old)
+    
     #-------update physical system-------------
     vtol.update(delta, wind)  # propagate the MAV dynamics
 
@@ -66,6 +70,7 @@ while sim_time < SIM.end_time:
         delta,  # inputs to aircraft
         None,  # measurements
     )
+    
     #-------increment time-------------
     sim_time += SIM.ts_simulation
 

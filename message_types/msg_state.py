@@ -12,17 +12,28 @@ from tools.rotations import rotation_to_euler, euler_to_rotation
 from message_types.msg_state_old import MsgState as MsgStateOld
 
 class MsgState:
-    def __init__(self, old=None):
+    def __init__(self, 
+                 old=None, 
+                 pos: np.ndarray=np.array([[0.], [0.], [0.]]), # inertial NED position in meters
+                 vel: np.ndarray=np.array([[0.], [0.], [0.]]), # inertial velocity in body frame in m/s
+                 R: np.ndarray=np.identity(3), # rotation matrix, inertial to body
+                 omega: np.ndarray=np.array([[0.], [0.], [0.]]), # angular velocity in body frame in rad/sec
+                 gyro_bias: np.ndarray=np.array([[0.], [0.], [0.]]),  # gyro bias in rad/sec
+                 motor_angle: np.ndarray=np.array([[0.], [0.]]),  # right/left angles of motors
+                 Va: float=0.,  # airspeed
+                 alpha: float=0.,  # angle of attach
+                 beta: float=0.,  # sideslip angle
+                 ):
         if old==None:
-            self.pos = np.array([[0.], [0.], [0.]])  # inertial NED position in meters
-            self.vel = np.array([[0.], [0.], [0.]])  # inertial velocity in body frame in meters
-            self.R = np.identity(3)  # rotation matrix, inertial to body
-            self.omega = np.array([[0.], [0.], [0.]])  # angular velocity in body frame in rad/sec
-            self.gyro_bias = np.array([[0.], [0.], [0.]])  # gyro bias in rad/sec
-            self.motor_angle = np.array([[0.], [0.]])  # right/left angles of motors
-            self.Va = 0.  # airspeed
-            self.alpha = 0.  # angle of attach
-            self.beta = 0.  # sideslip angle
+            self.pos = pos  
+            self.vel = vel  
+            self.R = R  
+            self.omega = omega  
+            self.gyro_bias = gyro_bias
+            self.motor_angle = motor_angle
+            self.Va = Va
+            self.alpha = alpha
+            self.beta = beta
         else:
             self.pos = np.array([[old.pn], [old.pe], [-old.h]])  
             self.vel = np.array([[old.u], [old.v], [old.w]]) 
