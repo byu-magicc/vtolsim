@@ -5,7 +5,7 @@ from scipy.optimize import linprog
 
 import parameters.convergence_parameters as VTOL
 from tools.msg_convert import *
-from control_allocation.compute_linear_motor_model import compute_rotor_allocation_submatrix
+from compute_linear_motor_model_old import compute_rotor_allocation_submatrix
 from message_types.msg_controls import msgControls
 
 class ControlAllocation:

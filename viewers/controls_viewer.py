@@ -8,7 +8,7 @@ part of mavsimPy
         12/17/2018 - RWB
         1/14/2019 - RWB
 """
-from state_plotter.Plotter import Plotter
+from plotter import Plotter
 from state_plotter.plotter_args import *
 
 class controlsViewer:

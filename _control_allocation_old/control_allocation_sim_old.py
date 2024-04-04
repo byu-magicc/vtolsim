@@ -1,37 +1,35 @@
 #/usr/bin/python3
 import os, sys
-sys.path.append('..')
-sys.path.append('../viewers')
 
 from pathlib import Path
-sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
+sys.path.insert(0,os.fspath(Path(__file__).parents[1]))
 
 import numpy as np
-import parameters.simulation_parameters as SIM
 
 #imports all the files from other parts of the code
-from viewers.vtol_viewer import vtolViewer
-from viewers.data_viewer import dataViewer
+from viewers.vtol_viewer import VtolViewer
+from viewers.data_viewer import DataViewer
 from viewers.controls_viewer import controlsViewer
-from models.vtol_dynamics import vtolDynamics
-from models.wind_simulation import windSimulation
-from message_types.msg_controls import msgControls
+from models.vtol_dynamics import VtolDynamics
+from models.wind_simulation import WindSimulation
+from message_types.msg_controls import MsgControls
 from tools.trim import *
 from controllers.rate_control import RateControl
-from controllers.attitude_control import attitudeControl
-from _control_allocation_old.control_allocation_cls import ControlAllocation
-from tools.signals import signals
+from controllers.attitude_control import AttitudeControl
+from _control_allocation_old.control_allocation_cls_old import ControlAllocation
+from tools.signals import Signals
 from message_types.msg_convert import *
 import time
+import parameters.simulation_parameters as SIM
 
 # initialize viewers
-vtol_view = vtolViewer()
-data_view = dataViewer()
+vtol_view = VtolViewer()
+data_view = DataViewer()
 controls_view = controlsViewer()
 
 # initialize elements of the architecture
-wind = windSimulation()
-vtol = vtolDynamics()
+wind = WindSimulation()
+vtol = VtolDynamics()
 
 # trim
 Va_star = 0.0
@@ -42,18 +40,18 @@ vtol._state = state_trim
 vtol._update_true_state()
 
 #initialize low level control
-att_ctrl = attitudeControl(ts_control=SIM.ts_simulation)
+att_ctrl = AttitudeControl(ts_control=SIM.ts_simulation)
 rate_control = RateControl(ts_control=SIM.ts_simulation)
 control_alloc = ControlAllocation(servo0=servo0)
 
 # signal generators
-p_command = signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
-q_command = signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
-r_command = signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
+p_command = Signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
+q_command = Signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
+r_command = Signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
 
-phi_command = signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
-theta_command = signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
-psi_command = signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
+phi_command = Signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
+theta_command = Signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
+psi_command = Signals(dc_offset=np.radians(0), amplitude=np.radians(15), start_time=0.0, frequency = 0.1)
 
 # initialize the simulation time
 sim_time = SIM.start_time
