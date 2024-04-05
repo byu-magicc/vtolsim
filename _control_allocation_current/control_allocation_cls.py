@@ -18,4 +18,12 @@ from scipy.optimize import linprog
 #imports the convergence parameters
 import parameters.convergence_parameters as VTOL_converge
 
-#imports the 
+#imports the compute rotor allocation submatrix
+#TODO need to implement this file itself
+from compute_linear_motor_model import compute_rotor_allocation_submatrix
+
+#imports the controls messages
+from message_types.msg_controls import MsgControls
+
+
+#defines the control allocation class

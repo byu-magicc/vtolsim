@@ -27,3 +27,7 @@ import parameters.convergence_parameters as VTOL_CONV
 
 import numpy as np
 
+
+
+
+#defines the compute rotor allocation submatrix
