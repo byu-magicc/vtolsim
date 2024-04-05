@@ -22,7 +22,7 @@ from controllers.low_level_control import LowLevelControl
 from message_types.msg_state import MsgState
 from message_types.msg_delta import MsgDelta
 
-from tools.signals import Signals
+from tools.signal_generator import Signals
 
 # initialize viewers
 plot_app = pg.QtWidgets.QApplication([])

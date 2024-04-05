@@ -19,7 +19,7 @@ from models.vtol_dynamics import VtolDynamics
 from message_types.msg_controls import MsgControls
 from controllers.low_level_control import LowLevelControl
 from controllers.attitude_control import AttitudeControl
-from tools.signals import Signals
+from tools.signal_generator import Signals
 
 from message_types.msg_state import MsgState
 from message_types.msg_delta import MsgDelta

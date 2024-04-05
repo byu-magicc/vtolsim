@@ -115,8 +115,7 @@ def compute_trim(vtol: VtolDynamics,
              }])
     # solve the minimization problem to find the trim states and inputs
 
-    result = minimize(trim_objective_fun, 
-                      x0=x0, 
+    result = minimize(trim_objective_fun, x0.flatten(), 
                       method='SLSQP', 
                       args = (vtol, Va, gamma),
                       constraints=cons, 

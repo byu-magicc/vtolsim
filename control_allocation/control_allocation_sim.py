@@ -12,11 +12,11 @@ import parameters.simulation_parameters as SIM
 from models.vtol_dynamics import VtolDynamics
 from viewers.view_manager import ViewManager
 from message_types.msg_delta import MsgDelta
-from tools.signals import SignalGenerator
+from tools.signal_generator import SignalGenerator
+from tools.trim import compute_trim
 
 #from message_types.msg_controls import msgControls
 #from dynamics.compute_models import compute_tf_model
-#from dynamics.trim import *
 from controllers.rate_control import RateControl
 from controllers.attitude_control import AttitudeControl
 from control_allocation.control_allocation_cls import ControlAllocation
@@ -28,13 +28,13 @@ wind = np.array([[0., 0., 0., 0., 0., 0.]]).T
 vtol = VtolDynamics(SIM.ts_simulation)
 viewers = ViewManager(animation=True, data=True)
 
-# # trim
-# Va_star = 0.0
-# gamma_star = 0.0
-# servo0 = np.radians(90)
-# state_trim, delta_trim = compute_trim(vtol, Va_star, gamma_star, servo0 = np.radians(90))
-# vtol._state = state_trim
-# vtol._update_true_state()
+# trim
+Va_star = 0.0
+gamma_star = 0.0
+servo0 = np.radians(90)
+state_trim, delta_trim = compute_trim(vtol, Va_star, gamma_star, motor0 = np.radians(90))
+vtol._state = state_trim
+vtol._update_true_state()
 
 #initialize low level control
 att_ctrl = AttitudeControl(ts_control=SIM.ts_simulation)

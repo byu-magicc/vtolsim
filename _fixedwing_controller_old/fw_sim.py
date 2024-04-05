@@ -17,7 +17,7 @@ from dynamics.wind_simulation import windSimulation
 from dynamics.trim import compute_trim
 from fixedwing_controller.autopilot import autopilot
 from message_types.msg_controls import msgControls
-from tools.signals import signals
+from tools.signal_generator import signals
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
