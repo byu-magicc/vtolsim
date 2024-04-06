@@ -27,7 +27,9 @@ class RateControl:
         #instantiates the r controller
         self.r_ctrl = PidControl(kp=r_kp, ki=r_ki, kd=r_kd, Ts=ts_control, limit=np.inf)
 
+    #creates the update function for the rate controller
     def update(self, omega_d, omega, Ts=None):
+        
         tau_x_d = self.p_ctrl.update(omega_d[0], omega[0], Ts)
         tau_y_d = self.q_ctrl.update(omega_d[1], omega[1], Ts)
         tau_z_d = self.r_ctrl.update(omega_d[2], omega[2], Ts)
