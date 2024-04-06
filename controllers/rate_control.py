@@ -2,6 +2,9 @@ import numpy as np
 from controllers.pid_control import PidControl
 
 
+
+#rate control controls the roll, pitch and yaw rates of the vtol (pqr)
+#using three PID controllers
 class RateControl:
     def __init__(self, ts_control):
         # Control gains
@@ -17,8 +20,11 @@ class RateControl:
         r_kp = 0.50  
         r_ki = 1.00
         r_kd = 0.001
+        #instantiates the p controller
         self.p_ctrl = PidControl(kp=p_kp, ki=p_ki, kd=p_kd, Ts=ts_control, limit=np.inf)
+        #instantiates the q controller
         self.q_ctrl = PidControl(kp=q_kp, ki=q_ki, kd=q_kd, Ts=ts_control, limit=np.inf)
+        #instantiates the r controller
         self.r_ctrl = PidControl(kp=r_kp, ki=r_ki, kd=r_kd, Ts=ts_control, limit=np.inf)
 
     def update(self, omega_d, omega, Ts=None):
