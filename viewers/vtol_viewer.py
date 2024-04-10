@@ -11,11 +11,13 @@ from viewers.draw_vtol import DrawVtol
 #from viewers.draw_vtol_convergence import DrawVtol
 import numpy as np
 from viewers.draw_trajectory import DrawTrajectory
+from time import time
 
 
 class VtolViewer():
     def __init__(self, app, dt = 0.01,
-                 plot_period = 0.2): # time interval between a plot update
+                 plot_period = 0.2, 
+                 ts_refresh=1./30.): # time interval between a plot update
         # initialize Qt gui application and window
         self._dt = dt
         self._time = 0
@@ -34,6 +36,9 @@ class VtolViewer():
         self.window.raise_() # bring window to the front
         self.plot_initialized = False # has the mav been plotted yet?
         self.vtol_plot = []
+        self.ts_refresh = ts_refresh
+        self.t = time()
+        self.t_next = self.t          
 
     def update(self, state):
         # initialize the drawing the first time update() is called
@@ -48,16 +53,22 @@ class VtolViewer():
             self.plot_initialized = True
         # else update drawing on all other calls to update()
         else:
-            if self._plot_delay >= self._plot_period:
+            t = time()
+            if t-self.t_next > 0.0:
                 self.vtol_plot.update(state)
-                self._plot_delay = 0
-                # update the center of the camera view to the vtol location
-                # defined in ENU coordinates
-                view_location = Vector(state.pos.item(1), state.pos.item(0), -state.pos.item(2))
-                self.window.opts['center'] = view_location
-                # redraw
-                self.app.processEvents()
+                self.t = t
+                self.t_next = t + self.ts_refresh
+            view_location = Vector(state.pos.item(1), state.pos.item(0), -state.pos.item(2))
+            self.window.opts['center'] = view_location
+            self.app.processEvents()
             self._plot_delay += self._dt
+
+            # if self._plot_delay >= self._plot_period:
+            #     self.vtol_plot.update(state)
+            #     self._plot_delay = 0
+            #     # update the center of the camera view to the vtol location
+            #     # defined in ENU coordinates
+            #     # redraw
 
     def close(self):
         self.window.close()
