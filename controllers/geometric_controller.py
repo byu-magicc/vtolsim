@@ -9,6 +9,8 @@ from message_types.msg_trajectory import MsgTrajectory
 from message_types.msg_state import MsgState
 from message_types.msg_delta import MsgDelta
 import parameters.convergence_parameters as VTOL
+from tools.differentiators import RotationDerivative
+from tools.lie_group import vee_SO3, antisymmetric
 
 from scipy.linalg import expm
 from tools.rotations import quaternion_to_euler, quaternion_to_rotation, vee, hat
@@ -18,6 +20,9 @@ from geometric_control.optimal_pitch import compute_thrust, find_pitch_thrust, f
 
 class GeometricController:
     def __init__(self, time_step=0.01, seed_optimizer=True, constrain_pitch_rate=True, theta_0=0.):
+        self.differentiate_R = RotationDerivative()
+        
+        
         self.seed_optimizer = seed_optimizer
         self.constrain_pitch_rate = constrain_pitch_rate
 
@@ -36,11 +41,15 @@ class GeometricController:
                trajectory: MsgTrajectory, 
                state: MsgState,
                )->tuple[MsgDelta, MsgState]:
-         #state, trajectory_flag, time_step=None):
+        # compute desired force and rotation matrix to follow trajectory
+        F_d, R_d = trajectory_follower(trajectory, state)
+        # numerically differentiate the rotation matrix R_d to get desired angular velocity
+        omega_d = self.differentiate_R.update(R_d)
+
+
+
         if time_step is None:
             time_step = self.time_step
-
-        F_d, R_d2i, omega_d_nopitch = self.trajectory_follower(state, trajectory_flag, time_step)
 
         # find Va and gamma
         vd_i = trajectory_flag[0:3,1]
@@ -80,145 +89,77 @@ class GeometricController:
         T_d_in_b = B.T @ R_b2i.T @ R_d2i @ R_p2d @ B @ T_d_p
         # T_d_in_b = T_d_in_p
 
-        # attitude control
-        omega_c = attitude_controller(state, R_p2i, omega_p2i_p)
 
 
         # desired position/velocity for plotting
         pd = trajectory_flag[0:3,0]
         vd_b_pitch = R_p2i.T @ vd_i
 
+        # attitude control
+        omega_c = attitude_controller(state, R_p2i, omega_p2i_p)
+
         return T_d_in_b, R_p2i, omega_c, pd, vd_b_pitch
-    
+
+
         return delta, commanded_state
 
-    def trajectory_follower(self, 
-                            trajectory: MsgTrajectory, 
-                            state: MsgState,
-                            )->tuple[np.ndarray, np.ndarray]:
-            #state, trajectory_flag, time_step):
-        # pi_d0 = true position in inertial frame, 0th derivative
-        pos_error = state.pos - trajectory.position
-        vel_error = state.vel - trajectory.velocity
-        e3 = np.array([[0.], [0.], [1.]])
-        # equation (8) in WillisBeard21
-        force = VTOL.mass * ( 
-             trajectory.acceleration 
-             - VTOL.gravity*e3 
-             - GEOM.Kp @ pos_error 
-             - GEOM.Kd @ vel_error 
-             #- GEOM.Ki @ self.perr_integral
-             )
-
-        # Inertial frame applied force vector
-        fI = (VTOL.mass
-                * (pd_d2
-                - VTOL.gravity*e3
-                - GEOM.Kp @ perr_d0
-                - GEOM.Kd @ perr_d1
-                - GEOM.Ki @ self.perr_integral))
-
-
-        pi_d0 = state[0:3].reshape(-1)
-        q_b2i = state[6:10].reshape(-1)
-        R_b2i = quaternion_to_rotation(q_b2i)
-        pi_d1 = R_b2i @ state[3:6].reshape(-1)
-
-        # pd_d0 = position desired, 0th derivative
-        pd_d0 = trajectory_flag[0:3,0]
-        pd_d1 = trajectory_flag[0:3,1]
-        pd_d2 = trajectory_flag[0:3,2]
-        pd_d3 = trajectory_flag[0:3,3]
-
-        psi_d0 = trajectory_flag[3,0]
-        psi_d1 = trajectory_flag[3,1]
-
-        # errors
-        perr_d0 = pi_d0 - pd_d0
-        perr_d1 = pi_d1 - pd_d1
-
-        # position error integral
-        self.perr_integral = self.perr_integral + .5 * time_step * (perr_d0 + self.perr_d0_delay1)
-        self.perr_d0_delay1 = perr_d0
+def trajectory_follower(
+        trajectory: MsgTrajectory, 
+        state: MsgState,
+        )->tuple[np.ndarray, np.ndarray]:
+    '''
+    Compute desired force and rotation matrix to follow trajectory.  
+    Implements WillisBeard21.pdf equations 6-11
+    '''
+    pos_error = state.pos - trajectory.position
+    vel_error = state.R @ state.vel - trajectory.velocity
+    e3 = np.array([[0.], [0.], [1.]])
+    f_d = VTOL.mass * ( 
+            trajectory.acceleration 
+            - VTOL.gravity*e3 
+            - GEOM.Kp @ pos_error 
+            - GEOM.Kd @ vel_error 
+            )
+    # desired body x axis in inertial frame
+    x_d = np.array([
+        [np.cos(trajectory.heading)],
+        [np.sin(trajectory.heading)],
+        [0.0]])
+    # desired body y axis in inertial frame
+    y_d = np.cross(x_d.T, f_d.T).T
+    norm_y_d = np.linalg.norm(y_d)
+    if norm_y_d>0:
+        y_d = y_d / norm_y_d
+    else:
+        y_d = np.cross(x_d.T, e3.T).T
+    # desired body z axis in inertial frame
+    z_d = np.cross(x_d.T, y_d.T).T
+    # desired rotation matrix from body to inertial
+    R_d = np.column_stack((x_d, y_d, z_d))
+    # desired force in body x-z plane
+    F_d = np.array([
+        [x_d.T @ f_d],
+        [z_d.T @ f_d],
+        ])
+    return F_d, R_d
 
 
-        # normalized
-        fI_mag = np.linalg.norm(fI)
-
-        # Body frame x axis in inertial frame
-        Rx_b = np.array([
-            np.cos(psi_d0),
-            np.sin(psi_d0),
-            0.0])
-
-        # Body frame y axis in inertial frame
-        Ry_b_used_fI = True
-        Ry_b_dir = np.cross(Rx_b, fI)
-        Ry_b_mag = np.linalg.norm(Ry_b_dir)
-        if Ry_b_mag < .1:
-            Ry_b_dir = np.cross(Rx_b, e3)
-            Ry_b_mag = np.linalg.norm(Ry_b_dir)
-            Ry_b_used_fI = False
-        Ry_b = Ry_b_dir/Ry_b_mag
-
-        # Body frame z axis in inertial frame
-        Rz_b = np.cross(Rx_b, Ry_b)
-
-        # Rotation matrix from desired to inertial
-        R_d = np.column_stack([Rx_b, Ry_b, Rz_b])
-
-        F_x = Rx_b @ fI
-        F_z = Rz_b @ fI
-
-        F_d = np.array([F_x, F_z])
-
-        # derivative of force vector
-        # TODO: add integral term here
-        fI_d1 = VTOL.mass * (pd_d3
-                - GEOM.Kp * perr_d1
-                - GEOM.Kd * (-GEOM.Kp*perr_d0 - GEOM.Kd*perr_d1))
-
-        # derivative of x-axis
-        Rx_b_d1 = np.array([
-            -psi_d1 * np.sin(psi_d0),
-            psi_d1 * np.cos(psi_d0),
-            0.0])
-
-        # derivative of y-axis
-        if Ry_b_used_fI:
-            Ry_b_dir_d1 = np.cross(Rx_b_d1, fI) + np.cross(Rx_b, fI_d1)
-        else:
-            Ry_b_dir_d1 = np.cross(Rx_b_d1, e3)
-
-        Ry_b_d1 = ((Ry_b_dir_d1/Ry_b_mag) - Ry_b*(Ry_b_dir_d1.T @ Ry_b)/(Ry_b_mag**3))
-
-        # derivative of z-axis
-        Rz_b_d1 = np.cross(Rx_b_d1, Ry_b) + np.cross(Rx_b, Ry_b_d1)
-
-        # derivative of Rd
-        R_d_d1 = np.column_stack([Rx_b_d1, Ry_b_d1, Rz_b_d1])
-
-        # Angular rates
-        omega_d = vee(R_d.T @ R_d_d1)
-
-        return F_d, R_d, omega_d
-    
-        return F_des, R_des  # desired force and rotation matrix
-
-def attitude_controller(state, R_d2i, omega_d):
-    q_b2i = state[6:10]
-    R_b2i = quaternion_to_rotation(q_b2i)
-    R_d2b = R_b2i.T @ R_d2i
-    if .5*(np.trace(np.eye(3) - R_d2b)) >= 2:
+def attitude_controller(
+        state: MsgState, 
+        R_d: np.ndarray, 
+        omega_d: np.ndarray,
+        )->np.ndarray:
+    '''
+    Compute the commanded angular velocity to converge to a desired rotation matrix
+    Implements WillisBeard21.pdf equation 27
+    '''
+    R_d2b = state.R.T @ R_d
+    if 0.5*(np.trace(np.eye(3) - R_d2b)) >= 2:
         print("Attitude controller assumptions violated")
         print("R_d2b = ", R_d2b)
-
-    omega_c = R_d2b @ omega_d + GEOM.omega_Kp @ vee(antisymmetric(R_d2b))
-
+    else:
+        # compute commanded angular velocity
+        omega_c = R_d2b @ omega_d + GEOM.omega_Kp @ vee_SO3(antisymmetric(R_d2b))
     return omega_c
 
-def antisymmetric(mat: np.ndarray)->np.ndarray:
-    '''
-    returns the antisymmetric part of a matrix
-    '''
-    return (1./2.)*(mat - mat.T)
+

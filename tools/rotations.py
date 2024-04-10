@@ -55,7 +55,7 @@ def euler_to_quaternion(phi, theta, psi):
 
 def euler_to_rotation(phi, theta, psi):
     """
-    Converts euler angles to rotation matrix (R_b^i)
+    Converts euler angles to rotation matrix (R_b^i): body to inertial
     """
     c_phi = np.cos(phi)
     s_phi = np.sin(phi)
@@ -86,9 +86,7 @@ def euler_to_rotation(phi, theta, psi):
 def quaternion_to_rotation(quaternion):
     q0 = quaternion.item(0)
     qbar = quaternion[1:].reshape(-1)
-
     R = np.eye(3) + 2*q0*hat(qbar) + 2*(hat(qbar)@hat(qbar))
-
     return R
 
 def rotation_to_quaternion(R):
