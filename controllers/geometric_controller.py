@@ -15,92 +15,83 @@ from tools.lie_group import vee_SO3, antisymmetric
 from scipy.linalg import expm
 from tools.rotations import quaternion_to_euler, quaternion_to_rotation, vee, hat
 import parameters.geometric_control_parameters as GEOM
-from geometric_control.optimal_pitch import compute_thrust, find_pitch_thrust, find_thrust_from_theta
+from controllers.geometric_control.optimal_pitch import compute_thrust, find_pitch_thrust, find_thrust_from_theta
+from controllers.low_level_control import LowLevelControl
 
 
 class GeometricController:
-    def __init__(self, time_step=0.01, seed_optimizer=True, constrain_pitch_rate=True, theta_0=0.):
+    def __init__(self, 
+                 time_step=0.01, 
+                 seed_optimizer=True, 
+                 constrain_pitch_rate=True, 
+                 theta_0=0.):
         self.differentiate_R = RotationDerivative()
-        
-        
         self.seed_optimizer = seed_optimizer
         self.constrain_pitch_rate = constrain_pitch_rate
-
         self.T_opt_prev = None
         self.theta_opt_prev = None
         self.theta_cmd_prev = theta_0
-
-        self.time_step = time_step
-
-        self.perr_integral = np.zeros(3)
-        self.perr_d0_delay1 = np.zeros(3)
-
-        self.name = "PitchOptimized" + GEOM.optimal_pitch_method.name + "_" + GEOM.aero_type.name
+        #initialize low-level controllers
+        self.low_ctrl = LowLevelControl(
+            M=0.5, 
+            Va0=0.0, 
+            ts=time_step)
 
     def update(self, 
                trajectory: MsgTrajectory, 
                state: MsgState,
                )->tuple[MsgDelta, MsgState]:
         # compute desired force and rotation matrix to follow trajectory
-        F_d, R_d = trajectory_follower(trajectory, state)
+        F_d, R_d2i = trajectory_follower(trajectory, state)
         # numerically differentiate the rotation matrix R_d to get desired angular velocity
-        omega_d = self.differentiate_R.update(R_d)
-
-
-
-        if time_step is None:
-            time_step = self.time_step
-
+        omega_d = self.differentiate_R.update(R_d2i)
         # find Va and gamma
-        vd_i = trajectory_flag[0:3,1]
-        vd_d = R_d2i.T @ vd_i
+        vd_d = R_d2i.T @ trajectory.velocity
         gamma = np.arctan2(-vd_d[2], vd_d[0])
         Va = np.linalg.norm(vd_d)
-
         # find optimal thrust and pitch
-        theta_opt_p2d, T_opt_d_p = find_pitch_thrust(vd_d, F_d, previous_theta=self.theta_opt_prev, model=GEOM.aero_type, method=GEOM.optimal_pitch_method)
-
+        theta_opt_p2d, T_opt_d_p = find_pitch_thrust(
+            vd_d, 
+            F_d, 
+            previous_theta=self.theta_opt_prev, 
+            model=GEOM.aero_type, 
+            method=GEOM.optimal_pitch_method)
         # filter theta
-        if self.constrain_pitch_rate and np.abs(self.theta_cmd_prev - theta_opt_p2d) > GEOM.delta_theta_max:
-                theta_p2d = self.theta_cmd_prev + np.sign(theta_opt_p2d - self.theta_cmd_prev)*GEOM.delta_theta_max
+        if (self.constrain_pitch_rate 
+            and np.abs(self.theta_cmd_prev - theta_opt_p2d)>GEOM.delta_theta_max):
+                theta_p2d = self.theta_cmd_prev \
+                    + np.sign(theta_opt_p2d - self.theta_cmd_prev)*GEOM.delta_theta_max
                 # make sure thrust matches pitch angle
-                T_d_p = find_thrust_from_theta(vd_d, F_d, theta_p2d, model=GEOM.aero_type)
+                T_d_p = find_thrust_from_theta(vd_d, 
+                                               F_d, 
+                                               theta_p2d, 
+                                               model=GEOM.aero_type)
         else:
             T_d_p = T_opt_d_p
             theta_p2d = theta_opt_p2d
-
         self.T_opt_prev = T_opt_d_p
         self.theta_opt_prev = theta_opt_p2d
-
         self.theta_cmd_prev = theta_p2d
-
         # y_d2i = R_d2i[:,1]
         # R_p2d = expm(-hat(theta_p2d*y_d2i)).T
         R_p2d = expm(-hat(theta_p2d*np.array([0., 1., 0.]))).T
-
         R_p2i = R_d2i @ R_p2d
-
-        omega_p2i_p = R_p2d.T @ omega_d_nopitch
-        # omega_p2i_p = omega_d_nopitch
-
+        omega_p2i_p = R_p2d.T @ omega_d
+        # omega_p2i_p = omega_d
         B = np.array([[1., 0.], [0., 0.], [0., 1.]])
         q_b2i = state[6:10].reshape(-1)
         R_b2i = quaternion_to_rotation(q_b2i)
         T_d_in_b = B.T @ R_b2i.T @ R_d2i @ R_p2d @ B @ T_d_p
-        # T_d_in_b = T_d_in_p
-
-
-
-        # desired position/velocity for plotting
-        pd = trajectory_flag[0:3,0]
-        vd_b_pitch = R_p2i.T @ vd_i
-
         # attitude control
         omega_c = attitude_controller(state, R_p2i, omega_p2i_p)
-
-        return T_d_in_b, R_p2i, omega_c, pd, vd_b_pitch
-
-
+        delta = self.low_ctrl.update(T_d_in_b, omega_c, state)
+        commanded_state = MsgState()
+        commanded_state.pos = trajectory.position
+        commanded_state.vel = R_p2i.T @ trajectory.velocity
+        commanded_state.R = R_p2i
+        commanded_state.omega = omega_c
+        commanded_state.motor_angle = np.array([
+            [delta.motor_left],[delta.motor_right]])
         return delta, commanded_state
 
 def trajectory_follower(
@@ -142,6 +133,10 @@ def trajectory_follower(
         [z_d.T @ f_d],
         ])
     return F_d, R_d
+
+def pitch_thrust_optimization():
+
+    return T_d_in_p, theta_opt_p2d     
 
 
 def attitude_controller(

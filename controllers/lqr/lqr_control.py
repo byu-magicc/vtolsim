@@ -75,7 +75,9 @@ class LqrControl:
             u[3] = -1.0
         if(u.item(4) < -1.0):
             u[4] = -1.0
-        return u
+        force = u[0:2]
+        omega = u[2:5]
+        return force, omega
 
     def find_K(self, A, B):
         # set up Hamiltonian matrix

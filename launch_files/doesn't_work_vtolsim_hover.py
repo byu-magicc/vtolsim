@@ -17,19 +17,10 @@ from tools.signal_generator import SignalGenerator
 from message_types.msg_trajectory import MsgTrajectory
 from controllers.geometric_controller import GeometricController
 
-#from models.ss_model_Va_0 import trim_state, trim_input
-#from controllers.hover_controller.hover_autopilot import HoverController
-# from message_types.msg_controls import MsgControls
-# from message_types.msg_autopilot import MsgAutopilot
-# from message_types.msg_state import MsgState
-# from message_types.msg_delta import MsgDelta
-
-#delta = MsgControls()
-
 # initialize elements of the architecture
 wind = np.array([[0., 0., 0., 0., 0., 0.]]).T
 vtol = VtolDynamics(SIM.ts_simulation)
-ctrl = GeometricController(SIM.ts_simulation)
+ctrl = GeometricController(time_step=SIM.ts_simulation)
 trajectory = MsgTrajectory()
 viewers = ViewManager(animation=True, data=True)
 
@@ -39,10 +30,6 @@ pe_command = SignalGenerator(dc_offset=0, amplitude=5, start_time=0.0, frequency
 h_command = SignalGenerator(dc_offset=10, amplitude=5, start_time=5.0, frequency = 0.0025)
 chi_command = SignalGenerator(dc_offset=np.radians(0), 
                               amplitude=np.radians(45), start_time=5.0, frequency = 0.015)
-
-# vtol._state = trim_state
-# delta_trim = MsgDelta()
-# delta_trim.from_array(trim_input)
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -59,7 +46,7 @@ while sim_time < end_time:
             [pe_command.square(sim_time)],
             [-h_command.square(sim_time)],
         ])
-    trajectory.heading = 0.0 #psi_command.square(sim_time)
+    trajectory.heading = chi_command.square(sim_time)
     #-------controller-------------
     delta, commanded_state = ctrl.update(trajectory, estimated_state)
     #-------physical system-------------

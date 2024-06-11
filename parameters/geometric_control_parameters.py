@@ -2,7 +2,7 @@
 Parameters for geometric controller
 """
 import numpy as np
-from geometric_control.optimal_pitch import AERO_TYPE, OPTIMAL_PITCH_METHOD
+from controllers.geometric_control.optimal_pitch import AERO_TYPE, OPTIMAL_PITCH_METHOD
 
 Kp = np.diag([3., 3., 5.])
 Kd = np.diag([2., 2., 2.])

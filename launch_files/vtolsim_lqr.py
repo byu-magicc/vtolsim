@@ -35,7 +35,7 @@ step =  0.*df_traj.traj.s_max/500
 viewers.vtol_view.addTrajectory(df_traj.traj.getPList(df_traj.traj.getP, 0., df_traj.traj.s_max + step, df_traj.traj.s_max/500))
 
 #initialize controllers
-low_ctrl = LowLevelControl(M=0.5, Va0=2.0, ts_control=SIM.ts_simulation)
+low_ctrl = LowLevelControl(M=0.5, Va0=2.0, ts=SIM.ts_simulation)
 lqr_ctrl = LqrControl(SIM.ts_simulation)
 
 # initialize the simulation time
@@ -52,11 +52,14 @@ while sim_time < SIM.end_time:
     desired_state, desired_input = df_traj.desiredState_fromX(estimated_state[0:10])
     
     #------- High Level controller-------------
-    u = lqr_ctrl.update(estimated_state[0:10], desired_state, desired_input, df_traj)
+    force_des, omega_des = lqr_ctrl.update(
+        estimated_state[0:10], 
+        desired_state, 
+        desired_input, 
+        df_traj)
     
     #------- Low Level Controller -------------
-    delta_old = low_ctrl.update(u[2:5], u[0:2], vtol.true_state.old_format())
-    delta = MsgDelta(delta_old)
+    delta = low_ctrl.update(force_des, omega_des, vtol.true_state)
     
     #-------update physical system-------------
     vtol.update(delta, wind)  # propagate the MAV dynamics
