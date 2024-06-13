@@ -50,7 +50,7 @@ class LowLevelControl:
             [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
             [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))],
         ]) 
-        wrench = np.concatenate((f_d, tau_d), axis=0)
+        wrench = np.concatenate((f_d.reshape(2,1), tau_d), axis=0)
 
         if sigma is None: # use sigma from airspeed
             sigma = self.compute_sigma(state.Va)

@@ -40,5 +40,5 @@ def vee_SO3(S: np.ndarray)->np.ndarray:
     if np.linalg.norm(S+S.T)!=0:
         disp('vee:  S must be skew symmetric')
     else:
-        omega = np.array([[S[2,1]],[S[0,3]],[S[1,0]]])
+        omega = np.array([[S[2,1]],[S[0,2]],[S[1,0]]])
     return omega

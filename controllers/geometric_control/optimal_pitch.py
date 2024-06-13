@@ -185,7 +185,7 @@ def find_thrust_from_theta(v_d_d, F_d_d, theta, model=AERO_TYPE.SMALL_ANGLE):
     if len(F_d_d) == 3:
         F_d_d = F_d_d[[0,2]]
 
-    F_d_gamma = R_gamma @ F_d_d
+    F_d_gamma = R_gamma @ F_d_d.reshape(2,1)
 
     alpha = theta - gamma
 
@@ -273,7 +273,7 @@ def find_pitch_thrust_sampled(v_d_d, F_d_d, previous_theta=None, nsamples=50, mo
     if len(F_d_d) == 3:
         F_d_d = F_d_d[[0,2]]
 
-    F_d_gamma = R_gamma @ F_d_d
+    F_d_gamma = R_gamma @ np.array([[F_d_d.item(0)],[F_d_d.item(1)]])
 
     # search across the theta_min/theta_max pitch range first
     if previous_theta is None or previous_theta >= OPT_PARAM.theta_max or previous_theta <= OPT_PARAM.theta_min:

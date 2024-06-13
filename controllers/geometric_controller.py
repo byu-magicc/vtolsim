@@ -79,8 +79,7 @@ class GeometricController:
         omega_p2i_p = R_p2d.T @ omega_d
         # omega_p2i_p = omega_d
         B = np.array([[1., 0.], [0., 0.], [0., 1.]])
-        q_b2i = state[6:10].reshape(-1)
-        R_b2i = quaternion_to_rotation(q_b2i)
+        R_b2i = state.R
         T_d_in_b = B.T @ R_b2i.T @ R_d2i @ R_p2d @ B @ T_d_p
         # attitude control
         omega_c = attitude_controller(state, R_p2i, omega_p2i_p)
