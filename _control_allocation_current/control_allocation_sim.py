@@ -192,9 +192,3 @@ while sim_time < SIM.end_time:
 
     #---------update viewers-----------------
     #updates the 
-
-
-
-
-
-
