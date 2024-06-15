@@ -5,11 +5,15 @@ import pyqtgraph.opengl as gl
 from tools.rotations import euler_to_rotation
 
 
+from message_types.msg_state import MsgState
+
+import pyqtgraph.opengl as gl
+
 
 class DrawQuadplane():
 
     #defines the initialization function
-    def __init__(self, state, window, scale=1.0):
+    def __init__(self, state: MsgState, window: gl.GLViewWidget, scale=1.0):
 
 
         #saves the unit length
@@ -28,6 +32,8 @@ class DrawQuadplane():
         self.mygrey3 = np.array([0.5, 0.5, 0.5, 1])
         self.mygrey4 = np.array([0.3, 0.3, 0.3, 1])  # dark
 
+        ################################################################################
+        #fuselage
         #gets the points, indecies, and colors from the helper function
         self.fuselage_points, self.fuselage_index, self.fuselage_meshColors = self.get_body_points()       
 
@@ -39,6 +45,189 @@ class DrawQuadplane():
                                              quad_position)
         #adds the item to the window
         window.addItem(self.quad_fuselage)
+        ################################################################################
+
+
+        ################################################################################
+        #left wing
+        self.leftWingPoints, self.left_wing_indicies, self.leftWing_meshColors = self.get_left_wing_points()
+        #sets the left wing location
+        self.leftWingLocation = np.array([[1.0*self.unit_length], [-1.0*self.unit_length], [0.0*self.unit_length]])
+        #creates the left wing object
+        self.quad_leftWing = self.add_object(self.leftWingPoints, 
+                                             self.left_wing_indicies, 
+                                             self.leftWing_meshColors,
+                                             R_bi,
+                                             quad_position + R_bi @ self.leftWingLocation)
+        window.addItem(self.quad_leftWing)
+        ################################################################################
+
+
+        ################################################################################
+        #right wing
+        self.rightWingPoints, self.rightWingIndicies, self.rightWing_meshColors = self.get_right_wing_points()
+        #creates the right wing location
+        self.rightWingLocation = np.array([[1.0*self.unit_length], [1.0*self.unit_length], [0.0*self.unit_length]])
+        #creates the right wing object
+        self.quad_rightWing = self.add_object(self.rightWingPoints,
+                                              self.rightWingIndicies,
+                                              self.rightWing_meshColors,
+                                              R_bi,
+                                              quad_position + R_bi @ self.rightWingLocation)
+        #adds the right wing to the window
+        window.addItem(self.quad_rightWing)
+        ################################################################################
+
+
+        ################################################################################
+        #left wpar
+        self.leftSparPoints, self.leftSparIndicies, self.leftSpar_meshColors = self.get_left_spar_points()
+        #left spar position
+        self.leftSparLocation = np.array([[5.0*self.unit_length], [-4.0*self.unit_length], [-0.5*self.unit_length]])
+        #creates the left spar object
+        self.quad_leftSpar = self.add_object(self.leftSparPoints,
+                                             self.leftSparIndicies,
+                                             self.leftSpar_meshColors,
+                                             R_bi,
+                                             quad_position + R_bi @ self.leftSparLocation)
+        #adds the item
+        window.addItem(self.quad_leftSpar)
+        ################################################################################
+
+
+        ################################################################################
+        #right spar portion
+        self.rightSparPoints, self.rightSparIndicies, self.rightSpar_meshColors = self.get_right_spar_points()
+        #right spar location
+        self.rightSparLocation = np.array([[5.0*self.unit_length], [4.0*self.unit_length], [-0.5*self.unit_length]])
+        #creates the right spar object
+        self.quad_rightspar = self.add_object(self.rightSparPoints,
+                                              self.rightSparIndicies,
+                                              self.rightSpar_meshColors,
+                                              R_bi,
+                                              quad_position + R_bi @ self.rightSparLocation)
+        #addsthe item
+        window.addItem(self.quad_rightspar)
+        ################################################################################
+
+        ################################################################################
+        #left vertical stabilizer
+        self.leftVerticalStabilizerPoints, self.leftVerticalStabilizerIndicies, self.leftVerticalStabilizer_meshColors = self.get_left_vertical_stabilizer_points()
+        #vertical stabilizer location
+        self.leftVerticalStabilizerLocation = np.array([[-8.0*self.unit_length], [-4.0*self.unit_length], [0.0*self.unit_length]])
+        #creates the vertical stabilizer object
+        self.quad_leftVerticalStabilizer = self.add_object(self.leftVerticalStabilizerPoints,
+                                                           self.leftVerticalStabilizerIndicies,
+                                                           self.leftVerticalStabilizer_meshColors,
+                                                           R_bi,
+                                                           quad_position + R_bi @ self.leftVerticalStabilizerLocation)
+
+        #adds the item
+        window.addItem(self.quad_leftVerticalStabilizer)
+        ################################################################################
+
+        ################################################################################
+        #right vertical stabilizer
+        self.rightVerticalStabilizerPoints, self.rightVerticalStabilizerIndicies, self.rightVerticalStabilizer_meshColors = self.get_right_vertical_stabilizer_points()
+        #right vertical stabilizer location
+        self.rightVerticalStabilizerLocation = np.array([[-8.0*self.unit_length], [4.0*self.unit_length], 0.0*self.unit_length])
+        #creates the vertical stabilizer object
+        self.quad_rightVerticalStabilizer = self.add_object(self.rightVerticalStabilizerPoints,
+                                                           self.rightVerticalStabilizerIndicies,
+                                                           self.rightVerticalStabilizer_meshColors,
+                                                           R_bi,
+                                                           quad_position + R_bi @ self.rightVerticalStabilizerLocation)
+
+        #adds the item
+        window.addItem(self.quad_rightVerticalStabilizer)
+        ################################################################################
+
+
+        ################################################################################
+        #horizontal stabilizer
+        self.horizontalStabilizerPoints, self.horizontalStabilizerIndicies, self.horizontalStabilizer_meshColors = self.get_horizontal_stabilizer_points()
+        #position of the horizontal stabilizer
+        self.horizontalStabilizerLocation = np.array([[-8.0*self.unit_length], [0.0*self.unit_length], [0.0*self.unit_length]])
+        #creates the vertical stabilizer object
+        self.quad_horizontalStabilizer = self.add_object(self.horizontalStabilizerPoints,
+                                                           self.horizontalStabilizerIndicies,
+                                                           self.horizontalStabilizer_meshColors,
+                                                           R_bi,
+                                                           quad_position + R_bi @ self.horizontalStabilizerLocation)
+
+        #adds the item
+        window.addItem(self.quad_horizontalStabilizer)        
+        ################################################################################
+
+    #creates the update function
+    def update(self, state: MsgState):
+
+        #gets the North, East, Down position of the aircraft
+        vtol_position = state.pos
+        R_bi = state.R
+        self.quad_fuselage = self.update_object(self.quad_fuselage,
+                                            self.fuselage_points,
+                                            self.fuselage_index,
+                                            self.fuselage_meshColors,
+                                            R_bi,
+                                            vtol_position)
+        #updates the left wing
+        self.quad_leftWing = self.update_object(self.quad_leftWing,
+                                                self.leftWingPoints,
+                                                self.left_wing_indicies,
+                                                self.leftWing_meshColors,
+                                                R_bi,
+                                                vtol_position + R_bi @ self.leftWingLocation)
+        
+        #updates the right wing
+        self.quad_rightWing = self.update_object(self.quad_rightWing,
+                                                 self.rightWingPoints,
+                                                 self.rightWingIndicies,
+                                                 self.rightWing_meshColors,
+                                                 R_bi,
+                                                 vtol_position + R_bi @ self.rightWingLocation)
+        
+        #updates the left spar
+        self.quad_leftSpar = self.update_object(self.quad_leftSpar,
+                                                self.leftSparPoints,
+                                                self.leftSparIndicies,
+                                                self.leftSpar_meshColors,
+                                                R_bi,
+                                                vtol_position + R_bi @ self.leftSparLocation)
+        
+        #updates the right spar
+        self.quad_rightspar = self.update_object(self.quad_rightspar,
+                                                 self.rightSparPoints,
+                                                 self.rightSparIndicies,
+                                                 self.leftSpar_meshColors,
+                                                 R_bi,
+                                                 vtol_position + R_bi @ self.rightSparLocation)
+        
+        #updates the left vertical stabilizer
+        self.quad_leftVerticalStabilizer = self.update_object(self.quad_leftVerticalStabilizer,
+                                                              self.leftVerticalStabilizerPoints,
+                                                              self.leftVerticalStabilizerIndicies,
+                                                              self.leftVerticalStabilizer_meshColors,
+                                                              R_bi,
+                                                              vtol_position + R_bi @ self.leftVerticalStabilizerLocation)
+        
+        #updatesthe right vertical stabilizer
+        self.quad_rightVerticalStabilizer = self.update_object(self.quad_rightVerticalStabilizer,
+                                                               self.rightVerticalStabilizerPoints,
+                                                               self.rightVerticalStabilizerIndicies,
+                                                               self.rightVerticalStabilizer_meshColors,
+                                                               R_bi,
+                                                               vtol_position + R_bi @ self.rightVerticalStabilizerLocation)
+        
+        #updates the horizontal stabilizer
+        self.quad_horizontalStabilizer = self.update_object(self.quad_horizontalStabilizer,
+                                                            self.horizontalStabilizerPoints,
+                                                            self.horizontalStabilizerIndicies,
+                                                            self.horizontalStabilizer_meshColors,
+                                                            R_bi,
+                                                            vtol_position + R_bi @ self.horizontalStabilizerLocation)
+
+        
 
 
     def add_object(self, points, index, colors, R, position):
@@ -151,32 +340,31 @@ class DrawQuadplane():
         #returns the points, the indicies, and the mesh colors
         return points, indicies, meshColors
     
-
     #creates the get left wing points
     def get_left_wing_points(self):
         
         #gets the unit length
         ul = self.unit_length
         #gets the front x
-        front_x = 1.0*ul
+        front_x = 0.0*ul
         #gets the back x
-        back_x = -2.0*ul
+        back_x = -3.0*ul
         #gets the aileron pocket x
-        aileron_pocket_x = -1.0*ul
+        aileron_pocket_x = -2.0*ul
 
         #gets the inside y
-        inside_y = -1.0*ul
+        inside_y = 0.0*ul
         #gets the outside y
-        outside_y = -8.0*ul
+        outside_y = -7.0*ul
         #inside aileron y
-        inside_aileron_y = -4.0*ul
+        inside_aileron_y = -3.0*ul
         #outside aileron y
-        outside_aileron_y = -7.0*ul
+        outside_aileron_y = -6.0*ul
 
         #top z
         top_z = -1.0*ul
         #bottom z
-        bottom_z = 1.0*ul
+        bottom_z = 0.0*ul
 
         #creates the points
         points = np.array([[front_x, inside_y, top_z],#point 0
@@ -263,32 +451,31 @@ class DrawQuadplane():
 
         return points, indicies, meshColors
 
-
     #creates the get left wing points
     def get_right_wing_points(self):
         
         #gets the unit length
         ul = self.unit_length
         #gets the front x
-        front_x = 1.0*ul
+        front_x = 0.0*ul
         #gets the back x
-        back_x = -2.0*ul
+        back_x = -3.0*ul
         #gets the aileron pocket x
-        aileron_pocket_x = -1.0*ul
+        aileron_pocket_x = -2.0*ul
 
         #gets the inside y
-        inside_y = 1.0*ul
+        inside_y = 0.0*ul
         #gets the outside y
-        outside_y = 8.0*ul
+        outside_y = 7.0*ul
         #inside aileron y
-        inside_aileron_y = 4.0*ul
+        inside_aileron_y = 3.0*ul
         #outside aileron y
-        outside_aileron_y = 7.0*ul
+        outside_aileron_y = 6.0*ul
 
         #top z
         top_z = -1.0*ul
         #bottom z
-        bottom_z = 1.0*ul
+        bottom_z = 0.0*ul
 
         #creates the points
         points = np.array([[front_x, inside_y, top_z],#point 0
@@ -382,15 +569,15 @@ class DrawQuadplane():
         ul = self.unit_length
         
         #x positions
-        front_x = 5.0*ul
-        back_x = -10.0*ul
+        front_x = 0.0*ul
+        back_x = -15.0*ul
         #y positions
-        inside_y = -1.0*(4.0*ul - 0.25*ul)
-        outside_y = -1.0*(4.0*ul + 0.25*ul)
+        inside_y = -0.25*ul
+        outside_y = 0.25*ul
 
         #z positions
-        top_z = -0.5*ul - 0.25*ul
-        bottom_z = -0.5*ul + 0.25*ul
+        top_z = -0.25*ul
+        bottom_z = 0.25*ul
 
         #creates the points vector
         points = np.array([[front_x, inside_y, top_z],# point 0
@@ -439,15 +626,15 @@ class DrawQuadplane():
         ul = self.unit_length
         
         #x positions
-        front_x = 5.0*ul
-        back_x = -10.0*ul
+        front_x = 0.0*ul
+        back_x = -15.0*ul
         #y positions
-        inside_y = 4.0*ul - 0.25*ul
-        outside_y = 4.0*ul + 0.25*ul
+        inside_y = -0.25*ul
+        outside_y = 0.25*ul
 
         #z positions
-        top_z = -0.5*ul - 0.25*ul
-        bottom_z = -0.5*ul + 0.25*ul
+        top_z = -0.25*ul
+        bottom_z = 0.25*ul
 
         #creates the points vector
         points = np.array([[front_x, inside_y, top_z],# point 0
@@ -489,7 +676,7 @@ class DrawQuadplane():
 
         #returns the points and the indicies
         return points, indicies, meshColors
-    
+
     #creates the left vertical stabilizer
     def get_left_vertical_stabilizer_points(self):
 
@@ -497,12 +684,12 @@ class DrawQuadplane():
         ul = self.unit_length
 
         #x coordinates
-        forward_x = -8.0*ul
-        rear_x = -10.0*ul
+        forward_x = 0.0*ul
+        rear_x = -2.0*ul
 
         #y coordinates
-        inside_y = -3.5*ul
-        outside_y = -4.0*ul
+        inside_y = 0.5*ul
+        outside_y = 0.0*ul
 
         #z coordinates
         bottom_z = 0.0*ul
@@ -551,7 +738,6 @@ class DrawQuadplane():
         #returns the vectors
         return points, indicies, meshColors
     
-
     #creates the right vertical stabilizer
     def get_right_vertical_stabilizer_points(self):
 
@@ -559,12 +745,12 @@ class DrawQuadplane():
         ul = self.unit_length
 
         #x coordinates
-        forward_x = -8.0*ul
-        rear_x = -10.0*ul
+        forward_x = 0.0*ul
+        rear_x = -2.0*ul
 
         #y coordinates
-        inside_y = 3.5*ul
-        outside_y = 4.0*ul
+        inside_y = -0.5*ul
+        outside_y = 0.0*ul
 
         #z coordinates
         bottom_z = 0.0*ul
@@ -613,16 +799,15 @@ class DrawQuadplane():
         #returns the vectors
         return points, indicies, meshColors
 
-
     #creates the horizontal stabilizer
     def get_horizontal_stabilizer_points(self):
         #gets the unit length
         ul = self.unit_length
 
         #saves the x values
-        front_x = -8.0*ul
-        back_x = -10.0*ul
-        inside_pocket_x = -9.5*ul
+        front_x = 0.0*ul
+        back_x = -2.0*ul
+        inside_pocket_x = -1.5*ul
         #saves the y values
         left_outside_y = -3.5*ul
         left_pocket_y = -3.0*ul
