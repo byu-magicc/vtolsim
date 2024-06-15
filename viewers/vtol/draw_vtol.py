@@ -9,9 +9,13 @@ import numpy as np
 import pyqtgraph.opengl as gl
 from tools.rotations import euler_to_rotation
 
+from message_types.msg_state import MsgState
+
+import pyqtgraph.opengl as gl
+
 
 class DrawVtol():
-    def __init__(self, state, window, scale=0.75):
+    def __init__(self, state: MsgState, window: gl.GLViewWidget, scale=0.75):
         """
         The input to this function is a (message) class with properties that define the state.
         The following properties are assumed:

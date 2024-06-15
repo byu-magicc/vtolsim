@@ -5,10 +5,10 @@ vtolsim
 import os, sys
 # insert parent directory at beginning of python search path
 from pathlib import Path
-sys.path.insert(0,os.fspath(Path(__file__).parents[1]))
+sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 # import viewers and video writer
 import pyqtgraph as pg
-from viewers.vtol_viewer import VtolViewer
+from viewers.vtol.vtol_viewer import VtolViewer
 from tools.rotations import euler_to_rotation
 import parameters.simulation_parameters as SIM
 from message_types.msg_state import MsgState

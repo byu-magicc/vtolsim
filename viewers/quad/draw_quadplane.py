@@ -130,7 +130,7 @@ class DrawQuadplane():
         #right vertical stabilizer
         self.rightVerticalStabilizerPoints, self.rightVerticalStabilizerIndicies, self.rightVerticalStabilizer_meshColors = self.get_right_vertical_stabilizer_points()
         #right vertical stabilizer location
-        self.rightVerticalStabilizerLocation = np.array([[-8.0*self.unit_length], [4.0*self.unit_length], 0.0*self.unit_length])
+        self.rightVerticalStabilizerLocation = np.array([[-8.0*self.unit_length], [4.0*self.unit_length], [0.0*self.unit_length]])
         #creates the vertical stabilizer object
         self.quad_rightVerticalStabilizer = self.add_object(self.rightVerticalStabilizerPoints,
                                                            self.rightVerticalStabilizerIndicies,
@@ -163,21 +163,21 @@ class DrawQuadplane():
     def update(self, state: MsgState):
 
         #gets the North, East, Down position of the aircraft
-        vtol_position = state.pos
+        quad_position = state.pos
         R_bi = state.R
         self.quad_fuselage = self.update_object(self.quad_fuselage,
                                             self.fuselage_points,
                                             self.fuselage_index,
                                             self.fuselage_meshColors,
                                             R_bi,
-                                            vtol_position)
+                                            quad_position)
         #updates the left wing
         self.quad_leftWing = self.update_object(self.quad_leftWing,
                                                 self.leftWingPoints,
                                                 self.left_wing_indicies,
                                                 self.leftWing_meshColors,
                                                 R_bi,
-                                                vtol_position + R_bi @ self.leftWingLocation)
+                                                quad_position + R_bi @ self.leftWingLocation)
         
         #updates the right wing
         self.quad_rightWing = self.update_object(self.quad_rightWing,
@@ -185,7 +185,7 @@ class DrawQuadplane():
                                                  self.rightWingIndicies,
                                                  self.rightWing_meshColors,
                                                  R_bi,
-                                                 vtol_position + R_bi @ self.rightWingLocation)
+                                                 quad_position + R_bi @ self.rightWingLocation)
         
         #updates the left spar
         self.quad_leftSpar = self.update_object(self.quad_leftSpar,
@@ -193,7 +193,7 @@ class DrawQuadplane():
                                                 self.leftSparIndicies,
                                                 self.leftSpar_meshColors,
                                                 R_bi,
-                                                vtol_position + R_bi @ self.leftSparLocation)
+                                                quad_position + R_bi @ self.leftSparLocation)
         
         #updates the right spar
         self.quad_rightspar = self.update_object(self.quad_rightspar,
@@ -201,7 +201,7 @@ class DrawQuadplane():
                                                  self.rightSparIndicies,
                                                  self.leftSpar_meshColors,
                                                  R_bi,
-                                                 vtol_position + R_bi @ self.rightSparLocation)
+                                                 quad_position + R_bi @ self.rightSparLocation)
         
         #updates the left vertical stabilizer
         self.quad_leftVerticalStabilizer = self.update_object(self.quad_leftVerticalStabilizer,
@@ -209,7 +209,7 @@ class DrawQuadplane():
                                                               self.leftVerticalStabilizerIndicies,
                                                               self.leftVerticalStabilizer_meshColors,
                                                               R_bi,
-                                                              vtol_position + R_bi @ self.leftVerticalStabilizerLocation)
+                                                              quad_position + R_bi @ self.leftVerticalStabilizerLocation)
         
         #updatesthe right vertical stabilizer
         self.quad_rightVerticalStabilizer = self.update_object(self.quad_rightVerticalStabilizer,
@@ -217,7 +217,7 @@ class DrawQuadplane():
                                                                self.rightVerticalStabilizerIndicies,
                                                                self.rightVerticalStabilizer_meshColors,
                                                                R_bi,
-                                                               vtol_position + R_bi @ self.rightVerticalStabilizerLocation)
+                                                               quad_position + R_bi @ self.rightVerticalStabilizerLocation)
         
         #updates the horizontal stabilizer
         self.quad_horizontalStabilizer = self.update_object(self.quad_horizontalStabilizer,
@@ -225,7 +225,7 @@ class DrawQuadplane():
                                                             self.horizontalStabilizerIndicies,
                                                             self.horizontalStabilizer_meshColors,
                                                             R_bi,
-                                                            vtol_position + R_bi @ self.horizontalStabilizerLocation)
+                                                            quad_position + R_bi @ self.horizontalStabilizerLocation)
 
         
 
@@ -293,15 +293,15 @@ class DrawQuadplane():
         self.noseLength_x = 4.0*ul
 
         #creates the point vector
-        points = np.array([[self.bodyForward_x, self.bodyRight_y, self.bodyUp_z],#point 0
-                           [self.bodyForward_x, self.bodyRight_y, self.bodyDown_z],#point 1
-                           [self.bodyBack_x, self.bodyRight_y, self.bodyDown_z],#point 2
-                           [self.bodyBack_x, self.bodyRight_y, self.bodyUp_z],#point 3
-                           [self.noseLength_x, 0.0, 0.0],#point 4
-                           [self.bodyForward_x, self.bodyLeft_y, self.bodyUp_z],#point 5
-                           [self.bodyForward_x, self.bodyLeft_y, self.bodyDown_z],#point 6
-                           [self.bodyBack_x, self.bodyLeft_y, self.bodyDown_z],#point 7
-                           [self.bodyBack_x, self.bodyLeft_y, self.bodyUp_z]])#point 8
+        points = np.transpose(np.array([[self.bodyForward_x, self.bodyRight_y, self.bodyUp_z],#point 0
+                                        [self.bodyForward_x, self.bodyRight_y, self.bodyDown_z],#point 1
+                                        [self.bodyBack_x, self.bodyRight_y, self.bodyDown_z],#point 2
+                                        [self.bodyBack_x, self.bodyRight_y, self.bodyUp_z],#point 3
+                                        [self.noseLength_x, 0.0, 0.0],#point 4
+                                        [self.bodyForward_x, self.bodyLeft_y, self.bodyUp_z],#point 5
+                                        [self.bodyForward_x, self.bodyLeft_y, self.bodyDown_z],#point 6
+                                        [self.bodyBack_x, self.bodyLeft_y, self.bodyDown_z],#point 7
+                                        [self.bodyBack_x, self.bodyLeft_y, self.bodyUp_z]]))#point 8
         
         #creates the indicies for the meshes
         indicies = np.array([[0, 1, 2],
@@ -367,26 +367,26 @@ class DrawQuadplane():
         bottom_z = 0.0*ul
 
         #creates the points
-        points = np.array([[front_x, inside_y, top_z],#point 0
-                           [front_x, inside_aileron_y, top_z],#point 1
-                           [front_x, outside_aileron_y, top_z],#point 2
-                           [front_x, outside_y, top_z],#point 3
-                           [back_x, outside_y, top_z],#point 4
-                           [back_x, outside_aileron_y, top_z],#point 5
-                           [aileron_pocket_x, outside_aileron_y, top_z],#point 6
-                           [aileron_pocket_x, inside_aileron_y, top_z],#point 7
-                           [back_x, inside_aileron_y, top_z],#point 8
-                           [back_x, inside_y, top_z],#point 9
-                           [front_x, inside_y, bottom_z],#point 10
-                           [front_x, inside_aileron_y, bottom_z], #point 11
-                           [front_x, outside_aileron_y, bottom_z], #point 12
-                           [front_x, outside_y, bottom_z],#point 13
-                           [back_x, outside_y, bottom_z],#point 14
-                           [back_x, outside_aileron_y, bottom_z],#point 15
-                           [aileron_pocket_x, outside_aileron_y, bottom_z],#point 16
-                           [aileron_pocket_x, inside_aileron_y, bottom_z],#point 17
-                           [back_x, inside_aileron_y, bottom_z],#point 18
-                           [back_x, inside_y, bottom_z]])#point 19
+        points = np.transpose(np.array([[front_x, inside_y, top_z],#point 0
+                                        [front_x, inside_aileron_y, top_z],#point 1
+                                        [front_x, outside_aileron_y, top_z],#point 2
+                                        [front_x, outside_y, top_z],#point 3
+                                        [back_x, outside_y, top_z],#point 4
+                                        [back_x, outside_aileron_y, top_z],#point 5
+                                        [aileron_pocket_x, outside_aileron_y, top_z],#point 6
+                                        [aileron_pocket_x, inside_aileron_y, top_z],#point 7
+                                        [back_x, inside_aileron_y, top_z],#point 8
+                                        [back_x, inside_y, top_z],#point 9
+                                        [front_x, inside_y, bottom_z],#point 10
+                                        [front_x, inside_aileron_y, bottom_z], #point 11
+                                        [front_x, outside_aileron_y, bottom_z], #point 12
+                                        [front_x, outside_y, bottom_z],#point 13
+                                        [back_x, outside_y, bottom_z],#point 14
+                                        [back_x, outside_aileron_y, bottom_z],#point 15
+                                        [aileron_pocket_x, outside_aileron_y, bottom_z],#point 16
+                                        [aileron_pocket_x, inside_aileron_y, bottom_z],#point 17
+                                        [back_x, inside_aileron_y, bottom_z],#point 18
+                                        [back_x, inside_y, bottom_z]]))#point 19
         
         #creates the meshes indicies
         indicies = np.array([[0, 8, 9],
@@ -419,7 +419,7 @@ class DrawQuadplane():
                              [0, 10, 13]])
         
         #creates the mesh colors array
-        meshColors = np.empty((18, 3, 4), dtype=np.float32)
+        meshColors = np.empty((28, 3, 4), dtype=np.float32)
         meshColors[0] = self.mygrey1  # top
         meshColors[1] = self.mygrey1  # top
         meshColors[2] = self.mygrey1  # top
@@ -478,26 +478,26 @@ class DrawQuadplane():
         bottom_z = 0.0*ul
 
         #creates the points
-        points = np.array([[front_x, inside_y, top_z],#point 0
-                           [front_x, inside_aileron_y, top_z],#point 1
-                           [front_x, outside_aileron_y, top_z],#point 2
-                           [front_x, outside_y, top_z],#point 3
-                           [back_x, outside_y, top_z],#point 4
-                           [back_x, outside_aileron_y, top_z],#point 5
-                           [aileron_pocket_x, outside_aileron_y, top_z],#point 6
-                           [aileron_pocket_x, inside_aileron_y, top_z],#point 7
-                           [back_x, inside_aileron_y, top_z],#point 8
-                           [back_x, inside_y, top_z],#point 9
-                           [front_x, inside_y, bottom_z],#point 10
-                           [front_x, inside_aileron_y, bottom_z], #point 11
-                           [front_x, outside_aileron_y, bottom_z], #point 12
-                           [front_x, outside_y, bottom_z],#point 13
-                           [back_x, outside_y, bottom_z],#point 14
-                           [back_x, outside_aileron_y, bottom_z],#point 15
-                           [aileron_pocket_x, outside_aileron_y, bottom_z],#point 16
-                           [aileron_pocket_x, inside_aileron_y, bottom_z],#point 17
-                           [back_x, inside_aileron_y, bottom_z],#point 18
-                           [back_x, inside_y, bottom_z]])#point 19
+        points = np.transpose(np.array([[front_x, inside_y, top_z],#point 0
+                                        [front_x, inside_aileron_y, top_z],#point 1
+                                        [front_x, outside_aileron_y, top_z],#point 2
+                                        [front_x, outside_y, top_z],#point 3
+                                        [back_x, outside_y, top_z],#point 4
+                                        [back_x, outside_aileron_y, top_z],#point 5
+                                        [aileron_pocket_x, outside_aileron_y, top_z],#point 6
+                                        [aileron_pocket_x, inside_aileron_y, top_z],#point 7
+                                        [back_x, inside_aileron_y, top_z],#point 8
+                                        [back_x, inside_y, top_z],#point 9
+                                        [front_x, inside_y, bottom_z],#point 10
+                                        [front_x, inside_aileron_y, bottom_z], #point 11
+                                        [front_x, outside_aileron_y, bottom_z], #point 12
+                                        [front_x, outside_y, bottom_z],#point 13
+                                        [back_x, outside_y, bottom_z],#point 14
+                                        [back_x, outside_aileron_y, bottom_z],#point 15
+                                        [aileron_pocket_x, outside_aileron_y, bottom_z],#point 16
+                                        [aileron_pocket_x, inside_aileron_y, bottom_z],#point 17
+                                        [back_x, inside_aileron_y, bottom_z],#point 18
+                                        [back_x, inside_y, bottom_z]]))#point 19
         
         #creates the meshes indicies
         indicies = np.array([[0, 8, 9],
@@ -530,7 +530,7 @@ class DrawQuadplane():
                              [0, 10, 13]])
         
         #creates the mesh colors array
-        meshColors = np.empty((18, 3, 4), dtype=np.float32)
+        meshColors = np.empty((28, 3, 4), dtype=np.float32)
         meshColors[0] = self.mygrey1  # top
         meshColors[1] = self.mygrey1  # top
         meshColors[2] = self.mygrey1  # top
@@ -580,14 +580,14 @@ class DrawQuadplane():
         bottom_z = 0.25*ul
 
         #creates the points vector
-        points = np.array([[front_x, inside_y, top_z],# point 0
-                           [front_x, outside_y, top_z],# point 1
-                           [back_x, outside_y, top_z],# point 2
-                           [back_x, inside_y, top_z],# point 3
-                           [front_x, inside_y, bottom_z],# point 4
-                           [front_x, outside_y, bottom_z],# point 5
-                           [back_x, outside_y, bottom_z],# point 6
-                           [back_x, inside_y, bottom_z]])# point 7
+        points = np.transpose(np.array([[front_x, inside_y, top_z],# point 0
+                                        [front_x, outside_y, top_z],# point 1
+                                        [back_x, outside_y, top_z],# point 2
+                                        [back_x, inside_y, top_z],# point 3
+                                        [front_x, inside_y, bottom_z],# point 4
+                                        [front_x, outside_y, bottom_z],# point 5
+                                        [back_x, outside_y, bottom_z],# point 6
+                                        [back_x, inside_y, bottom_z]]))# point 7
         
         indicies = np.array([[0, 1, 2],
                              [0, 2, 3],
@@ -637,14 +637,14 @@ class DrawQuadplane():
         bottom_z = 0.25*ul
 
         #creates the points vector
-        points = np.array([[front_x, inside_y, top_z],# point 0
-                           [front_x, outside_y, top_z],# point 1
-                           [back_x, outside_y, top_z],# point 2
-                           [back_x, inside_y, top_z],# point 3
-                           [front_x, inside_y, bottom_z],# point 4
-                           [front_x, outside_y, bottom_z],# point 5
-                           [back_x, outside_y, bottom_z],# point 6
-                           [back_x, inside_y, bottom_z]])# point 7
+        points = np.transpose(np.array([[front_x, inside_y, top_z],# point 0
+                                        [front_x, outside_y, top_z],# point 1
+                                        [back_x, outside_y, top_z],# point 2
+                                        [back_x, inside_y, top_z],# point 3
+                                        [front_x, inside_y, bottom_z],# point 4
+                                        [front_x, outside_y, bottom_z],# point 5
+                                        [back_x, outside_y, bottom_z],# point 6
+                                        [back_x, inside_y, bottom_z]]))# point 7
         
         indicies = np.array([[0, 1, 2],
                              [0, 2, 3],
@@ -696,14 +696,14 @@ class DrawQuadplane():
         top_z = 3.0*ul
 
         #creates the points
-        points = np.array([[forward_x, outside_y, bottom_z],#point 0
-                           [rear_x, outside_y, bottom_z],#point 1
-                           [rear_x, outside_y, top_z],#point 2
-                           [forward_x, outside_y, top_z],#point 3
-                           [forward_x, inside_y, bottom_z],#point 4
-                           [rear_x, inside_y, bottom_z],#point 5
-                           [rear_x, inside_y, top_z],#point 6
-                           [forward_x, inside_y, top_z]])#point 7
+        points = np.transpose(np.array([[forward_x, outside_y, bottom_z],#point 0
+                                        [rear_x, outside_y, bottom_z],#point 1
+                                        [rear_x, outside_y, top_z],#point 2
+                                        [forward_x, outside_y, top_z],#point 3
+                                        [forward_x, inside_y, bottom_z],#point 4
+                                        [rear_x, inside_y, bottom_z],#point 5
+                                        [rear_x, inside_y, top_z],#point 6
+                                        [forward_x, inside_y, top_z]]))#point 7
         
         #creates the indicies
         indicies = np.array([[0, 1, 3],
@@ -764,7 +764,7 @@ class DrawQuadplane():
                            [forward_x, inside_y, bottom_z],#point 4
                            [rear_x, inside_y, bottom_z],#point 5
                            [rear_x, inside_y, top_z],#point 6
-                           [forward_x, inside_y, top_z]])#point 7
+                           [forward_x, inside_y, top_z]]).T#point 7
         
         #creates the indicies
         indicies = np.array([[0, 1, 3],
@@ -838,7 +838,7 @@ class DrawQuadplane():
                            [back_x, left_outside_y, bottom_z],#point 16
                            [front_x, left_outside_y, bottom_z],#point 17
                            [front_x, left_pocket_y, bottom_z],#point 18
-                           [front_x, right_pocket_y, bottom_z]])#point 19
+                           [front_x, right_pocket_y, bottom_z]]).T#point 19
         
         #creates the indicies for the meshes
         indicies = np.array([[0, 1, 2],

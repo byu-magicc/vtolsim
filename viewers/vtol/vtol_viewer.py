@@ -7,10 +7,10 @@ vtol_viewer: simple vtol viewer
 """
 import pyqtgraph.opengl as gl
 import pyqtgraph.Vector as Vector
-from viewers.draw_vtol import DrawVtol
+from viewers.vtol.draw_vtol import DrawVtol
 #from viewers.draw_vtol_convergence import DrawVtol
 import numpy as np
-from viewers.draw_trajectory import DrawTrajectory
+from viewers.vtol.draw_trajectory import DrawTrajectory
 from time import time
 
 
