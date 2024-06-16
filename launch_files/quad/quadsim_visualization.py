@@ -32,7 +32,7 @@ sim_time = SIM.start_time
 psi = 0
 theta = 0
 phi = 0
-end_time = 400000
+end_time = 4000
 
 
 # main simulation loop
