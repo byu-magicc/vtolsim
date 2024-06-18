@@ -227,9 +227,7 @@ class DrawQuadplane():
                                                             R_bi,
                                                             quad_position + R_bi @ self.horizontalStabilizerLocation)
 
-        
-
-
+    #function to add object
     def add_object(self, points, index, colors, R, position):
         rotated_points = self.rotate_points(points, R)
         translated_points = self.translate_points(rotated_points, position)
@@ -244,6 +242,7 @@ class DrawQuadplane():
             computeNormals=False)  # speeds up rendering
         return object
 
+    #function to update object
     def update_object(self, object, points, index, colors, R, position):
         rotated_points = self.rotate_points(points, R)
         translated_points = self.translate_points(rotated_points, position)
@@ -253,15 +252,18 @@ class DrawQuadplane():
         object.setMeshData(vertexes=mesh, vertexColors=colors)
         return object
 
+    #function to rotate the object
     def rotate_points(self, points, R):
         "Rotate points by the rotation matrix R"
         rotated_points = R @ points
         return rotated_points
 
+    #function to translate the object
     def translate_points(self, points, translation):
         "Translate points by the vector translation"
         translated_points = points + np.dot(translation, np.ones([1, points.shape[1]]))
         return translated_points
+
 
     def points_to_mesh(self, points, index):
         """"

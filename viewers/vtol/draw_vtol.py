@@ -402,6 +402,7 @@ class DrawVtol():
         meshColors[21] = self.mygrey4  # bottom
         return points, index, meshColors
 
+
     def get_rod_points(self):
         # define rod
         self.rod_height = 0.2 * self.unit_length
