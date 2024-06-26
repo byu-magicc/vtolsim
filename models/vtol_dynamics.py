@@ -526,4 +526,3 @@ class VtolDynamics:
         # self.true_state.w = self._state.item(5)
         # self.true_state.right_rotor = self._state.item(13)
         # self.true_state.left_rotor = self._state.item(14)
-
