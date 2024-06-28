@@ -64,9 +64,7 @@ class VtolDynamics:
 
     ###################################
     # public functions
-    def update(self, 
-               delta: MsgDelta, 
-               wind: np.ndarray):
+    def update(self, delta: MsgDelta, wind: np.ndarray):
         '''
             Integrate the differential equations defining dynamics, update sensors
             

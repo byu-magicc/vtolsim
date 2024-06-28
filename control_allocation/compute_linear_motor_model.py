@@ -21,6 +21,7 @@ import numpy as np
 np.set_printoptions(precision=4, linewidth=200, suppress=True)
 
 def compute_rotor_allocation_submatrix(servo0, Va_star=0.0, gamma_star=0.0):
+    
     K = compute_K_least_squares(np.array([servo0]), Va_star=Va_star, gamma_star=gamma_star)
 
     KT1 = K[0]

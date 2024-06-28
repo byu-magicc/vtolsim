@@ -66,6 +66,30 @@ class QuadDynamics:
     #creates the update function for the system
     def update(self, delta: MsgDelta, wind: np.ndarray):
 
+        #calls to get the forces and the moments of the system
+        forces_moments = self._forces_moments(delta)
+        # Integrate ODE using Runge-Kutta RK4 algorithm
+        time_step = self._ts
+        k1 = self._derivatives(self._state, forces_moments, delta)
+        k2 = self._derivatives(self._state + time_step/2.*k1, forces_moments, delta)
+        k3 = self._derivatives(self._state + time_step/2.*k2, forces_moments, delta)
+        k4 = self._derivatives(self._state + time_step*k3, forces_moments, delta)
+        self._state += time_step/6 * (k1 + 2*k2 + 2*k3 + k4)
+        # normalize the quaternion
+        e0 = self._state.item(6)
+        e1 = self._state.item(7)
+        e2 = self._state.item(8)
+        e3 = self._state.item(9)
+        normE = np.sqrt(e0**2+e1**2+e2**2+e3**2)
+        self._state[6] = self._state.item(6)/normE
+        self._state[7] = self._state.item(7)/normE
+        self._state[8] = self._state.item(8)/normE
+        self._state[9] = self._state.item(9)/normE
+        # update the airspeed, angle of attack, and side slip angles using new state
+        self._update_velocity_data(wind)
+        # update the message class for the true state
+        self._update_true_state()
+
 
     #creates the sensors function
     def sensors(self)->MsgSensors:
@@ -495,3 +519,17 @@ class QuadDynamics:
         return T_p, Q_p
 
 
+    #function to update the true state
+    def _update_true_state(self):
+        '''update the class structure for the true state '''
+        self.true_state.pos = self._state[0:3]
+        self.true_state.vel = self._state[3:6]
+        self.true_state.R = quaternion_to_rotation(self._state[6:10])
+        self.true_state.omega = self._state[10:13]
+        self.true_state.gyro_bias = np.array([
+            [SENSOR.gyro_x_bias],
+            [SENSOR.gyro_y_bias],
+            [SENSOR.gyro_z_bias]])  
+        self.true_state.Va = self._Va
+        self.true_state.alpha = self._alpha
+        self.true_state.beta = self._beta    

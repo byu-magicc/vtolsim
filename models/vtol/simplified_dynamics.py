@@ -3,14 +3,14 @@ sys.path.append('..')
 import numpy as np
 
 # load message types
-from vtolsim.message_types.msg_state_old import msgState
+from message_types.msg_state_old import msgState
 from message_types.msg_sensors import msgSensors
 from message_types.msg_controls import msgControls
 
 import parameters.simulation_parameters as SIM
 import parameters.convergence_parameters as VTOL
 import parameters.sensor_parameters as SENSOR
-from dynamics.vtol_dynamics import vtolDynamics
+from models.vtol.vtol_dynamics import vtolDynamics
 from tools.rotations import Quaternion2Rotation, Quaternion2Euler, Euler2Rotation, Euler2Quaternion
 import matplotlib.pyplot as plt
 

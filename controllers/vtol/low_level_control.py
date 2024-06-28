@@ -1,5 +1,5 @@
 import numpy as np
-from controllers.pid_control import PidControl
+from controllers.vtol.pid_control import PidControl
 #from message_types.msg_controls import MsgControls
 from message_types.msg_delta import MsgDelta
 from message_types.msg_state import MsgState
