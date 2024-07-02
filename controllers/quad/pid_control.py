@@ -157,3 +157,38 @@ class PdControlWithRate:
         else:
             u_sat = u
         return u_sat
+    
+
+
+#creates class for just straight Proportional control
+class PControl:
+
+    #creates the initialization function
+    def __init__(self, kp=0.0, Ts=0.01, limit=1.0):
+        self.kp = kp
+        self.Ts = Ts
+        self.limit = limit
+
+    #creates the update function
+    def update(self, y_ref, y):
+        #computes the error
+        error = y_ref - y
+
+        #gets the output u
+        u = self.kp * error
+
+        #gets the saturated u
+        u_saturated = self._saturate(u)
+
+        #returns the u saturated
+        return u_saturated
+
+    def _saturate(self, u):
+        # saturate u at +- self.limit
+        if u >= self.limit:
+            u_sat = self.limit
+        elif u <= -self.limit:
+            u_sat = -self.limit
+        else:
+            u_sat = u
+        return u_sat
