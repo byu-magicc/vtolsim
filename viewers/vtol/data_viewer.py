@@ -9,7 +9,7 @@ data_viewer
         11/20/2023 - RWB
 """
 import numpy as np
-from viewers.plotter import Plotter
+from viewers.vtol.plotter import Plotter
 from tools.wrap import wrap
 from tools.rotations import rotation_to_euler
 

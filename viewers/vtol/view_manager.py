@@ -5,8 +5,8 @@ mavsim: manage_viewers
         3/11/2024 - RWB
 """
 import pyqtgraph as pg
-from viewers.vtol_viewer import VtolViewer
-from viewers.data_viewer import DataViewer
+from viewers.vtol.vtol_viewer import VtolViewer
+from viewers.vtol.data_viewer import DataViewer
 #from viewers.sensor_viewer import SensorViewer
 import parameters.simulation_parameters as SIM
 from message_types.msg_state import MsgState

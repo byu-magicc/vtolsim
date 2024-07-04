@@ -86,6 +86,8 @@ C_L_delta_e = 0.2
 C_D_delta_e = 0.005
 C_m_delta_e = -0.05
 
+C_D_p = 0.0
+
 C_Y_0 = 0.0
 C_ell_0 = 0.0
 C_n_0 = 0.0
