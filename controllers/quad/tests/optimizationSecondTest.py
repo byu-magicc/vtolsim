@@ -22,19 +22,19 @@ import parameters.simulation_parameters as SIM
 
 from controllers.quad.pid_control import PControl
 
-from optimizationTestClass import OptimizationTest
+from controllers.quad.tests.optimizationTestClass import OptimizationTest
 
 kp = 0.15
 Ts=SIM.ts_control
 
 
 #creates an arbitrary desired wrench
-Wrench_D = np.array([[1.0],
-                     [1.0],
-                     [1.0],
-                     [1.0],
-                     [1.0],
-                     [1.0]])
+Wrench_D = np.array([[0.0],
+                     [0.0],
+                     [0.0],
+                     [0.0],
+                     [0.0],
+                     [0.0]])
 
 
 
@@ -42,10 +42,7 @@ Wrench_D = np.array([[1.0],
 delta_a_bound = (-1.0, 1.0)
 delta_e_bound = (-1.0, 1.0)
 delta_r_bound = (-1.0, 1.0)
-
-
 delta_t_forward = (0.0, 0.0)
-
 delta_t_vertical_1 = (0.0, 0.0)
 delta_t_vertical_2 = (0.0, 0.0)
 delta_t_vertical_3 = (0.0, 0.0)
@@ -57,7 +54,7 @@ delta_bounds = (delta_a_bound, delta_e_bound, delta_r_bound, delta_t_forward, de
 
 
 pos = np.array([[0.00421417], [0.00023018], [0.00346456]])
-vel = np.array([[0.09106776], [0.00517804], [-0.01385525]])
+vel = np.array([[25.0], [0.00517804], [-0.01385525]])
 R = np.array([[0.9999275], [0.00511143], [0.00059805], [0.01088625]])
 omega = np.array([[-0.02315855], [0.02411054], [0.43522908]])
 
@@ -79,12 +76,16 @@ wind = np.array([[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]])
 
 optimizer.update(delta=delta_initial, wind=wind)
 
-x0 = [0.1, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0]
+x0 = [0.0, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 #gets the solution
-solution = spo.minimize(optimizer.getWrench,x0, method='SLSQP', bounds=delta_bounds)
+spo.minimize(optimizer.meanSquaredError,x0, method='SLSQP', bounds=delta_bounds)
 
+#x_output = solution.x
+#print(x_output)
 
+#gets the forces and torques from the x output
+#forcesTorques = 
 
 
 

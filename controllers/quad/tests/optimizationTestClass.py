@@ -363,6 +363,20 @@ class OptimizationTest:
         self._t_gps = 999.  # large value ensures gps updates at initial time.
 
     #creates the objective function, to get the mean squared error
+    def meanSquaredError(self, deltaArray: np.array):
+
+        #gets the actual wrench
+        wrenchActual = self.getWrench(deltaArray=deltaArray)
+
+        #gets the error
+        error = self.wrenchDesired - wrenchActual
+
+        #gets the magnitude squared of the error
+        errorMagnitudeSquared = np.linalg.norm(error)**2
+
+        #returns the error magnitude squared
+        return errorMagnitudeSquared
+
 
     #creates wrapper function to get the wrench
     def getWrench(self, deltaArray: np.array):
