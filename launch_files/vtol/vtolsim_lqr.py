@@ -9,18 +9,18 @@ vtolsim_lqr
 import os, sys
 # insert parent directory at beginning of python search path
 from pathlib import Path
-sys.path.insert(0,os.fspath(Path(__file__).parents[1]))
+sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
 import parameters.simulation_parameters as SIM
 import parameters.spline_parameters as SPLP
 from message_types.msg_convert import *
-from models.vtol_dynamics import VtolDynamics
-from controllers.lqr.lqr_control import LqrControl
-from controllers.low_level_control import LowLevelControl
+from models.vtol.vtol_dynamics import VtolDynamics
+from controllers.vtol.lqr.lqr_control import LqrControl
+from controllers.vtol.low_level_control import LowLevelControl
 from planners.trajectory.spline_trajectory import SplineTrajectory
 from planners.trajectory.differential_flatness import DifferentialFlatness
 from message_types.msg_delta import MsgDelta
-from viewers.view_manager import ViewManager
+from viewers.vtol.view_manager import ViewManager
 
 # initialize elements of the architecture
 wind = np.array([[0., 0., 0., 0., 0., 0.]]).T
@@ -40,6 +40,8 @@ lqr_ctrl = LqrControl(SIM.ts_simulation)
 
 # initialize the simulation time
 sim_time = SIM.start_time
+
+printerCounter = 0
 
 # main simulation loop
 print("Press Command-Q to exit...")
@@ -73,6 +75,12 @@ while sim_time < SIM.end_time:
         delta,  # inputs to aircraft
         None,  # measurements
     )
+
+    if printerCounter % 500 == 0:
+        print(0)
+
+
+    printerCounter += 1
     
     #-------increment time-------------
     sim_time += SIM.ts_simulation

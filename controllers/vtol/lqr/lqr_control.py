@@ -4,7 +4,7 @@
 import numpy as np
 import scipy
 from message_types.msg_convert import *
-from controllers.lqr.lqr_dynamics import es_jacobians
+from controllers.vtol.lqr.lqr_dynamics import es_jacobians
 from tools.quaternions import state_boxMinus, state_boxPlus
 
 class LqrControl:

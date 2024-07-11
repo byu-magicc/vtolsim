@@ -1,4 +1,3 @@
-#quad dynamics
 #-this file implements the dynamic equations of motion for the quad plane
 #uses unit quaternion for the attitude state
 
@@ -14,8 +13,304 @@ from message_types.msg_sensors import MsgSensors
 from message_types.quad.msg_delta import MsgDelta
 
 
-#creates the QuadDynamics class
-class QuadDynamics:
+
+#creates test class
+class optimizationTestOld:
+
+    #creates the initialization function
+    def __init__(self, state: MsgState):
+
+        #stores the state
+        self.state = state
+
+    #creates wrapper function for get Forces Torques
+    def getWrench(self, deltaArray: np.array):
+
+        #creates instance of delta class
+        delta_message = MsgDelta()
+        delta_message.aileron = deltaArray[0]
+        delta_message.elevator = deltaArray[1]
+        delta_message.rudder = deltaArray[2]
+        delta_message.forwardThrottle = deltaArray[3]
+        delta_message.verticalThrottle_1 = deltaArray[4]
+        delta_message.verticalThrottle_1 = deltaArray[5]
+        delta_message.verticalThrottle_1 = deltaArray[6]
+        delta_message.verticalThrottle_1 = deltaArray[7]
+
+        #gets the wrench
+        wrench = self.getForcesTorques(delta=delta_message)
+
+        #returns the wrench
+        return wrench
+
+    #creates function to get the forces and torques
+    def getForcesTorques(self, delta: MsgDelta)->np.ndarray:
+
+        #gets the three control surfaces
+        elevator = delta.elevator
+        aileron = delta.aileron
+        rudder = delta.rudder
+
+        #gets the R matrix
+        R = quaternion_to_rotation(self.state[6:10])
+
+        #gets p, q, and r
+        p = self.state.pos.item(0)
+        q = self.state.pos.item(1)
+        r = self.state.pos.item(2)
+
+        #gets the gravitational force
+        f_g = QUAD.mass * QUAD.gravity * R.T @ np.array([[0.], [0.], [1.]])
+
+        #gets each portion of the gravitational force
+        fx = f_g.item(0)
+        fy = f_g.item(1)
+        fz = f_g.item(2)
+        #intermediate variables
+        qbar = 0.5 * QUAD.rho * self._Va**2
+        ca = np.cos(self.state.alpha)
+        sa = np.sin(self.state.alpha)
+
+        if self.state.Va > 1:
+            p_nondim = p * QUAD.b / (2 * self._Va)  # nondimensionalize p
+            q_nondim = q * QUAD.c / (2 * self._Va)  # nondimensionalize q
+            r_nondim = r * QUAD.b / (2 * self._Va)  # nondimensionalize r
+        else:
+            p_nondim = 0.0
+            q_nondim = 0.0
+            r_nondim = 0.0
+
+        # compute Lift and Drag coefficients
+        tmp1 = np.exp(-QUAD.M * (self.state.alpha - QUAD.alpha0))
+        tmp2 = np.exp(QUAD.M * (self.state.alpha + QUAD.alpha0))
+        sigma = (1 + tmp1 + tmp2) / ((1 + tmp1) * (1 + tmp2))
+
+        CL = (1 - sigma) * (QUAD.C_L_0 + QUAD.C_L_alpha * self.state.alpha) \
+             + sigma * 2 * np.sign(self.state.alpha) * sa**2 * ca
+        CD = (1 - sigma) \
+            * (QUAD.C_D_p + \
+               ((QUAD.C_L_0 + QUAD.C_L_alpha * self.state.alpha)**2)\
+                /(np.pi * QUAD.e * QUAD.AR)) \
+            + sigma * 2 * np.sign(self.state.alpha) * sa
+
+        # compute Lift and Drag Forces
+        F_lift = qbar * QUAD.S_wing * (CL + QUAD.C_L_q * q_nondim + QUAD.C_L_delta_e * elevator)
+        F_drag = qbar * QUAD.S_wing * (CD + QUAD.C_D_q * q_nondim + QUAD.C_D_delta_e * elevator)
+
+        # compute longitudinal forces in body frame
+        fx += - ca * F_drag + sa * F_lift
+        fz += - sa * F_drag - ca * F_lift
+        # compute lateral forces in body frame
+        fy += qbar * QUAD.S_wing * (
+                  QUAD.C_Y_0
+                + QUAD.C_Y_beta * self._beta
+                + QUAD.C_Y_p * p_nondim
+                + QUAD.C_Y_r * r_nondim
+                + QUAD.C_Y_delta_a * aileron
+                + QUAD.C_Y_delta_r * rudder)
+
+        # compute logitudinal torque in body frame
+        My = qbar * QUAD.S_wing * QUAD.c * (
+                QUAD.C_m_0
+                + QUAD.C_m_alpha * self._alpha
+                + QUAD.C_m_q * q_nondim
+                + QUAD.C_m_delta_e * elevator
+        )
+        # compute lateral torques in body frame
+        Mx  = qbar * QUAD.S_wing * QUAD.b * (
+                QUAD.C_ell_0
+                + QUAD.C_ell_beta * self._beta
+                + QUAD.C_ell_p * p_nondim
+                + QUAD.C_ell_r * r_nondim
+                + QUAD.C_ell_delta_a * aileron
+                + QUAD.C_ell_delta_r * rudder
+        )
+        Mz = qbar * QUAD.S_wing * QUAD.b * (
+                QUAD.C_n_0 + QUAD.C_n_beta * self._beta
+                + QUAD.C_n_p * p_nondim
+                + QUAD.C_n_r * r_nondim
+                + QUAD.C_n_delta_a * aileron
+                + QUAD.C_n_delta_r * rudder
+        )
+
+
+        #############################################################################################################
+        #Forces and moments from the forward prop
+
+        #gets the airspeed through the rear, main propulsion propellor
+        Va_forward_prop = np.array([[1.0], [0.0], [0.0]]).T @ self.v_air
+
+        #gets the thrust and the moment from the forward prop
+        Thrust_Forward, Prop_Moment_Forward = self._motor_thrust_torque(Va_forward_prop, delta.forwardThrottle)
+
+        #gets the force on the airplane from the forward propeller
+        #In this case, it is in the positive x direction, so we multiply by the unit vector in the direction the thrust is facing
+        Force_Forward = Thrust_Forward * np.array([[1.0], [0.0], [0.0]])
+
+        #gets the moment, which is a little more complicated
+        ##############################*******************************************************************************************
+        #I may need to change this to account for the direction of the prop rotation
+        #I am currently choosing it to rotate clockwise, when at the back, looking to the front of the airplane
+        Moment_Forward = Prop_Moment_Forward*np.array([[1.0],[0.0],[0.0]]) + np.cross(QUAD.forward_rotor_pos.T, Force_Forward.T).T
+
+        #adds each component to the whole forces and moment variables
+        fx += Force_Forward.item(0)
+        fy += Force_Forward.item(1)
+        fz += Force_Forward.item(2)
+
+        Mx += Moment_Forward.item(0)
+        My += Moment_Forward.item(1)
+        Mz += Moment_Forward.item(2)
+        #############################################################################################################
+
+
+
+        #############################################################################################################
+        #Forces and moments from the rear port propeller
+        Va_rear_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+
+        #gets the thrust and the moment from the rear port propeller
+        Thrust_RearPort, Prop_Moment_RearPort = self._motor_thrust_torque(Va_rear_port_prop, delta.verticalThrottle_1)
+
+        #gets the RearPort Force
+        Force_RearPort = Thrust_RearPort*np.array([[0.0],[0.0],[-1.0]])
+
+        #gets the rear port moment
+        Moment_RearPort = Prop_Moment_RearPort*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_1_pos.T, Force_RearPort.T).T
+
+        #adds each component to the whole forces and moment variables
+        fx += Force_RearPort.item(0)
+        fy += Force_RearPort.item(1)
+        fz += Force_RearPort.item(2)
+
+        Mx += Moment_RearPort.item(0)
+        My += Moment_RearPort.item(1)
+        Mz += Moment_RearPort.item(2)
+        #############################################################################################################
+
+        #############################################################################################################
+        #Forces and moments from the front port propeller
+        Va_front_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+
+        #gets the thrust and the moment from the rear port propeller
+        Thrust_FrontPort, Prop_Moment_FrontPort = self._motor_thrust_torque(Va_front_port_prop, delta.verticalThrottle_2)
+
+        #gets the RearPort Force
+        Force_FrontPort = Thrust_FrontPort*np.array([[0.0],[0.0],[-1.0]])
+
+        #gets the rear port moment
+        Moment_FrontPort = Prop_Moment_FrontPort*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_2_pos.T, Force_FrontPort.T).T
+
+        #adds each component to the whole forces and moment variables
+        fx += Force_FrontPort.item(0)
+        fy += Force_FrontPort.item(1)
+        fz += Force_FrontPort.item(2)
+
+        Mx += Moment_FrontPort.item(0)
+        My += Moment_FrontPort.item(1)
+        Mz += Moment_FrontPort.item(2)
+
+        #############################################################################################################
+
+        #############################################################################################################
+        #Forces and moments from the front starboard propeller
+        Va_front_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+
+        #gets the thrust and the moment from the rear port propeller
+        Thrust_FrontStarboard, Prop_Moment_FrontStarboard = self._motor_thrust_torque(Va_front_starboard_prop, delta.verticalThrottle_3)
+
+        #gets the RearStarboard Force
+        Force_FrontStarboard = Thrust_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])
+
+        #gets the rear starboard moment
+        Moment_FrontStarboard = Prop_Moment_FrontStarboard*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_3_pos.T, Force_FrontStarboard.T).T
+
+        #adds each component to the whole forces and moment variables
+        fx += Force_FrontStarboard.item(0)
+        fy += Force_FrontStarboard.item(1)
+        fz += Force_FrontStarboard.item(2)
+
+        Mx += Moment_FrontStarboard.item(0)
+        My += Moment_FrontStarboard.item(1)
+        Mz += Moment_FrontStarboard.item(2)
+
+        #############################################################################################################
+
+        #############################################################################################################
+        #Forces and moments from the rear starboard propeller
+
+        #Forces and moments from the front starboard propeller
+        Va_rear_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+
+        #gets the thrust and the moment from the rear port propeller
+        Thrust_RearStarboard, Prop_Moment_RearStarboard = self._motor_thrust_torque(Va_rear_starboard_prop, delta.verticalThrottle_4)
+
+        #gets the RearStarboard Force
+        Force_RearStarboard = Thrust_RearStarboard*np.array([[0.0],[0.0],[-1.0]])
+
+        #gets the rear starboard moment
+        Moment_RearStarboard = Prop_Moment_RearStarboard*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_4_pos.T, Force_RearStarboard.T).T
+
+        #adds each component to the whole forces and moment variables
+        fx += Force_RearStarboard.item(0)
+        fy += Force_RearStarboard.item(1)
+        fz += Force_RearStarboard.item(2)
+
+        Mx += Moment_RearStarboard.item(0)
+        My += Moment_RearStarboard.item(1)
+        Mz += Moment_RearStarboard.item(2)
+
+        #############################################################################################################
+
+        #returns the forces
+        return np.array([[fx, fy, fz, Mx, My, Mz]]).T
+
+    #gets the motor thrust and torque
+    def _motor_thrust_torque(Va: float, delta_t: float)->tuple[float, float]:
+        #gets the coefficients for the propeller
+    
+        C_Q0 = QUAD.C_Q0
+        C_Q1 = QUAD.C_Q1
+        C_T0 = QUAD.C_T0
+        C_Q2 = QUAD.C_Q2
+        C_T1 = QUAD.C_T1
+        C_T2 = QUAD.C_T2
+        D_prop = QUAD.D_prop
+        KQ = QUAD.KQ
+        R_motor = QUAD.R_motor
+        i0 = QUAD.i0
+    
+    
+        #gets the voltage in, based on the delta_t
+        V_in = QUAD.V_max * delta_t
+        # Quadratic formula to solve for motor speed
+        a = C_Q0 * QUAD.rho * np.power(D_prop, 5) \
+            / ((2.*np.pi)**2)
+        b = (C_Q1 * QUAD.rho * np.power(D_prop, 4)
+             / (2.*np.pi)) * Va + KQ**2/R_motor
+        c = C_Q2 * QUAD.rho * np.power(D_prop, 3) \
+            * Va**2 - (KQ / R_motor) * V_in + KQ * i0        
+        # Consider only positive root
+        Omega_op = (-b + np.sqrt(b**2 - 4*a*c)) / (2.*a)
+        # compute advance ratio
+        J_op = 2 * np.pi * Va / (Omega_op * D_prop)
+        # compute non-dimensionalized coefficients of thrust and torque
+        C_T = C_T2 * J_op**2 + C_T1 * J_op + C_T0
+        C_Q = C_Q2 * J_op**2 + C_Q1 * J_op + C_Q0
+        # add thrust and torque due to propeller
+        n = Omega_op / (2 * np.pi)
+        T_p = QUAD.rho * n**2 * np.power(D_prop, 4) * C_T
+        Q_p = QUAD.rho * n**2 * np.power(D_prop, 5) * C_Q
+        return T_p, Q_p
+    
+
+
+#quad dynamics
+
+
+
+#creates the optimization test class
+class OptimizationTest:
 
     #creates the initialization function
     def __init__(self, ts: float):
@@ -39,6 +334,12 @@ class QuadDynamics:
             [QUAD.r0],   # [12]  yaw rate
         ])
 
+        #stores the current wrench
+        self.wrenchActual = np.array([[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]])
+
+        #stores the desired wrench
+        self.wrenchDesired = np.array([[0.0], [0.0], [0.0], [0.0], [0.0], [0.0]])
+
         #stores the wind
         self._wind = np.array([[0.0], [0.0], [0.0]])
         #stores the original airspeed
@@ -61,6 +362,47 @@ class QuadDynamics:
         # timer so that gps only updates every ts_gps seconds
         self._t_gps = 999.  # large value ensures gps updates at initial time.
 
+    #creates the objective function, to get the mean squared error
+    def meanSquaredError(self, deltaArray: np.array):
+
+        #gets the actual wrench
+        wrenchActual = self.getWrench(deltaArray=deltaArray)
+
+        #gets the error
+        error = self.wrenchDesired - wrenchActual
+
+        #gets the magnitude squared of the error
+        errorMagnitudeSquared = np.linalg.norm(error)**2
+
+        #returns the error magnitude squared
+        return errorMagnitudeSquared
+
+
+    #creates wrapper function to get the wrench
+    def getWrench(self, deltaArray: np.array):
+
+        #creates the delta message and inputs it into the get forces and torques function
+        delta_message = MsgDelta()
+        delta_message.aileron = deltaArray[0]
+        delta_message.elevator = deltaArray[1]
+        delta_message.rudder = deltaArray[2]
+        delta_message.forwardThrottle = deltaArray[3]
+        delta_message.verticalThrottle_1 = deltaArray[4]
+        delta_message.verticalThrottle_2 = deltaArray[5]
+        delta_message.verticalThrottle_3 = deltaArray[6]
+        delta_message.verticalThrottle_4 = deltaArray[7]
+
+        #gets the wrench from the forces moments function
+        self.wrenchActual = self._forces_moments(delta=delta_message)
+
+        #returns the wrench
+        return self.wrenchActual
+
+
+    #creates function to set the desired wrench
+    def setDesiredWrench(self, wrenchDesired: np.array):
+        #sets the wrench
+        self.wrenchDesired = wrenchDesired
 
     #creates the update function for the system
     def update(self, delta: MsgDelta, wind: np.ndarray):
@@ -88,7 +430,6 @@ class QuadDynamics:
         self._update_velocity_data(wind)
         # update the message class for the true state
         self._update_true_state()
-
 
     #creates the sensors function
     def sensors(self)->MsgSensors:
@@ -162,9 +503,6 @@ class QuadDynamics:
         else:
             self._t_gps += self._ts
         return self._sensors
-
-
-
     ###################################
     # private functions
     def _derivatives(self, 
@@ -221,7 +559,6 @@ class QuadDynamics:
                            p_dot, q_dot, r_dot]]).T
         return x_dot
 
-
     #creates the update velocity data function
     def _update_velocity_data(self, wind: np.ndarray=np.zeros((6,1))):
 
@@ -251,7 +588,6 @@ class QuadDynamics:
             self._beta = np.sign(vr)*np.pi/2.
         else:
             self._beta = np.arcsin(vr/self._Va)
-
 
     #creates the forces moments function
     def _forces_moments(self, delta: MsgDelta)->np.ndarray:
@@ -476,8 +812,6 @@ class QuadDynamics:
         #returns the forces
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
 
-
-    
     def _motor_thrust_torque(self, Va: float, delta_t: float)->tuple[float, float]:
 
 
@@ -517,6 +851,22 @@ class QuadDynamics:
         Q_p = QUAD.rho * n**2 * np.power(D_prop, 5) * C_Q
         return T_p, Q_p
 
+    #function to update the state of the object
+    def _update_state(self, 
+                      pos: np.array,
+                      vel: np.array,
+                      R: np.array,
+                      omega: np.array):
+        
+        #sets the position portion
+        self._state[0:3] = pos
+        #sets the velocity portion
+        self._state[3:6] = vel
+        #sets the quaternion portion
+        self._state[6:10] = R
+        #sets the omega portion
+        self._state[10:13] = omega
+        
 
     #function to update the true state
     def _update_true_state(self):
@@ -532,3 +882,4 @@ class QuadDynamics:
         self.true_state.Va = self._Va
         self.true_state.alpha = self._alpha
         self.true_state.beta = self._beta    
+
