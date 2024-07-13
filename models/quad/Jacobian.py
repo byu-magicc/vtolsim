@@ -18,13 +18,17 @@ display(beta)
 alpha2 = alpha**2
 
 #defines the delta variables
-delta_e, delta_a, delta_r = sp.symbols('delta_e, delta_a, delta_r', real = True)
+delta_a, delta_e, delta_r = sp.symbols('delta_a, delta_e, delta_r', real = True)
 display(delta_e)
 
 #defines the delta thrust variables
 delta_t1, delta_t2, delta_t3, delta_t4, delta_t5 = sp.symbols('\delta_{t1}, \delta_{t2}, \delta_{t3}, \delta_{t4}, \delta_{t5}')
 display(delta_t2)
 
+
+#defines the delta vector
+deltaVector = sp.Matrix([[delta_a], [delta_e], [delta_r], [delta_t1], [delta_t2], [delta_t3], [delta_t4], [delta_t5]])
+display(deltaVector)
 
 #############################################################################
 #defines the variables for the for the Fx components
@@ -60,7 +64,7 @@ Fx_Gravity = -m*g*sp.sin(theta)
 
 #gets the Whole Function Fx
 Fx = (ForcesScalingFactor*FxAlphaMatrix*LiftDragMixing*LiftDragCoefficientsVector)[0] + ForwardThrust + Fx_Gravity
-display(Fx)
+#display(Fx)
 #gets everything for Fz
 
 #gets the z alpha matrix for forces
@@ -167,16 +171,31 @@ p_2 = sp.Matrix([[p_x2], [p_y2], [p_z2]])
 p_3 = sp.Matrix([[p_x3], [p_y3], [p_z3]])
 p_4 = sp.Matrix([[p_x4], [p_y4], [p_z4]])
 
+#gets the Thrust Moments
+ThrustMoment1 = sp.Matrix([[-p_y1*VerticalThrust1],[p_x1*VerticalThrust1],[0]])
+ThrustMoment2 = sp.Matrix([[-p_y2*VerticalThrust2],[p_x2*VerticalThrust2],[0]])
+ThrustMoment3 = sp.Matrix([[-p_y3*VerticalThrust3],[p_x3*VerticalThrust3],[0]])
+ThrustMoment4 = sp.Matrix([[-p_y4*VerticalThrust4],[p_x4*VerticalThrust4],[0]])
 
+
+#gets the sum of the x components of the thrust moments
+ThrustMomentsX = ThrustMoment1[0] + ThrustMoment2[0] + ThrustMoment3[0] + ThrustMoment4[0]
+ThrustMomentsY = ThrustMoment1[1] + ThrustMoment2[1] + ThrustMoment3[1] + ThrustMoment4[1]
+ThrustMomentsZ = ThrustMoment1[2] + ThrustMoment2[2] + ThrustMoment3[2] + ThrustMoment4[2]
 
 #adds everything together for each moment
-Mx = (lScalingFactor*lMixingMatrix*lCoefficientVector)[0] + MomentForward
+Mx = (lScalingFactor*lMixingMatrix*lCoefficientVector)[0] + MomentForward + ThrustMomentsX
 
-My = (mScalingFactor*mMixingMatrix*mCoefficientVector)[0]
+My = (mScalingFactor*mMixingMatrix*mCoefficientVector)[0] + ThrustMomentsY
 
-Mz = (nScalingFactor*nMixingMatrix*nCoefficientVector)[0] + verticalMoments
+Mz = (nScalingFactor*nMixingMatrix*nCoefficientVector)[0] + verticalMoments + ThrustMomentsZ
 
+#gets the whole wrench vector
+Wrench = sp.Matrix([[Fx],[Fy],[Fz],[Mx],[My],[Mz]])
 
+#gets the Jacobian of the wrench with respect to the delta vector
+Wrench_Jacobian = Wrench.jacobian(deltaVector)
+display(Wrench_Jacobian)
 
 ###################################################################################################
 
