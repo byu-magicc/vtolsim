@@ -111,6 +111,7 @@ lScalingFactor = (1/2)*rho*(Va**2)*S*b
 #gets the m scaling factor
 mScalingFactor = (1/2)*rho*(Va**2)*S*c
 #gets the n scaling factor
+nScalingFactor = (1/2)*rho*(Va**2)*S*b
 
 
 #gets the l mixing matrix
@@ -149,13 +150,31 @@ MomentVertical2 = sp.Function('M')(delta_t2)
 MomentVertical3 = sp.Function('M')(delta_t3)
 MomentVertical4 = sp.Function('M')(delta_t4)
 
+#gets the vertical moments sum
+verticalMoments = MomentVertical1 + MomentVertical2 + MomentVertical3 + MomentVertical4
+
 ############################****************************************************************************************************************************************
-#Fix this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#I need to add the most important term, which is the cross product term, which I do not know how to do yet exactly
+#creates the variables for the positions of the four vertical props
+#prop 1 position variables
+p_x1, p_y1, p_z1 = sp.symbols('p_{x1}, p_{y1}, p_{z1}')
+p_x2, p_y2, p_z2 = sp.symbols('p_{x2}, p_{y2}, p_{z2}')
+p_x3, p_y3, p_z3 = sp.symbols('p_{x3}, p_{y3}, p_{z3}')
+p_x4, p_y4, p_z4 = sp.symbols('p_{x4}, p_{y4}, p_{z4}')
+
+#gets the prop position 1 vector
+p_1 = sp.Matrix([[p_x1], [p_y1], [p_z1]])
+p_2 = sp.Matrix([[p_x2], [p_y2], [p_z2]])
+p_3 = sp.Matrix([[p_x3], [p_y3], [p_z3]])
+p_4 = sp.Matrix([[p_x4], [p_y4], [p_z4]])
 
 
 
+#adds everything together for each moment
+Mx = (lScalingFactor*lMixingMatrix*lCoefficientVector)[0] + MomentForward
 
+My = (mScalingFactor*mMixingMatrix*mCoefficientVector)[0]
+
+Mz = (nScalingFactor*nMixingMatrix*nCoefficientVector)[0] + verticalMoments
 
 
 
