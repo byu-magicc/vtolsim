@@ -193,11 +193,71 @@ Mz = (nScalingFactor*nMixingMatrix*nCoefficientVector)[0] + verticalMoments + Th
 #gets the whole wrench vector
 Wrench = sp.Matrix([[Fx],[Fy],[Fz],[Mx],[My],[Mz]])
 
+
 #gets the Jacobian of the wrench with respect to the delta vector
 Wrench_Jacobian = Wrench.jacobian(deltaVector)
-display(Wrench_Jacobian)
+Wrench_Jacobian_Transposed = sp.transpose(Wrench_Jacobian)
+display(Wrench_Jacobian_Transposed)
+
+wrenchJacobianLatex = sp.latex(Wrench_Jacobian)
+wrenchJacobianTransposedLatex = sp.latex(Wrench_Jacobian_Transposed)
+
+file = open("JacobianOutput.txt", "w")
+file.write(wrenchJacobianTransposedLatex)
+file.close
+
+
+newFile = open("JacobianOutput.txt", "r")
+output = newFile.read()
+print(output)
+newFile.close()
+
+
+
 
 ###################################################################################################
 
+###################################################################################################
+#this section creates the symbolic form of the motor thrust functions
+C_Q0, C_Q1, C_Q2, D_prop, V_max, delta_ti = sp.symbols('C_{Q0}, C_{Q1}, C_{Q2}, D_{p}, V_{max}, \\delta_{ti}')
+Va_i, KQ, C_T0, C_T1, C_T2, R_motor, i0 = sp.symbols('Va_{i}, K_Q, C_{T0}, C_{T1}, C_{T2}, R_{motor}, i_0')
+display(Va_i)
+
+#defines the Vin
+Vin = V_max*delta_ti
+
+#gets the a_prop
+a_prop = ((C_Q0*rho*(D_prop**5))/((2*sp.pi)**2))
+display(a_prop)
+#gets the b_prop
+b_prop = (rho*(D_prop**4))/(2*sp.pi)*C_Q1*Va_i + (KQ**2)/(R_motor) 
+display(b_prop)
+
+#gets the c prop
+c_prop = rho*(D_prop**3)*C_Q2*(Va_i**2) - (KQ/R_motor)*Vin + KQ*i0
+display(c_prop)
+
+#gets the angular velocity of the propeller
+Omega_p = ((-b_prop + sp.sqrt(b_prop**2 - 4*a_prop*c_prop))/(2*a_prop))
+display(Omega_p)
+
+#computes the advance ratio
+J_op = 2*sp.pi*Va_i/(Omega_p*D_prop)
+
+#gets the coefficient of thrust
+C_T = C_T2*(J_op**2) + C_T1*J_op + C_T0
+C_Q = C_Q2*(J_op**2) + C_Q2*J_op + C_T0
+
+#gets n (whatever that is)
+n = Omega_p / (2*sp.pi)
+#gets the thrust output for a particular propeller
+T_pi = rho*(n**2)*(D_prop**4)*C_T
+Q_pi = rho*(n**2)*(D_prop**5)*C_Q
+
+#gets the derivative of T_pi with respect to delta_ti
+T_p_partial = sp.diff(T_pi, delta_ti)
+
+
+###################################################################################################
 
 # %%
