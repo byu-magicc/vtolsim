@@ -256,7 +256,7 @@ Q_pi = rho*(n**2)*(D_prop**5)*C_Q
 
 #gets the derivative of T_pi with respect to delta_ti
 T_p_partial = sp.diff(T_pi, delta_ti)
-display(T_p_partial)
+#display(T_p_partial)
 
 
 ###################################################################################################
