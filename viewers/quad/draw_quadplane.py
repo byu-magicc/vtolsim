@@ -159,6 +159,60 @@ class DrawQuadplane():
         window.addItem(self.quad_horizontalStabilizer)        
         ################################################################################
 
+        ################################################################################
+        #adding the motors section
+        self.motor_points, self.motor_indicies, self.motor_meshColors = self.get_motor_points()
+
+        #port front motor section
+        self.portFrontMotorPos = np.array([[5.8], [-4.0], [-0.3]])
+
+        self.portFrontMotor = self.add_object(self.motor_points, 
+                                              self.motor_indicies,
+                                              self.motor_meshColors,
+                                              R_bi,
+                                              quad_position + R_bi @ self.portFrontMotorPos)
+
+        window.addItem(self.portFrontMotor)
+
+        #port rear motor section
+        self.portRearMotorPos = np.array([[-5.0], [-4.0], [-0.3]])
+
+        self.portRearMotor = self.add_object(self.motor_points, 
+                                              self.motor_indicies,
+                                              self.motor_meshColors,
+                                              R_bi,
+                                              quad_position + R_bi @ self.portRearMotorPos)
+
+        window.addItem(self.portRearMotor)
+
+        #starboard rear motor section
+        self.starboardRearMotorPos = np.array([[-5.0], [4.0], [-0.3]])
+
+        self.starboardRearMotor = self.add_object(self.motor_points, 
+                                              self.motor_indicies,
+                                              self.motor_meshColors,
+                                              R_bi,
+                                              quad_position + R_bi @ self.starboardRearMotorPos)
+
+        window.addItem(self.starboardRearMotor)
+
+        #starboard front motor section
+        self.starboardFrontMotorPos = np.array([[5.8], [4.0], [-0.3]])
+
+        self.starboardFrontMotor = self.add_object(self.motor_points, 
+                                                   self.motor_indicies,
+                                                   self.motor_meshColors,
+                                                   R_bi,
+                                                   quad_position + R_bi @ self.starboardFrontMotorPos)
+
+        window.addItem(self.starboardFrontMotor)
+
+        ################################################################################
+
+
+
+
+
     #creates the update function
     def update(self, state: MsgState):
 
@@ -226,6 +280,36 @@ class DrawQuadplane():
                                                             self.horizontalStabilizer_meshColors,
                                                             R_bi,
                                                             quad_position + R_bi @ self.horizontalStabilizerLocation)
+        
+        #updates the front port motor
+        self.portFrontMotor = self.update_object(self.portFrontMotor,
+                                                 self.motor_points,
+                                                 self.motor_indicies,
+                                                 self.motor_meshColors,
+                                                 R_bi,
+                                                 quad_position + R_bi @ self.portFrontMotorPos)
+        
+        self.portRearMotor = self.update_object(self.portRearMotor,
+                                                self.motor_points,
+                                                self.motor_indicies,
+                                                self.motor_meshColors,
+                                                R_bi,
+                                                quad_position + R_bi @ self.portRearMotorPos)
+        
+        self.starboardRearMotor = self.update_object(self.starboardRearMotor,
+                                                     self.motor_points,
+                                                     self.motor_indicies,
+                                                     self.motor_meshColors,
+                                                     R_bi,
+                                                     quad_position + R_bi @ self.starboardRearMotorPos)
+
+        self.starboardFrontMotor = self.update_object(self.starboardFrontMotor,
+                                                      self.motor_points,
+                                                      self.motor_indicies,
+                                                      self.motor_meshColors,
+                                                      R_bi,
+                                                      quad_position + R_bi @ self.starboardFrontMotorPos)
+
 
     #function to add object
     def add_object(self, points, index, colors, R, position):
@@ -474,7 +558,7 @@ class DrawQuadplane():
         ul = self.unit_length
         
         #x positions
-        front_x = 0.0*ul
+        front_x = 1.0*ul
         back_x = -15.0*ul
         #y positions
         inside_y = -0.15*ul
@@ -531,7 +615,7 @@ class DrawQuadplane():
         ul = self.unit_length
         
         #x positions
-        front_x = 0.0*ul
+        front_x = 1.0*ul
         back_x = -15.0*ul
         #y positions
         inside_y = -0.15*ul
@@ -759,4 +843,71 @@ class DrawQuadplane():
         meshColors[10] = self.mygrey1  # left side
         meshColors[11] = self.mygrey1  # left side
         return points, indicies, meshColors
+    
 
+    def get_motor_points(self):
+        #gets the unit length
+        ul = self.unit_length
+
+        height = 0.3*ul
+        width = 0.4*ul
+        length = 0.4*ul
+
+
+        #defines the points
+        points = np.array([[length/2.0, width/2.0, -height/2.0], #0
+                           [-length/2.0, width/2.0, -height/2.0], #1
+                           [-length/2.0, -width/2.0, -height/2.0], #2
+                           [length/2.0, -width/2.0, -height/2.0], #3
+                           [length/2.0, width/2.0, height/2.0], #4
+                           [-length/2.0, width/2.0, height/2.0], #5
+                           [-length/2.0, -width/2.0, height/2.0], #6
+                           [length/2.0, -width/2.0, height/2.0]]).T #7
+        
+        indecies = np.array([[0, 1, 2],
+                             [0, 2, 3],
+                             [0, 1, 4],
+                             [1, 4, 5],
+                             [0, 3, 4],
+                             [3, 4, 7],
+                             [2, 3, 7],
+                             [2, 6, 7],
+                             [1, 2, 5],
+                             [2, 5, 6],
+                             [4, 5, 6],
+                             [4, 6, 7]])
+        
+        #creates the mesh colors
+        meshColors = np.empty((12, 3, 4), dtype=np.float32)
+        meshColors[0] = self.mygrey1  # top
+        meshColors[1] = self.mygrey1  # top
+        meshColors[2] = self.mygrey1  # top
+        meshColors[3] = self.mygrey1  # top
+        meshColors[4] = self.mygrey1  # right side
+        meshColors[5] = self.mygrey1  # right side
+        meshColors[6] = self.mygrey1  # right side
+        meshColors[7] = self.mygrey1  # right side
+        meshColors[8] = self.mygrey1  # left side
+        meshColors[9] = self.mygrey1  # left side
+        meshColors[10] = self.mygrey1  # left side
+        meshColors[11] = self.mygrey1  # left side
+
+        return points, indecies, meshColors
+
+
+    def get_rotor_points(self):
+        radius = 0.8 * self.unit_length
+        N = 10
+        points = np.array([[0, 0, 0]])
+        theta = 0
+        while theta <= 2*np.pi:
+            theta += 2 * np.pi / N
+            new_point = np.array([[radius*np.cos(theta), radius*np.sin(theta), 0]])
+            points = np.concatenate((points, new_point), axis=0)
+        index = np.array([[0, 1, 2]])
+        meshColors = np.empty((points.shape[0]-1, 3, 4))
+        for i in range(1, (points.shape[0]-1)):
+            new_mesh = np.array([[0, i, i+1]])
+            index = np.concatenate((index, new_mesh), axis=0)
+            meshColors[i] = self.mygrey4
+        return points.T, index, meshColors
