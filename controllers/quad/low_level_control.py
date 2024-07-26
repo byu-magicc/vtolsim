@@ -81,8 +81,7 @@ class LowLevelControl:
         #puts them together
         delta_c_bounds = (delta_a_bound, delta_e_bound, delta_r_bound)
 
-        #gets the minimization solution
-        solution = spo.minimize(fun=self.getForcesTorques())
+
 
 
 

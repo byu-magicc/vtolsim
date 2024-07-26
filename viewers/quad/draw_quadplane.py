@@ -207,14 +207,83 @@ class DrawQuadplane():
 
         window.addItem(self.starboardFrontMotor)
 
+        #creates the rotation for the R rotor
+        self.R_motor = euler_to_rotation(0.0, np.pi/2.0, 0.0)
+        self.forwardPropulsionMotorPos = np.array([[-3.0], [0.0], [-0.5]])
+
+        self.forwardPropulsionMotor = self.add_object(self.motor_points,
+                                                      self.motor_indicies,
+                                                      self.motor_meshColors,
+                                                      R_bi @ self.R_motor,
+                                                      quad_position + R_bi @ self.forwardPropulsionMotorPos)
+        window.addItem(self.forwardPropulsionMotor)
         ################################################################################
 
 
 
-        ################################################################################
+        ################################################################################       
+        self.rotor_points, self.rotor_indicies, self.rotor_meshColors = self.get_rotor_points()
+        
+        #creates the port front rotor
+        self.portFront_rotorPosition = np.array([[5.8], [-4.0], [-0.5]])
+        #adds the right rotor object
+        self.portFront_rotor = self.add_object(self.rotor_points,
+                                           self.rotor_indicies,
+                                           self.rotor_meshColors,
+                                           R_bi,
+                                           quad_position + R_bi @ self.portFront_rotorPosition)
+        window.addItem(self.portFront_rotor)
+
+        #creates the port rear rotor
+        self.portRear_rotorPosition = np.array([[-5.0], [-4.0], [-0.5]])
+
+        #adds the port rear rotor object
+        self.portRear_rotor = self.add_object(self.rotor_points,
+                                              self.rotor_indicies,
+                                              self.rotor_meshColors,
+                                              R_bi,
+                                              quad_position + R_bi @ self.portRear_rotorPosition)
+        window.addItem(self.portRear_rotor)
 
 
+        #creates the port rear rotor
+        self.starboardRear_rotorPosition = np.array([[-5.0], [4.0], [-0.5]])
 
+        #adds the port rear rotor object
+        self.starboardRear_rotor = self.add_object(self.rotor_points,
+                                              self.rotor_indicies,
+                                              self.rotor_meshColors,
+                                              R_bi,
+                                              quad_position + R_bi @ self.starboardRear_rotorPosition)
+        window.addItem(self.starboardRear_rotor)
+
+        #creates the port rear rotor
+        self.starboardFront_rotorPosition = np.array([[5.8], [4.0], [-0.5]])
+
+        #adds the port rear rotor object
+        self.starboardFront_rotor = self.add_object(self.rotor_points,
+                                              self.rotor_indicies,
+                                              self.rotor_meshColors,
+                                              R_bi,
+                                              quad_position + R_bi @ self.starboardFront_rotorPosition)
+        window.addItem(self.starboardFront_rotor)
+
+        window.addItem(self.starboardFront_rotor)
+
+
+        #creates the propulsion rotor
+
+        #creates the rotation for the R rotor
+        self.R_rotor = euler_to_rotation(0.0, np.pi/2.0, 0.0)
+
+        self.forwardPropulsion_rotorPosition = np.array([[-3.2], [0.0], [-0.5]])
+
+        self.forwardPropulsion_rotor = self.add_object(self.rotor_points,
+                                                       self.rotor_indicies,
+                                                       self.rotor_meshColors,
+                                                       R_bi @ self.R_rotor,
+                                                       quad_position + R_bi @ self.forwardPropulsion_rotorPosition)
+        window.addItem(self.forwardPropulsion_rotor)
         ################################################################################
 
 
@@ -317,6 +386,48 @@ class DrawQuadplane():
                                                       R_bi,
                                                       quad_position + R_bi @ self.starboardFrontMotorPos)
 
+        self.forwardPropulsionMotor = self.update_object(self.forwardPropulsionMotor,
+                                                  self.motor_points,
+                                                  self.motor_indicies,
+                                                  self.motor_meshColors,
+                                                  R_bi @ self.R_motor,
+                                                  quad_position + R_bi @ self.forwardPropulsionMotorPos)
+
+
+        self.portFront_rotor = self.update_object(self.portFront_rotor,
+                                                  self.rotor_points,
+                                                  self.rotor_indicies,
+                                                  self.rotor_meshColors,
+                                                  R_bi,
+                                                  quad_position + R_bi @ self.portFront_rotorPosition)
+
+        self.portRear_rotor = self.update_object(self.portRear_rotor,
+                                                  self.rotor_points,
+                                                  self.rotor_indicies,
+                                                  self.rotor_meshColors,
+                                                  R_bi,
+                                                  quad_position + R_bi @ self.portRear_rotorPosition)
+        
+        self.starboardRear_rotor = self.update_object(self.starboardRear_rotor,
+                                                  self.rotor_points,
+                                                  self.rotor_indicies,
+                                                  self.rotor_meshColors,
+                                                  R_bi,
+                                                  quad_position + R_bi @ self.starboardRear_rotorPosition)
+        
+        self.starboardFront_rotor = self.update_object(self.starboardFront_rotor,
+                                                  self.rotor_points,
+                                                  self.rotor_indicies,
+                                                  self.rotor_meshColors,
+                                                  R_bi,
+                                                  quad_position + R_bi @ self.starboardFront_rotorPosition)
+
+        self.forwardPropulsion_rotor = self.update_object(self.forwardPropulsion_rotor,
+                                                          self.rotor_points,
+                                                          self.rotor_indicies,
+                                                          self.rotor_meshColors,
+                                                          R_bi @ self.R_rotor,
+                                                          quad_position + R_bi @ self.forwardPropulsion_rotorPosition)
 
     #function to add object
     def add_object(self, points, index, colors, R, position):
@@ -903,7 +1014,7 @@ class DrawQuadplane():
 
 
     def get_rotor_points(self):
-        radius = 0.8 * self.unit_length
+        radius = 1.8 * self.unit_length
         N = 10
         points = np.array([[0, 0, 0]])
         theta = 0
@@ -918,3 +1029,4 @@ class DrawQuadplane():
             index = np.concatenate((index, new_mesh), axis=0)
             meshColors[i] = self.mygrey4
         return points.T, index, meshColors
+    
