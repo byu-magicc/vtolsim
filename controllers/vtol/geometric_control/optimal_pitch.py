@@ -10,8 +10,8 @@ from enum import Enum
 
 from tools.rotations import quaternion_to_rotation, vee
 from tools.wrap import wrap
-import parameters.convergence_parameters as VTOL
-import parameters.optimal_pitch_parameters as OPT_PARAM
+import parameters.vtol.convergence_parameters as VTOL
+import parameters.vtol.optimal_pitch_parameters as OPT_PARAM
 
 # import pyoptsparse - set flag if it is available
 try:

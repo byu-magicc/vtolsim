@@ -8,13 +8,13 @@ import numpy as np
 from message_types.msg_trajectory import MsgTrajectory
 from message_types.msg_state import MsgState
 from message_types.msg_delta import MsgDelta
-import parameters.convergence_parameters as VTOL
+import parameters.vtol.convergence_parameters as VTOL
 from tools.differentiators import RotationDerivative
 from tools.lie_group import vee_SO3, antisymmetric
 
 from scipy.linalg import expm
 from tools.rotations import quaternion_to_euler, quaternion_to_rotation, vee, hat
-import parameters.geometric_control_parameters as GEOM
+import parameters.vtol.geometric_control_parameters as GEOM
 from controllers.vtol.geometric_control.optimal_pitch import compute_thrust, find_pitch_thrust, find_thrust_from_theta
 from controllers.vtol.low_level_control import LowLevelControl
 

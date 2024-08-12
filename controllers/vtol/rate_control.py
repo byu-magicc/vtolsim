@@ -1,5 +1,5 @@
 import numpy as np
-from controllers.pid_control import PidControl
+from controllers.vtol.pid_control import PidControl
 
 
 class RateControl:

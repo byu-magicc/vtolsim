@@ -83,10 +83,6 @@ class LowLevelControl:
 
 
 
-
-
-
-
     #creates function to get the forces and torques
     def getForcesTorques(self, state: MsgState, delta: MsgDelta)->np.ndarray:
 
@@ -309,7 +305,6 @@ class LowLevelControl:
 
         #returns the forces
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
-
 
 
     #gets the motor thrust and torque

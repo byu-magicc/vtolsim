@@ -11,4 +11,4 @@ import parameters.control_allocation_parameters as CP
 
 #creates the epsilon factor
 epsilon = 0.001
-g = QUAD
+g = QUAD.gra

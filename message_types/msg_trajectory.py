@@ -21,5 +21,5 @@ class MsgTrajectory:
         self.position = position
         self.velocity = velocity
         self.acceleration = acceleration
-        self.heading = heading
-        self.heading_rate = heading_rate
+        self.heading = heading #We have our heading
+        self.heading_rate = heading_rate #here we go
