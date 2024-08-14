@@ -23,3 +23,46 @@ class MsgTrajectory:
         self.acceleration = acceleration
         self.heading = heading #We have our heading
         self.heading_rate = heading_rate #here we go
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+        
+        
+        
+        #from the magic within our hearts
+        #to the adventure beyond the horizon
+        #there is only one Disney

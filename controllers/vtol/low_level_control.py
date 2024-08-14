@@ -3,7 +3,7 @@ from controllers.vtol.pid_control import PidControl
 #from message_types.msg_controls import MsgControls
 from message_types.msg_delta import MsgDelta
 from message_types.msg_state import MsgState
-import parameters.control_allocation_parameters as CP
+import parameters.vtol.control_allocation_parameters as CP
 import math
 
 
