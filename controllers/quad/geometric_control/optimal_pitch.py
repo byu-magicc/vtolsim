@@ -86,6 +86,8 @@ def blended(alpha, CLCD_small, CLCD_large):
     return (1 - sig)*CLCD_small_res + sig*CLCD_large_res
 
 
+#function that returns which of the above Drag Models we will be using
+#and returns the corresponding function
 def CD(alpha, model=AERO_TYPE.SMALL_ANGLE):
     if model is AERO_TYPE.SMALL_ANGLE:
         return CD_small_angle(alpha)
@@ -102,6 +104,8 @@ def CD(alpha, model=AERO_TYPE.SMALL_ANGLE):
     else:
         error("Unknown AERO_TYPE")
 
+#function that returns which of the above Lift Models we will be using
+#and returns the corresponding function
 def CL(alpha, model=AERO_TYPE.SMALL_ANGLE):
     if model is AERO_TYPE.SMALL_ANGLE:
         return CL_discontinuous(alpha, CL_small_angle)

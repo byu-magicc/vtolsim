@@ -5,8 +5,8 @@ Geometric Controller for vtolsim
 import numpy as np
 from scipy.linalg import expm
 from tools.rotations import quaternion_to_euler, quaternion_to_rotation, vee, hat
-import parameters.convergence_parameters as VTOL
-import parameters.geometric_control_parameters as GEOM
+import parameters.vtol.convergence_parameters as VTOL
+import parameters.vtol.geometric_control_parameters as GEOM
 from geometric_control.optimal_pitch import compute_thrust, find_pitch_thrust, find_thrust_from_theta
 
 

@@ -1,6 +1,8 @@
 import numpy as np
 import scipy
 from message_types.msg_convert import *
+from controllers.quad.lqr.lqr_dynamics import es_jacobians
+from tools.quaternions import state_boxMinus, state_boxPlus
 
 
 
@@ -43,3 +45,11 @@ class LqrControl:
         
     #creates the update function
     def update(self, x, x_desired, u_desired, df_traj):
+
+        #gets the error for the state
+        x_tilde = state_boxMinus(x_desired, x)
+
+        #gets the u_tilde
+        u_tilde = u_desired - self.u_prev
+
+        

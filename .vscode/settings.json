@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "C:/Users/dben1/Documents/001_School/Masters/vtolsim/planners/trajectorygenerator"
+    "cmake.sourceDirectory": "C:/Users/dben1/Documents/001_School/Masters/vtolsim/planners/trajectorygenerator",
+    "ros.distro": "humble"
 }
