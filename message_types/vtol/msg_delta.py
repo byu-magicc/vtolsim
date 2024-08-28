@@ -1,5 +1,5 @@
 import numpy as np
-from message_types.msg_controls import MsgControls
+from message_types.vtol.msg_controls import MsgControls
 
 class MsgDelta:
     '''

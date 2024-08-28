@@ -8,7 +8,7 @@ part of mavsim_python
         4/10/2019 - RWB
 """
 import numpy as np
-import parameters.planner_parameters as PLAN
+import parameters.vtol.planner_parameters as PLAN
 
 
 class MsgMap:

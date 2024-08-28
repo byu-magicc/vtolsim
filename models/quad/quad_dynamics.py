@@ -8,9 +8,8 @@ import parameters.quad.anaconda_parameters as QUAD
 import parameters.quad.sensor_parameters as SENSOR
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler, euler_to_rotation
 from tools.quaternions import *
-from message_types.msg_convert import *
 from message_types.quad.msg_state import MsgState
-from message_types.msg_sensors import MsgSensors
+from message_types.quad.msg_sensors import MsgSensors
 from message_types.quad.msg_delta import MsgDelta
 
 
@@ -43,9 +42,18 @@ class QuadDynamics:
         self._wind = np.array([[0.0], [0.0], [0.0]])
         #stores the original airspeed
         self.v_air = self._state[3:6]
+        #airspeed
         self._Va = 0.0
+        #alpha
         self._alpha = 0.0
+        #beta
         self._beta = 0.0
+        #stores the groundspeed
+        self._Vg = 0.0
+        #stores the course angle
+        self._chi = 0.0
+
+
         self._update_velocity_data()
 
         #stores the forces
@@ -233,8 +241,10 @@ class QuadDynamics:
         wind_body_frame = R.T @ steady_state  # rotate steady state wind to body frame
         wind_body_frame += gust  # add the gust
         self._wind = R @ wind_body_frame  # wind in the world frame
+        #gets the velocity in the body frame
+        velocity_body_frame = self._state[3:6]
         # velocity vector relative to the airmass
-        self.v_air = self._state[3:6] - wind_body_frame
+        self.v_air = velocity_body_frame - wind_body_frame
         # compute airspeed
         self._Va = np.linalg.norm( self.v_air )
         ur = self.v_air.item(0)
@@ -251,6 +261,18 @@ class QuadDynamics:
             self._beta = np.sign(vr)*np.pi/2.
         else:
             self._beta = np.arcsin(vr/self._Va)
+
+        #computes the groundspeed
+        self._Vg = np.linalg.norm(velocity_body_frame)
+        
+        #computes the course angle
+        #gets the world frame velocity
+        velocity_world_frame = R @ velocity_body_frame
+
+        self._chi = np.arctan2(velocity_world_frame.item(1), velocity_world_frame.item(0))
+
+
+
 
 
     #creates the forces moments function
@@ -531,4 +553,6 @@ class QuadDynamics:
             [SENSOR.gyro_z_bias]])  
         self.true_state.Va = self._Va
         self.true_state.alpha = self._alpha
-        self.true_state.beta = self._beta    
+        self.true_state.beta = self._beta
+        self.true_state.Vg = self._Vg
+        self.true_state.chi = self._chi  

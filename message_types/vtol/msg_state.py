@@ -9,7 +9,7 @@ msgState
 """
 import numpy as np
 from tools.rotations import rotation_to_euler, euler_to_rotation
-from message_types.msg_state_old import MsgState as MsgStateOld
+from message_types.vtol.msg_state_old import MsgState as MsgStateOld
 
 class MsgState:
     '''

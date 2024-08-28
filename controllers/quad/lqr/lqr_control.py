@@ -16,6 +16,8 @@ import parameters.quad.fixed_wing_lqr_parameters as AP
 class LqrControl:
     def __init__(self, ts_control):
 
-        
+        #saves the time sample
+        self.Ts = ts_control
+        #creates a 
 
 

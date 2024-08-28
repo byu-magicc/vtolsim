@@ -13,7 +13,7 @@ import numpy as np
 from viewers.vtol.draw_trajectory import DrawTrajectory
 from time import time
 
-from message_types.msg_state import MsgState
+from message_types.quad.msg_state import MsgState
 
 #creates the QuadViewer class
 class QuadViewer():

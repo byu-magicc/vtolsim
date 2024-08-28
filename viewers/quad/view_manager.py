@@ -1,23 +1,20 @@
-"""
-mavsim: manage_viewers
-    - Beard & McLain, PUP, 2012
-    - Update history:
-        3/11/2024 - RWB
-"""
 import pyqtgraph as pg
-from viewers.vtol.vtol_viewer import VtolViewer
-from viewers.vtol.data_viewer import DataViewer
-#from viewers.sensor_viewer import SensorViewer
-import parameters.vtol.simulation_parameters as SIM
-from message_types.vtol.msg_state import MsgState
-from message_types.vtol.msg_sensors import MsgSensors
-from message_types.vtol.msg_delta import MsgDelta
+from viewers.quad.quad_viewer import QuadViewer
+from viewers.quad.data_viewer import DataViewer
 
+#imports the simulation parameters
+import parameters.quad.simulation_parameters as SIM
+from message_types.quad.msg_state import MsgState
+from message_types.quad.msg_sensors import MsgSensors
+from message_types.quad.msg_delta import MsgDelta
+
+
+#creates the view manager class
 class ViewManager:
-    def __init__(self, 
-                 video: bool=False, 
-                 data: bool=False, 
-                 sensors: bool=False, 
+    def __init__(self,
+                 video: bool=False,
+                 data: bool=False,
+                 sensors: bool=False,
                  animation: bool=False,
                  save_plots: bool=False,
                  video_name: str=[]):
@@ -37,7 +34,7 @@ class ViewManager:
         if self.animation_flag or self.data_plot_flag or self.sensor_plot_flag: 
             self.app = pg.QtWidgets.QApplication([]) 
             if self.animation_flag:
-                self.vtol_view = VtolViewer(app=self.app, 
+                self.vtol_view = QuadViewer(app=self.app, 
                                             dt=SIM.ts_simulation,
                                             plot_period=SIM.ts_plot_refresh)
             if self.data_plot_flag: 
@@ -55,7 +52,7 @@ class ViewManager:
                     plot_period=SIM.ts_plot_refresh, 
                     data_recording_period=SIM.ts_plot_record_data, 
                     time_window_length=30)
-
+                
     def update(self,
                sim_time: float,
                true_state: MsgState, 
@@ -87,4 +84,3 @@ class ViewManager:
                 self.sensor_view.save_plot_image(sensorplot_name)
         if self.video_flag: 
             self.video.close()
-

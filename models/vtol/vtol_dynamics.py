@@ -12,10 +12,10 @@ import parameters.vtol.convergence_parameters as VTOL
 import parameters.vtol.sensor_parameters as SENSOR
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler, euler_to_rotation
 from tools.quaternions import *
-from message_types.msg_convert import *
-from message_types.msg_state import MsgState
-from message_types.msg_sensors import MsgSensors
-from message_types.msg_delta import MsgDelta
+from message_types.vtol.msg_convert import *
+from message_types.vtol.msg_state import MsgState
+from message_types.vtol.msg_sensors import MsgSensors
+from message_types.vtol.msg_delta import MsgDelta
 
 class VtolDynamics:
     '''

@@ -3,8 +3,8 @@
     and convert old style messages to new style messages
 """
 import numpy as np
-from message_types.msg_controls import MsgControls
-from message_types.msg_state_old import MsgState
+from message_types.vtol.msg_controls import MsgControls
+from message_types.vtol.msg_state_old import MsgState
 
 def np2msg_controls(delta):
         msg = MsgControls()

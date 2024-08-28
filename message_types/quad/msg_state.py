@@ -18,7 +18,9 @@ class MsgState:
                  gyro_bias: np.ndarray=np.array([[0.0], [0.0], [0.0]]),
                  Va: float=0.0,
                  alpha: float=0.0,  
-                 beta: float=0.0):
+                 beta: float=0.0,
+                 Vg: float=0.0,
+                 chi: float=0.0):
         
         #saves the position
         self.pos = pos
@@ -36,6 +38,10 @@ class MsgState:
         self.alpha = alpha
         #saves the beta or sideslip angle
         self.beta = beta
+        #saves the groundspeed
+        self.Vg = Vg
+        #saves the course angle
+        self.chi = chi
 
     #creates function to add to the position
     def add_to_position(self, n=0, e=0, d=0):
