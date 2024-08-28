@@ -84,12 +84,30 @@ class LowLevelControl:
         delta_r_bound = (-1.0, 1.0)
         delta_t_forward_bound = (0.0, 1.0)
         
-
         #puts them together
         self.delta_c_bounds = (delta_a_bound, delta_e_bound, delta_r_bound, delta_t_forward_bound)
 
+        #defines the bounds for the vertical thrusters
+        delta_t_vertical_1_bound = (0.0, 1.0)
+        delta_t_vertical_2_bound = (0.0, 1.0)
+        delta_t_vertical_3_bound = (0.0, 1.0)
+        delta_t_vertical_4_bound = (0.0, 1.0)
+
+        #puts these together
+        self.delta_t_bounds = (delta_t_vertical_1_bound, delta_t_vertical_2_bound, delta_t_vertical_3_bound, delta_t_vertical_4_bound)
+
+
+        #creates the state message
+        self.state = MsgState()
+
         #creates the initial guess for the delta c portion
         self.x0_delta_c = (0.0, 0.0, 0.0, 0.5)
+
+        #stores the delta c star
+        self.delta_c_star_array = np.array((4,1))
+
+        #creates the initial guess for the delta r portion
+        self.x0_delta_r = (0.5, 0.5, 0.5, 0.5)
 
 
 
@@ -99,7 +117,9 @@ class LowLevelControl:
                      state: MsgState, #Quad state
                      sigma: float=None): #mixing parameter
         
-        
+        #stores the state
+        self.state = state
+
         #gets the tau desired vector from the omega desired input and the actual omega
         tau_d = np.array([
             [self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
@@ -111,12 +131,35 @@ class LowLevelControl:
         self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
 
 
+        #gets delta c star
+        self.delta_c_star_array = spo.minimize(fun=self.getWrenchSESurfaces, x0=self.x0_delta_c, method='Nelder-Mead', bounds=self.delta_c_bounds)
+
+
+        #gets the full delta which minimizes error given a desired wrench,
+        #as a length 8 array
+        deltaOutputArray = spo.minimize(fun=self.getWrenchSERotors, x0=self.x0_delta_r, method='Nelder-Mead', bounds=self.delta_t_bounds)
+
+        #converts that array into a delta message
+        deltaOutput = MsgDelta(elevator=deltaOutputArray[0],
+                               aileron=deltaOutputArray[1],
+                               rudder=deltaOutputArray[2],
+                               forwardThrottle=deltaOutputArray[3],
+                               verticalThrottle_1=deltaOutputArray[4],
+                               verticalThrottle_2=deltaOutputArray[5],
+                               verticalThrottle_3=deltaOutputArray[6],
+                               verticalThrottle_4=deltaOutputArray[7])
+        
+        #returns the delta output
+        return deltaOutput
+
+
+
 
 
     #creates function that gets the wrench squared error based on the
     #standard plane model, with just the control surfaces and the 
     #forward oriented throttle
-    def getWrenchSESurfaces(self, delta_c_array, state: MsgState):
+    def getWrenchSESurfaces(self, delta_c_array):
 
         #takes the delta array and converts it into a delta message
         deltaMessage = MsgDelta(elevator=delta_c_array[0],
@@ -125,7 +168,7 @@ class LowLevelControl:
                                 forwardThrottle=delta_c_array[3])
         
         #gets the calculated wrench
-        calculatedWrench = self.getForcesTorques(state=state, delta=deltaMessage)
+        calculatedWrench = self.getForcesTorques(state=self.state, delta=deltaMessage)
 
         #gets the wrench error
         wrenchError = self.wrenchDesired - calculatedWrench
@@ -136,18 +179,17 @@ class LowLevelControl:
         #returns the Mean squared error
         return MSError
     
-
     #creates a function that gets the wrench squared error based on the
     #quadrotors
-    def getWrenchSERotors(self, delta_r_array, delta_c_star: MsgDelta, state: MsgState):
+    def getWrenchSERotors(self, delta_r_array):
 
         #takes the delta array and converts it into a delta message
         #all the while saving the delta_c_star, which has already been calculated 
         #for this particular iteration
-        deltaMessage = MsgDelta(elevator=delta_c_star.elevator,
-                                aileron=delta_c_star.aileron,
-                                rudder=delta_c_star.rudder,
-                                forwardThrottle=delta_c_star.forwardThrottle,
+        deltaMessage = MsgDelta(elevator=(self.delta_c_star_array)[0],
+                                aileron=(self.delta_c_star_array)[0],
+                                rudder=(self.delta_c_star_array)[0],
+                                forwardThrottle=(self.delta_c_star_array)[0],
                                 verticalThrottle_1=delta_r_array[0],
                                 verticalThrottle_2=delta_r_array[1],
                                 verticalThrottle_3=delta_r_array[2],
@@ -155,7 +197,7 @@ class LowLevelControl:
         
 
         #gets the calculated wrench
-        calculatedWrench = self.getForcesTorques(state=state, delta=deltaMessage)
+        calculatedWrench = self.getForcesTorques(state=self.state, delta=deltaMessage)
 
         #gets the wrench error
         wrenchError = self.wrenchDesired - calculatedWrench
