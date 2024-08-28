@@ -8,7 +8,7 @@ import pyqtgraph as pg
 from viewers.vtol.vtol_viewer import VtolViewer
 from viewers.vtol.data_viewer import DataViewer
 #from viewers.sensor_viewer import SensorViewer
-import parameters.simulation_parameters as SIM
+import parameters.vtol.simulation_parameters as SIM
 from message_types.msg_state import MsgState
 from message_types.msg_sensors import MsgSensors
 from message_types.msg_delta import MsgDelta

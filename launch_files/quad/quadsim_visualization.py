@@ -14,7 +14,7 @@ from viewers.quad.quad_viewer import QuadViewer
 
 
 from tools.rotations import euler_to_rotation
-import parameters.simulation_parameters as SIM
+import parameters.quad.simulation_parameters as SIM
 from message_types.msg_state import MsgState
 
 

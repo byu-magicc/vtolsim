@@ -6,8 +6,8 @@ differential_flatness.py
 import numpy as np
 from tools.rotations import euler_to_rotation, euler_to_quaternion
 from tools.quaternions import q_rotate, q_conj
-import parameters.convergence_parameters as VTOL
-import parameters.differential_flatness_parameters as DF
+import parameters.vtol.convergence_parameters as VTOL
+import parameters.vtol.differential_flatness_parameters as DF
 
 
 class DifferentialFlatness:

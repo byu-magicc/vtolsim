@@ -8,8 +8,8 @@ vtolDynamics
         3/12/2024 - RWBeard
 """
 import numpy as np
-import parameters.convergence_parameters as VTOL
-import parameters.sensor_parameters as SENSOR
+import parameters.vtol.convergence_parameters as VTOL
+import parameters.vtol.sensor_parameters as SENSOR
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler, euler_to_rotation
 from tools.quaternions import *
 from message_types.msg_convert import *

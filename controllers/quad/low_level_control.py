@@ -6,16 +6,22 @@ from controllers.quad.pid_control import PControl
 from message_types.quad.msg_delta import MsgDelta
 #imports the state message
 from message_types.quad.msg_state import MsgState
-import parameters.control_allocation_parameters as CP
+
 import math
 
-import parameters.simulation_parameters as SIM
+import parameters.quad.simulation_parameters as SIM
 
 import parameters.quad.anaconda_parameters as QUAD
 
 from tools.rotations import quaternion_to_rotation
 
 import scipy.optimize as spo
+
+#instantiates the dynamics for the quadplane
+from models.quad.quad_dynamics import QuadDynamics
+
+#saves the trim
+from models.quad.trimValues import trimDelta
 
 
 #creates the Low Level Control class
@@ -26,6 +32,10 @@ class LowLevelControl:
                  M: float=0.5,
                  Va0: float=0.0,
                  ts: float=0.01):
+        
+
+        #creates an instance of the Quad dynamics for the control piece
+        self.quad = QuadDynamics(ts=SIM.ts_control)
         
         # control gains: p-channel
         p_kp = 0.15
@@ -48,17 +58,47 @@ class LowLevelControl:
         self.p_ctrl = PControl(kp=p_kp, Ts=self.Ts)
         self.q_ctrl = PControl(kp=q_kp, Ts=self.Ts)
         self.r_ctrl = PControl(kp=r_kp, Ts=self.Ts)
-        self.mixer = CP.mixer
         #self.output = MsgControls()
         self.output = MsgDelta()
-        self.limits = CP.limits
         self.alpha = 0.99
+
+
+        #saves the weights for the mixing matrix to mix the forces and torques for the error
+        Fx_bar = 100.0
+        Fy_bar = 100.0
+        Fz_bar = 100.0
+        Mx_bar = 50.0
+        My_bar = 50.0
+        Mz_bar = 50.0
+
+        #creates the weighting matrix
+        self.weightingMatrix = np.diag([1/Fx_bar, 1/Fy_bar, 1/Fz_bar, 1/Mx_bar, 1/My_bar, 1/Mz_bar])
+
+
+        #creates the desired wrench vector
+        self.wrenchDesired = np.ndarray((6,1))
+
+        #defines the delta_a, e, and r and t forward bounds
+        delta_a_bound = (-1.0, 1.0)
+        delta_e_bound = (-1.0, 1.0)
+        delta_r_bound = (-1.0, 1.0)
+        delta_t_forward_bound = (0.0, 1.0)
+        
+
+        #puts them together
+        self.delta_c_bounds = (delta_a_bound, delta_e_bound, delta_r_bound, delta_t_forward_bound)
+
+        #creates the initial guess for the delta c portion
+        self.x0_delta_c = (0.0, 0.0, 0.0, 0.5)
+
+
 
     #creates the update function
     def update(self, f_d: np.ndarray,#desired force 2x1 vector
                      omega_d: np.ndarray, #desired angular velocity 3x1 vector
                      state: MsgState, #Quad state
                      sigma: float=None): #mixing parameter
+        
         
         #gets the tau desired vector from the omega desired input and the actual omega
         tau_d = np.array([
@@ -68,19 +108,63 @@ class LowLevelControl:
         ])
 
         #gets the wrench desired, which is the generalized version of forces and torques
-        Wrench_D = np.clongdouble((f_d, tau_d), axis=0)
+        self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
 
 
 
-        #defines the delta_a, e, and r bounds
-        delta_a_bound = (-1.0, 1.0)
-        delta_e_bound = (-1.0, 1.0)
-        delta_r_bound = (-1.0, 1.0)
+
+    #creates function that gets the wrench squared error based on the
+    #standard plane model, with just the control surfaces and the 
+    #forward oriented throttle
+    def getWrenchSESurfaces(self, delta_c_array, state: MsgState):
+
+        #takes the delta array and converts it into a delta message
+        deltaMessage = MsgDelta(elevator=delta_c_array[0],
+                                aileron=delta_c_array[1],
+                                rudder=delta_c_array[2],
+                                forwardThrottle=delta_c_array[3])
+        
+        #gets the calculated wrench
+        calculatedWrench = self.getForcesTorques(state=state, delta=deltaMessage)
+
+        #gets the wrench error
+        wrenchError = self.wrenchDesired - calculatedWrench
+
+        #gets the mean squared error using the weighting matrix
+        MSError = (wrenchError.T @ self.weightingMatrix @ wrenchError)[0][0]
+
+        #returns the Mean squared error
+        return MSError
+    
+
+    #creates a function that gets the wrench squared error based on the
+    #quadrotors
+    def getWrenchSERotors(self, delta_r_array, delta_c_star: MsgDelta, state: MsgState):
+
+        #takes the delta array and converts it into a delta message
+        #all the while saving the delta_c_star, which has already been calculated 
+        #for this particular iteration
+        deltaMessage = MsgDelta(elevator=delta_c_star.elevator,
+                                aileron=delta_c_star.aileron,
+                                rudder=delta_c_star.rudder,
+                                forwardThrottle=delta_c_star.forwardThrottle,
+                                verticalThrottle_1=delta_r_array[0],
+                                verticalThrottle_2=delta_r_array[1],
+                                verticalThrottle_3=delta_r_array[2],
+                                verticalThrottle_4=delta_r_array[3])
         
 
-        #puts them together
-        delta_c_bounds = (delta_a_bound, delta_e_bound, delta_r_bound)
+        #gets the calculated wrench
+        calculatedWrench = self.getForcesTorques(state=state, delta=deltaMessage)
 
+        #gets the wrench error
+        wrenchError = self.wrenchDesired - calculatedWrench
+
+        #gets the mean squared error using the weighting matrix
+        MSError = (wrenchError.T @ self.weightingMatrix @ wrenchError)[0][0]
+
+        #returns the Mean squared error
+        return MSError
 
 
     #creates function to get the forces and torques

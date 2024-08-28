@@ -1,55 +1,31 @@
+#creates the two seperate lqr controllers. I am going to do two things as preliminaries to making the 
+#whole simulation thing run. In this case, I am going to create two LQR controllers, one for VTOL and
+#one for the standard plane. I first want to get the simulation running on each of them individually
+#before I start building the rest of the controller
+
 import numpy as np
-import scipy
-from message_types.msg_convert import *
-from controllers.quad.lqr.lqr_dynamics import es_jacobians
-from tools.quaternions import state_boxMinus, state_boxPlus
+from scipy.linalg import solve_continuous_are, inv
+from tools.transfer_function import TransferFunction
+import parameters.quad.fixed_wing_lqr_parameters as AP
 
+#creates the autopilot for the standard plane configuration 
+class LQR_Autopilot_Fixed_Wing:
 
-
-#creates the Lqr control class
-class LqrControl:
-
-    #creates the initialization fnction
-    def __init__(self, Ts):
-        self.Ts = Ts
-
-        #saves the number of actuators
-        numActuators = 8
-        #stores the previous input
-        self.u_prev = np.zeros((numActuators, 1))
-        #saves the alpha
-        self.alpha = 0.5
-        #saves the epsilon
-        self.epsilon = 0.001
-
-        #creates the Q matrix
-        self.Q = np.diag([1/10.0, # north position
-                          1/10.0, # east position
-                          1/10.0, # down position
-                          1/10.0, # x body velocity
-                          1/10.0, # y body velocity
-                          1/10.0, # z body velocity
-                          2.0,    # q_tilde 0
-                          2.0,    # q_tilde 1
-                          2.0])   # q_tilde 2
+    #creates the initialization function
+    def __init__(self, ts_control):
+        #saves the time sample
+        self.Ts = ts_control
+        self.yaw_damper = TransferFunction(
+                        num=np.array([[AP.yaw_damper_kr, 0]]),
+                        den=np.array([[1, AP.yaw_damper_p_wo]]),
+                        Ts=ts_control)
         
-        #creates the R matrix
-        self.R = np.diag([1.0,
-                          1.0,
-                          1.0,
-                          1.0,
-                          1.0,
-                          1.0,
-                          1.0,
-                          1.0])
-        
-    #creates the update function
-    def update(self, x, x_desired, u_desired, df_traj):
+        #creates the integrators for error for this system
+        self.courseErrorIntegrator = 0.0
+        self.altitudeErrorIntegrator = 0.0
+        self.airspeedErrorIntegrator = 0.0
+        self.errorCourseD1 = 0.0
+        self.errorAltitudeD1 = 0.0
+        self.errorAirspeedD1 = 0.0
 
-        #gets the error for the state
-        x_tilde = state_boxMinus(x_desired, x)
-
-        #gets the u_tilde
-        u_tilde = u_desired - self.u_prev
-
-        
+                

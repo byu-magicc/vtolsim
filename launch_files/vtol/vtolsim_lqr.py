@@ -11,8 +11,8 @@ import os, sys
 from pathlib import Path
 sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
-import parameters.simulation_parameters as SIM
-import parameters.spline_parameters as SPLP
+import parameters.vtol.simulation_parameters as SIM
+import parameters.vtol.spline_parameters as SPLP
 from message_types.msg_convert import *
 from models.vtol.vtol_dynamics import VtolDynamics
 from controllers.vtol.lqr.lqr_control import LqrControl

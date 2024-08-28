@@ -34,6 +34,7 @@ class LqrControl:
             150., # r
         ])
 
+
     def update(self, x, x_des, u_des, df_traj):
         """
         Control state = (p, v, q)
@@ -49,6 +50,11 @@ class LqrControl:
         # print("J_u = ", np.sum(J_u), " = ", J_u.T)
         x_tilde[0:2, 0] = np.clip(x_tilde[0:2, 0], -.5, .5)
         # find A and B matrices
+
+        #this update function operates on the principle of linearizing about each
+        #successive point and then doing LQR. However, this approach requires a
+        #very large computational burden. It might be nicer to do the other approach
+        #and provide feedback linearization.
         A, B = es_jacobians(x_tilde, x_des, u_tilde, u_des, df_traj) 
         # find K gain matrix
         K = self.find_K(A, B)
