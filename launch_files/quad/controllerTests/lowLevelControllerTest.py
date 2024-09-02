@@ -12,7 +12,7 @@ import parameters.quad.simulation_parameters as SIM
 from models.quad.quad_dynamics import QuadDynamics
 #imports the low level controller for the Quad,
 #which minimizes the mean squared error
-from controllers.quad.low_level_control import LowLevelControl
+from controllers.quad.low_level_control import LowLevelControl_simultaneousControl
 from message_types.quad.msg_delta import MsgDelta
 from viewers.quad.view_manager import ViewManager
 
@@ -28,7 +28,7 @@ viewers = ViewManager(animation=True, data=True)
 
 
 #instantiates the low level controller
-lowControl = LowLevelControl(M=0.5, Va0=2.0, ts=SIM.ts_simulation)
+lowControl = LowLevelControl_simultaneousControl(M=0.5, Va0=2.0, ts=SIM.ts_simulation)
 
 
 #sets the simulation time
