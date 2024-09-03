@@ -17,6 +17,8 @@ from tools.rotations import quaternion_to_rotation
 
 import scipy.optimize as spo
 
+import copy
+
 #instantiates the dynamics for the quadplane
 from models.quad.quad_dynamics import QuadDynamics
 
@@ -110,14 +112,21 @@ class LowLevelControl_successiveControl:
         #saves the wind
         self.wind = np.array([[0.0], [0.0], [0.0]])
 
+        #saves an instance of the quad dynamics class
+        self.quad = QuadDynamics(ts=ts)
+
 
 
     #creates the update function
     def update(self, f_d: np.ndarray,#desired force 2x1 vector
                      omega_d: np.ndarray, #desired angular velocity 3x1 vector
                      state: MsgState, #Quad state
+                     quad: QuadDynamics,
                      wind: np.ndarray): #the wind in the inertial frame
         
+        #saves a copy of the quad dynamics class being passed in
+        self.quad = copy.copy(quad)
+
         #stores the state
         self.state = state
 
@@ -172,7 +181,7 @@ class LowLevelControl_successiveControl:
                                 forwardThrottle=delta_c_array[3])
         
         #gets the calculated wrench
-        calculatedWrench = self.getForcesTorques(state=self.state, delta=deltaMessage)
+        calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
 
         #gets the wrench error
         wrenchError = self.wrenchDesired - calculatedWrench
@@ -199,9 +208,8 @@ class LowLevelControl_successiveControl:
                                 verticalThrottle_3=delta_r_array[2],
                                 verticalThrottle_4=delta_r_array[3])
         
-
         #gets the calculated wrench
-        calculatedWrench = self.getForcesTorques(state=self.state, delta=deltaMessage)
+        calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
 
         #gets the wrench error
         wrenchError = self.wrenchDesired - calculatedWrench
@@ -295,10 +303,14 @@ class LowLevelControl_simultaneousControl:
                f_d: np.ndarray, #desired force vector
                omega_d: np.ndarray, #desired omega vector
                state: MsgState, #current state
+               quad: QuadDynamics, #the whole quad state and dynamics
                wind: np.ndarray): #current wind conditions
         
         #stores the state in the self variable
         self.state = state
+
+        #stores the quad dynamics copy
+        self.quad = copy.copy(quad)
 
         #stores the wind in the wind vector
         self.wind = wind
@@ -345,7 +357,7 @@ class LowLevelControl_simultaneousControl:
                                 verticalThrottle_4=deltaArray[7])
 
         #gets the calculated wrench
-        calculatedWrench = self.getForcesTorques(state=self.state, delta=deltaMessage)
+        calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
 
         #gets the wrench error
         wrenchError = self.wrenchDesired - calculatedWrench
@@ -356,43 +368,6 @@ class LowLevelControl_simultaneousControl:
         #returns the mean squared error
         return MSError
 
-
-
-        #gets the coefficients for the propeller
-
-        C_Q0 = QUAD.C_Q0
-        C_Q1 = QUAD.C_Q1
-        C_T0 = QUAD.C_T0
-        C_Q2 = QUAD.C_Q2
-        C_T1 = QUAD.C_T1
-        C_T2 = QUAD.C_T2
-        D_prop = QUAD.D_prop
-        KQ = QUAD.KQ
-        R_motor = QUAD.R_motor
-        i0 = QUAD.i0
-
-
-        #gets the voltage in, based on the delta_t
-        V_in = QUAD.V_max * delta_t
-        # Quadratic formula to solve for motor speed
-        a = C_Q0 * QUAD.rho * np.power(D_prop, 5) \
-            / ((2.*np.pi)**2)
-        b = (C_Q1 * QUAD.rho * np.power(D_prop, 4)
-             / (2.*np.pi)) * Va + KQ**2/R_motor
-        c = C_Q2 * QUAD.rho * np.power(D_prop, 3) \
-            * Va**2 - (KQ / R_motor) * V_in + KQ * i0        
-        # Consider only positive root
-        Omega_op = (-b + np.sqrt(b**2 - 4*a*c)) / (2.*a)
-        # compute advance ratio
-        J_op = 2 * np.pi * Va / (Omega_op * D_prop)
-        # compute non-dimensionalized coefficients of thrust and torque
-        C_T = C_T2 * J_op**2 + C_T1 * J_op + C_T0
-        C_Q = C_Q2 * J_op**2 + C_Q1 * J_op + C_Q0
-        # add thrust and torque due to propeller
-        n = Omega_op / (2 * np.pi)
-        T_p = QUAD.rho * n**2 * np.power(D_prop, 4) * C_T
-        Q_p = QUAD.rho * n**2 * np.power(D_prop, 5) * C_Q
-        return T_p, Q_p
 
         
 

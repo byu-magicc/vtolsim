@@ -190,8 +190,6 @@ class QuadDynamics:
             self._t_gps += self._ts
         return self._sensors
 
-
-
     ###################################
     # private functions
     def _derivatives(self, 
