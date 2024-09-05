@@ -6,7 +6,7 @@
 import numpy as np
 import parameters.quad.anaconda_parameters as QUAD
 import parameters.quad.sensor_parameters as SENSOR
-from tools.rotations import quaternion_to_rotation, quaternion_to_euler, euler_to_rotation
+from tools.rotations import quaternion_to_rotation, quaternion_to_euler, euler_to_rotation, rotation_to_quaternion
 from tools.quaternions import *
 from message_types.quad.msg_state import MsgState
 from message_types.quad.msg_sensors import MsgSensors
@@ -115,6 +115,8 @@ class QuadDynamics:
         self._update_velocity_data(wind)
         # update the message class for the true state
         self._update_true_state()
+
+        return forces_moments
 
 
     #creates the sensors function
@@ -384,6 +386,7 @@ class QuadDynamics:
         )
         
 
+
         #############################################################################################################
         #Forces and moments from the forward prop
 
@@ -515,6 +518,15 @@ class QuadDynamics:
 
         #############################################################################################################
 
+        #############################################################################################################
+        #induced drag section
+        #######TODO##############
+        #need to add all of the induced drag stuff here
+
+
+        #############################################################################################################
+
+
         #returns the forces
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
 
@@ -575,4 +587,15 @@ class QuadDynamics:
         self.true_state.alpha = self._alpha
         self.true_state.beta = self._beta
         self.true_state.Vg = self._Vg
-        self.true_state.chi = self._chi  
+        self.true_state.chi = self._chi
+
+    #function to set initial conditions for the state
+    def setInitialConditions(self, initialTrueState: MsgState):
+
+        self._state[0:3] = initialTrueState.pos
+        self._state[3:6] = initialTrueState.vel
+        self._state[6:10] = rotation_to_quaternion(initialTrueState.R)
+        self._state[10:13] = initialTrueState.omega
+
+        self.true_state = initialTrueState
+

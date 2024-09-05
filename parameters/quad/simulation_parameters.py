@@ -5,7 +5,7 @@ import numpy as np
 ######################################################################################
 ts_simulation = 0.01  # smallest time step for simulation
 start_time = 0.0  # start time for simulation
-end_time = 1.0
+end_time = 100.0
 
 ts_plot_refresh = 0.1  # seconds between each plot update
 ts_plot_record_data = 0.1 # seconds between each time data is recorded for plots

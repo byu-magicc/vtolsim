@@ -15,7 +15,7 @@ from viewers.quad.quad_viewer import QuadViewer
 
 from tools.rotations import euler_to_rotation
 import parameters.quad.simulation_parameters as SIM
-from message_types.msg_state import MsgState
+from message_types.quad.msg_state import MsgState
 
 
 # initialize messages
@@ -32,28 +32,16 @@ sim_time = SIM.start_time
 psi = 0
 theta = 0
 phi = 0
-end_time = 400000
+end_time = 1000.0
 
 
 # main simulation loop
 while sim_time < end_time:
     # -------vary states to check viewer-------------
     if sim_time < end_time:
-        state.pos[0] += 0*SIM.ts_simulation
-    elif sim_time < 2*end_time/8:
-        state.pos[1] += 10*SIM.ts_simulation
-    elif sim_time < 3*end_time/8:
-        state.pos[2] -= 10*SIM.ts_simulation
-    elif sim_time < 4*end_time/8:
-        psi += 0.01*SIM.ts_simulation
-    elif sim_time < 5*end_time/8:
-        theta += 0.01*SIM.ts_simulation
-    elif sim_time < 6*end_time/8:
-        phi += 0.01*SIM.ts_simulation
-    elif sim_time < 7*end_time/8:
-        state.motor_angle[0,0] += 0.01*SIM.ts_simulation  # right motor
-    else:
-        state.motor_angle[1,0] += 0.01*SIM.ts_simulation  # left motor
+        state.pos[2] += -0.25*SIM.ts_simulation
+    elif sim_time < 2*end_time/6:
+        state.pos[1] += 1*SIM.ts_simulation
     state.R = euler_to_rotation(phi, theta, psi)
 
     # -------update viewer and video-------------
