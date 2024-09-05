@@ -6,7 +6,7 @@
 import numpy as np
 import parameters.quad.anaconda_parameters as QUAD
 import parameters.quad.sensor_parameters as SENSOR
-from tools.rotations import quaternion_to_rotation, quaternion_to_euler, euler_to_rotation
+from tools.rotations import quaternion_to_rotation, quaternion_to_euler, euler_to_rotation, rotation_to_quaternion
 from tools.quaternions import *
 from message_types.quad.msg_state import MsgState
 from message_types.quad.msg_sensors import MsgSensors
@@ -70,6 +70,25 @@ class QuadDynamics:
         self._t_gps = 999.  # large value ensures gps updates at initial time.
 
 
+        #defines the directions of the propellers. We use a right hand rule, which means:
+        # +1 : COUNTER Clockwise Rotation
+        # -1 : Clockwise Rotation
+
+        #defines the rotations
+        #counterclockwise for the forward prop
+        self.forwardThrust_direction = 1
+
+        #counterclockwise for vertical thruster 1 (Port Front)
+        self.verticalThrust_1_direction = 1
+        #clockwise for vertical thruster 2 (Port Rear)
+        self.verticalThrust_2_direction = -1
+        #counterclockwise for vertical thruster 3 (Starboard Rear)
+        self.verticalThrust_3_direction = 1
+        #clockwise for vertical thruster 4 (Starboard Front)
+        self.verticalThrust_4_direction = -1
+
+        self.printerCounter = 0
+
     #creates the update function for the system
     def update(self, delta: MsgDelta, wind: np.ndarray):
 
@@ -96,6 +115,8 @@ class QuadDynamics:
         self._update_velocity_data(wind)
         # update the message class for the true state
         self._update_true_state()
+
+        return forces_moments
 
 
     #creates the sensors function
@@ -170,8 +191,6 @@ class QuadDynamics:
         else:
             self._t_gps += self._ts
         return self._sensors
-
-
 
     ###################################
     # private functions
@@ -274,7 +293,6 @@ class QuadDynamics:
 
 
 
-
     #creates the forces moments function
     def _forces_moments(self, delta: MsgDelta)->np.ndarray:
 
@@ -367,6 +385,7 @@ class QuadDynamics:
         )
         
 
+
         #############################################################################################################
         #Forces and moments from the forward prop
 
@@ -384,7 +403,8 @@ class QuadDynamics:
         ##############################*******************************************************************************************
         #I may need to change this to account for the direction of the prop rotation
         #I am currently choosing it to rotate clockwise, when at the back, looking to the front of the airplane
-        Moment_Forward = Prop_Moment_Forward*np.array([[1.0],[0.0],[0.0]]) + np.cross(QUAD.forward_rotor_pos.T, Force_Forward.T).T
+        Moment_Forward = self.forwardThrust_direction*Prop_Moment_Forward*np.array([[1.0],[0.0],[0.0]])\
+                         + np.cross(QUAD.forward_rotor_pos.T, Force_Forward.T).T
 
         #adds each component to the whole forces and moment variables
         fx += Force_Forward.item(0)
@@ -394,31 +414,6 @@ class QuadDynamics:
         Mx += Moment_Forward.item(0)
         My += Moment_Forward.item(1)
         Mz += Moment_Forward.item(2)
-        #############################################################################################################
-
-
-
-        #############################################################################################################
-        #Forces and moments from the rear port propeller
-        Va_rear_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
-
-        #gets the thrust and the moment from the rear port propeller
-        Thrust_RearPort, Prop_Moment_RearPort = self._motor_thrust_torque(Va_rear_port_prop, delta.verticalThrottle_1)
-
-        #gets the RearPort Force
-        Force_RearPort = Thrust_RearPort*np.array([[0.0],[0.0],[-1.0]])
-
-        #gets the rear port moment
-        Moment_RearPort = Prop_Moment_RearPort*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_1_pos.T, Force_RearPort.T).T
-
-        #adds each component to the whole forces and moment variables
-        fx += Force_RearPort.item(0)
-        fy += Force_RearPort.item(1)
-        fz += Force_RearPort.item(2)
-
-        Mx += Moment_RearPort.item(0)
-        My += Moment_RearPort.item(1)
-        Mz += Moment_RearPort.item(2)
         #############################################################################################################
 
         #############################################################################################################
@@ -432,7 +427,8 @@ class QuadDynamics:
         Force_FrontPort = Thrust_FrontPort*np.array([[0.0],[0.0],[-1.0]])
 
         #gets the rear port moment
-        Moment_FrontPort = Prop_Moment_FrontPort*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_2_pos.T, Force_FrontPort.T).T
+        Moment_FrontPort = self.verticalThrust_1_direction*Prop_Moment_FrontPort*np.array([[0.0],[0.0],[-1.0]]) \
+                           + np.cross(QUAD.vertical_rotor_2_pos.T, Force_FrontPort.T).T
 
         #adds each component to the whole forces and moment variables
         fx += Force_FrontPort.item(0)
@@ -446,27 +442,27 @@ class QuadDynamics:
         #############################################################################################################
 
         #############################################################################################################
-        #Forces and moments from the front starboard propeller
-        Va_front_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+        #Forces and moments from the rear port propeller
+        Va_rear_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
 
         #gets the thrust and the moment from the rear port propeller
-        Thrust_FrontStarboard, Prop_Moment_FrontStarboard = self._motor_thrust_torque(Va_front_starboard_prop, delta.verticalThrottle_3)
+        Thrust_RearPort, Prop_Moment_RearPort = self._motor_thrust_torque(Va_rear_port_prop, delta.verticalThrottle_1)
 
-        #gets the RearStarboard Force
-        Force_FrontStarboard = Thrust_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])
+        #gets the RearPort Force
+        Force_RearPort = Thrust_RearPort*np.array([[0.0],[0.0],[-1.0]])
 
-        #gets the rear starboard moment
-        Moment_FrontStarboard = Prop_Moment_FrontStarboard*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_3_pos.T, Force_FrontStarboard.T).T
+        #gets the rear port moment
+        Moment_RearPort = self.verticalThrust_2_direction*Prop_Moment_RearPort*np.array([[0.0],[0.0],[-1.0]]) \
+                          + np.cross(QUAD.vertical_rotor_1_pos.T, Force_RearPort.T).T
 
         #adds each component to the whole forces and moment variables
-        fx += Force_FrontStarboard.item(0)
-        fy += Force_FrontStarboard.item(1)
-        fz += Force_FrontStarboard.item(2)
+        fx += Force_RearPort.item(0)
+        fy += Force_RearPort.item(1)
+        fz += Force_RearPort.item(2)
 
-        Mx += Moment_FrontStarboard.item(0)
-        My += Moment_FrontStarboard.item(1)
-        Mz += Moment_FrontStarboard.item(2)
-
+        Mx += Moment_RearPort.item(0)
+        My += Moment_RearPort.item(1)
+        Mz += Moment_RearPort.item(2)
         #############################################################################################################
 
         #############################################################################################################
@@ -482,7 +478,8 @@ class QuadDynamics:
         Force_RearStarboard = Thrust_RearStarboard*np.array([[0.0],[0.0],[-1.0]])
 
         #gets the rear starboard moment
-        Moment_RearStarboard = Prop_Moment_RearStarboard*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_4_pos.T, Force_RearStarboard.T).T
+        Moment_RearStarboard = self.verticalThrust_3_direction*Prop_Moment_RearStarboard*np.array([[0.0],[0.0],[-1.0]]) \
+                               + np.cross(QUAD.vertical_rotor_4_pos.T, Force_RearStarboard.T).T
 
         #adds each component to the whole forces and moment variables
         fx += Force_RearStarboard.item(0)
@@ -495,6 +492,44 @@ class QuadDynamics:
 
         #############################################################################################################
 
+        #############################################################################################################
+        #Forces and moments from the front starboard propeller
+        Va_front_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+
+        #gets the thrust and the moment from the rear port propeller
+        Thrust_FrontStarboard, Prop_Moment_FrontStarboard = self._motor_thrust_torque(Va_front_starboard_prop, delta.verticalThrottle_3)
+
+        #gets the RearStarboard Force
+        Force_FrontStarboard = Thrust_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])
+
+        #gets the rear starboard moment
+        Moment_FrontStarboard = self.verticalThrust_4_direction*Prop_Moment_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])\
+                                 + np.cross(QUAD.vertical_rotor_3_pos.T, Force_FrontStarboard.T).T
+
+        #adds each component to the whole forces and moment variables
+        fx += Force_FrontStarboard.item(0)
+        fy += Force_FrontStarboard.item(1)
+        fz += Force_FrontStarboard.item(2)
+
+        Mx += Moment_FrontStarboard.item(0)
+        My += Moment_FrontStarboard.item(1)
+        Mz += Moment_FrontStarboard.item(2)
+
+        #############################################################################################################
+
+        #############################################################################################################
+        #induced drag section
+        #######TODO##############
+        #need to add all of the induced drag stuff here
+
+
+        #############################################################################################################
+
+        if self.printerCounter % 100 == 0:
+            thrust = Thrust_Forward
+            a=0
+
+        self.printerCounter += 1
         #returns the forces
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
 
@@ -555,4 +590,15 @@ class QuadDynamics:
         self.true_state.alpha = self._alpha
         self.true_state.beta = self._beta
         self.true_state.Vg = self._Vg
-        self.true_state.chi = self._chi  
+        self.true_state.chi = self._chi
+
+    #function to set initial conditions for the state
+    def setInitialConditions(self, initialTrueState: MsgState):
+
+        self._state[0:3] = initialTrueState.pos
+        self._state[3:6] = initialTrueState.vel
+        self._state[6:10] = rotation_to_quaternion(initialTrueState.R)
+        self._state[10:13] = initialTrueState.omega
+
+        self.true_state = initialTrueState
+

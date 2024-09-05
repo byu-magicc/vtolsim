@@ -12,7 +12,7 @@ from scipy.linalg import expm
 from tools.rotations import quaternion_to_euler, quaternion_to_rotation, vee, hat
 import parameters.quad.geometric_control_parameters as GEOM
 from controllers.quad.geometric_control.optimal_pitch import compute_thrust, find_pitch_thrust, find_thrust_from_theta
-from controllers.quad.low_level_control import LowLevelControl
+from controllers.quad.low_level_control import LowLevelControl_successiveControl
 
 
 
@@ -32,7 +32,7 @@ class GeometricController:
         self.theta_opt_prev = None
         self.theta_cmd_prev = theta_0
         #initialize low-level controllers
-        self.low_ctrl = LowLevelControl(
+        self.low_ctrl = LowLevelControl_successiveControl(
             M=0.5, 
             Va0=0.0, 
             ts=time_step)

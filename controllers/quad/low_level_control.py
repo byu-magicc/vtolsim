@@ -17,6 +17,8 @@ from tools.rotations import quaternion_to_rotation
 
 import scipy.optimize as spo
 
+import copy
+
 #instantiates the dynamics for the quadplane
 from models.quad.quad_dynamics import QuadDynamics
 
@@ -24,8 +26,9 @@ from models.quad.quad_dynamics import QuadDynamics
 from models.quad.trimValues import trimDelta
 
 
-#creates the Low Level Control class
-class LowLevelControl:
+#creates the Low Level Control class for successive control, which
+#FIRST finds the delta_c* and SECOND finds the delta_t*
+class LowLevelControl_successiveControl:
 
     #creates the initialization function
     def __init__(self,
@@ -37,18 +40,18 @@ class LowLevelControl:
         #creates an instance of the Quad dynamics for the control piece
         self.quad = QuadDynamics(ts=SIM.ts_control)
         
+        #creates the state message
+        self.state = MsgState()
+
         # control gains: p-channel
         p_kp = 0.15
-        p_ki = 0.03
-        p_kd = 0.00
+
         # control gains: q-channel
         q_kp = 0.08
-        q_ki = 0.03
-        q_kd = 0.0
+
         # control gains: r-channel
         r_kp = 0.1
-        r_ki = 0.03
-        r_kd = 0.01
+
         self.M = M
         self.Va0 = Va0
 
@@ -96,10 +99,6 @@ class LowLevelControl:
         #puts these together
         self.delta_t_bounds = (delta_t_vertical_1_bound, delta_t_vertical_2_bound, delta_t_vertical_3_bound, delta_t_vertical_4_bound)
 
-
-        #creates the state message
-        self.state = MsgState()
-
         #creates the initial guess for the delta c portion
         self.x0_delta_c = (0.0, 0.0, 0.0, 0.5)
 
@@ -107,19 +106,22 @@ class LowLevelControl:
         self.delta_c_star_array = np.array((4,1))
 
         #creates the initial guess for the delta r portion
-        self.x0_delta_r = (0.5, 0.5, 0.5, 0.5)
+        self.x0_delta_t = (0.5, 0.5, 0.5, 0.5)
 
         #saves the wind
         self.wind = np.array([[0.0], [0.0], [0.0]])
-
 
 
     #creates the update function
     def update(self, f_d: np.ndarray,#desired force 2x1 vector
                      omega_d: np.ndarray, #desired angular velocity 3x1 vector
                      state: MsgState, #Quad state
+                     quad: QuadDynamics,
                      wind: np.ndarray): #the wind in the inertial frame
         
+        #saves a copy of the quad dynamics class being passed in
+        self.quad = copy.copy(quad)
+
         #stores the state
         self.state = state
 
@@ -144,19 +146,19 @@ class LowLevelControl:
 
         #gets the full delta which minimizes error given a desired wrench,
         #as a length 8 array
-        delta_t_solution = spo.minimize(fun=self.getWrenchSERotors, x0=self.x0_delta_r, method='Nelder-Mead', bounds=self.delta_t_bounds)
+        delta_t_solution = spo.minimize(fun=self.getWrenchSERotors, x0=self.x0_delta_t, method='Nelder-Mead', bounds=self.delta_t_bounds)
 
-        delta_r_star_array = delta_t_solution.x
+        delta_t_star_array = delta_t_solution.x
 
         #converts that array into a delta message
         deltaOutput = MsgDelta(elevator=self.delta_c_star_array[0],
                                aileron=self.delta_c_star_array[1],
                                rudder=self.delta_c_star_array[2],
                                forwardThrottle=self.delta_c_star_array[3],
-                               verticalThrottle_1=delta_r_star_array[0],
-                               verticalThrottle_2=delta_r_star_array[1],
-                               verticalThrottle_3=delta_r_star_array[2],
-                               verticalThrottle_4=delta_r_star_array[3])
+                               verticalThrottle_1=delta_t_star_array[0],
+                               verticalThrottle_2=delta_t_star_array[1],
+                               verticalThrottle_3=delta_t_star_array[2],
+                               verticalThrottle_4=delta_t_star_array[3])
         
         #returns the delta output
         return deltaOutput
@@ -174,7 +176,7 @@ class LowLevelControl:
                                 forwardThrottle=delta_c_array[3])
         
         #gets the calculated wrench
-        calculatedWrench = self.getForcesTorques(state=self.state, delta=deltaMessage)
+        calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
 
         #gets the wrench error
         wrenchError = self.wrenchDesired - calculatedWrench
@@ -187,9 +189,8 @@ class LowLevelControl:
     
     #creates a function that gets the wrench squared error based on the
     #quadrotors
-    def getWrenchSERotors(self, delta_r_array: np.ndarray):
+    def getWrenchSERotors(self, delta_t_array: np.ndarray):
 
-        a=0
         #takes the delta array and converts it into a delta message
         #all the while saving the delta_c_star, which has already been calculated 
         #for this particular iteration
@@ -197,14 +198,13 @@ class LowLevelControl:
                                 aileron=(self.delta_c_star_array)[0],
                                 rudder=(self.delta_c_star_array)[0],
                                 forwardThrottle=(self.delta_c_star_array)[0],
-                                verticalThrottle_1=delta_r_array[0],
-                                verticalThrottle_2=delta_r_array[1],
-                                verticalThrottle_3=delta_r_array[2],
-                                verticalThrottle_4=delta_r_array[3])
+                                verticalThrottle_1=delta_t_array[0],
+                                verticalThrottle_2=delta_t_array[1],
+                                verticalThrottle_3=delta_t_array[2],
+                                verticalThrottle_4=delta_t_array[3])
         
-
         #gets the calculated wrench
-        calculatedWrench = self.getForcesTorques(state=self.state, delta=deltaMessage)
+        calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
 
         #gets the wrench error
         wrenchError = self.wrenchDesired - calculatedWrench
@@ -216,276 +216,403 @@ class LowLevelControl:
         return MSError
 
 
-    #creates function to get the forces and torques
-    def getForcesTorques(self, state: MsgState, delta: MsgDelta)->np.ndarray:
+#creates the unseperated low level control system, 
+# which means we find the delta_c and delta_t at the same time
+class LowLevelControl_simultaneousControl:
 
-
-        #gets the three control surfaces
-        elevator = delta.elevator
-        aileron = delta.aileron
-        rudder = delta.rudder
-
-        #gets the R matrix
-        R = state.R
-
-        #gets p, q, and r
-        p = state.pos.item(0)
-        q = state.pos.item(1)
-        r = state.pos.item(2)
-
-        #gets the gravitational force
-        f_g = QUAD.mass * QUAD.gravity * R.T @ np.array([[0.], [0.], [1.]])
-
-        #gets each portion of the gravitational force
-        fx = f_g.item(0)
-        fy = f_g.item(1)
-        fz = f_g.item(2)
-        #intermediate variables
-        qbar = 0.5 * QUAD.rho * state.Va**2
-        ca = np.cos(state.alpha)
-        sa = np.sin(state.alpha)
-
-        if state.Va > 1:
-            p_nondim = p * QUAD.b / (2 * state.Va)  # nondimensionalize p
-            q_nondim = q * QUAD.c / (2 * state.Va)  # nondimensionalize q
-            r_nondim = r * QUAD.b / (2 * state.Va)  # nondimensionalize r
-        else:
-            p_nondim = 0.0
-            q_nondim = 0.0
-            r_nondim = 0.0
-
-        # compute Lift and Drag coefficients
-        tmp1 = np.exp(-QUAD.M * (state.alpha - QUAD.alpha0))
-        tmp2 = np.exp(QUAD.M * (state.alpha + QUAD.alpha0))
-        sigma = (1 + tmp1 + tmp2) / ((1 + tmp1) * (1 + tmp2))
-
-        CL = (1 - sigma) * (QUAD.C_L_0 + QUAD.C_L_alpha * state.alpha) \
-             + sigma * 2 * np.sign(state.alpha) * sa**2 * ca
-        CD = (1 - sigma) \
-            * (QUAD.C_D_p + \
-               ((QUAD.C_L_0 + QUAD.C_L_alpha * state.alpha)**2)\
-                /(np.pi * QUAD.e * QUAD.AR)) \
-            + sigma * 2 * np.sign(state.alpha) * sa
-
-        # compute Lift and Drag Forces
-        F_lift = qbar * QUAD.S_wing * (CL + QUAD.C_L_q * q_nondim + QUAD.C_L_delta_e * elevator)
-        F_drag = qbar * QUAD.S_wing * (CD + QUAD.C_D_q * q_nondim + QUAD.C_D_delta_e * elevator)
-
-        # compute longitudinal forces in body frame
-        fx += - ca * F_drag + sa * F_lift
-        fz += - sa * F_drag - ca * F_lift
-        # compute lateral forces in body frame
-        fy += qbar * QUAD.S_wing * (
-                  QUAD.C_Y_0
-                + QUAD.C_Y_beta * state.beta
-                + QUAD.C_Y_p * p_nondim
-                + QUAD.C_Y_r * r_nondim
-                + QUAD.C_Y_delta_a * aileron
-                + QUAD.C_Y_delta_r * rudder)
+    #creates the init function
+    def __init__(self,
+                 M: float=0.5,
+                 Va0: float=0.0,
+                 ts: float=0.01):
         
-        # compute logitudinal torque in body frame
-        My = qbar * QUAD.S_wing * QUAD.c * (
-                QUAD.C_m_0
-                + QUAD.C_m_alpha * state.alpha
-                + QUAD.C_m_q * q_nondim
-                + QUAD.C_m_delta_e * elevator
-        )
-        # compute lateral torques in body frame
-        Mx  = qbar * QUAD.S_wing * QUAD.b * (
-                QUAD.C_ell_0
-                + QUAD.C_ell_beta * state.beta
-                + QUAD.C_ell_p * p_nondim
-                + QUAD.C_ell_r * r_nondim
-                + QUAD.C_ell_delta_a * aileron
-                + QUAD.C_ell_delta_r * rudder
-        )
-        Mz = qbar * QUAD.S_wing * QUAD.b * (
-                QUAD.C_n_0 + QUAD.C_n_beta * state.beta
-                + QUAD.C_n_p * p_nondim
-                + QUAD.C_n_r * r_nondim
-                + QUAD.C_n_delta_a * aileron
-                + QUAD.C_n_delta_r * rudder
-        )
+        #creates an instance of the Quad dynamics for the control piece
+        self.quad = QuadDynamics(ts=SIM.ts_control)
+        
+        # control gains: p-channel
+        p_kp = 0.15
+
+        # control gains: q-channel
+        q_kp = 0.08
+
+        # control gains: r-channel
+        r_kp = 0.1
+
+        self.M = M
+        self.Va0 = Va0
+
+        #stores the time sample rate of the simulation parameters
+        self.Ts = SIM.ts_control
+
+        self.p_ctrl = PControl(kp=p_kp, Ts=self.Ts)
+        self.q_ctrl = PControl(kp=q_kp, Ts=self.Ts)
+        self.r_ctrl = PControl(kp=r_kp, Ts=self.Ts)
+        #self.output = MsgControls()
+        self.output = MsgDelta()
+        self.alpha = 0.99
+
+
+        #saves the weights for the mixing matrix to mix the forces and torques for the error
+        Fx_bar = 100.0
+        Fy_bar = 100.0
+        Fz_bar = 100.0
+        Mx_bar = 50.0
+        My_bar = 50.0
+        Mz_bar = 50.0
+
+        #creates the weighting matrix
+        self.weightingMatrix = np.diag([1/Fx_bar, 1/Fy_bar, 1/Fz_bar, 1/Mx_bar, 1/My_bar, 1/Mz_bar])
+
+
+        #creates the desired wrench vector
+        self.wrenchDesired = np.ndarray((6,1))
+
+        #creates the bounds, which are all lumped together in this one
+        #defines the delta_a, e, and r and t forward bounds
+        delta_a_bound = (-1.0, 1.0)
+        delta_e_bound = (-1.0, 1.0)
+        delta_r_bound = (-1.0, 1.0)
+        delta_t_forward_bound = (0.0, 1.0)
+        #defines the bounds for the vertical thrusters
+        delta_t_vertical_1_bound = (0.0, 1.0)
+        delta_t_vertical_2_bound = (0.0, 1.0)
+        delta_t_vertical_3_bound = (0.0, 1.0)
+        delta_t_vertical_4_bound = (0.0, 1.0)
+
+        #puts them together
+        self.delta_bounds = (delta_a_bound, delta_e_bound, delta_r_bound, delta_t_forward_bound,\
+                             delta_t_vertical_1_bound, delta_t_vertical_2_bound, delta_t_vertical_3_bound, delta_t_vertical_4_bound)
+
+        #creates the state message
+        self.state = MsgState()
+
+        #creates the initial guess
+        self.x0_delta = (0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5)
+
+    #creates the update function
+    def update(self,
+               f_d: np.ndarray, #desired force vector
+               omega_d: np.ndarray, #desired omega vector
+               state: MsgState, #current state
+               quad: QuadDynamics, #the whole quad state and dynamics
+               wind: np.ndarray): #current wind conditions
+        
+        #stores the state in the self variable
+        self.state = state
+
+        #stores the quad dynamics copy
+        self.quad = copy.copy(quad)
+
+        #stores the wind in the wind vector
+        self.wind = wind
+
+        #gets the desired torques from the p, q, r controls using proportional control loop
+        tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
+                          [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
+                          [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
         
 
-        #############################################################################################################
-        #Forces and moments from the forward prop
+        #gets the wrench desired by concatenation
+        self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
 
-        #gets the airspeed in all three axes, in the body grame
-        wind = self.wind[0:3]
-        #gets the wind velocity in the body frame
-        wind_body = (state.R).T @ wind
-        #gets the velocity in the body frame
-        velocity_body = state.vel
-        v_air_body = velocity_body - wind_body
+        #gets the delta output
+        delta_solution = spo.minimize(fun=self.getWrench, x0=self.x0_delta, method='Nelder-Mead', bounds=self.delta_bounds)
 
-        #gets the airspeed through the rear, main propulsion propellor
-        Va_forward_prop = np.array([[1.0], [0.0], [0.0]]).T @ v_air_body
+        #gets the delta array
+        deltaArray = delta_solution.x
 
-        #gets the thrust and the moment from the forward prop
-        Thrust_Forward, Prop_Moment_Forward = self._motor_thrust_torque(Va_forward_prop, delta.forwardThrottle)
-
-        #gets the force on the airplane from the forward propeller
-        #In this case, it is in the positive x direction, so we multiply by the unit vector in the direction the thrust is facing
-        Force_Forward = Thrust_Forward * np.array([[1.0], [0.0], [0.0]])
-
-        #gets the moment, which is a little more complicated
-        ##############################*******************************************************************************************
-        #I may need to change this to account for the direction of the prop rotation
-        #I am currently choosing it to rotate clockwise, when at the back, looking to the front of the airplane
-        Moment_Forward = Prop_Moment_Forward*np.array([[1.0],[0.0],[0.0]]) + np.cross(QUAD.forward_rotor_pos.T, Force_Forward.T).T
-
-        #adds each component to the whole forces and moment variables
-        fx += Force_Forward.item(0)
-        fy += Force_Forward.item(1)
-        fz += Force_Forward.item(2)
-
-        Mx += Moment_Forward.item(0)
-        My += Moment_Forward.item(1)
-        Mz += Moment_Forward.item(2)
-        #############################################################################################################
+        #converts that array into a delta message
+        deltaOutput = MsgDelta(elevator=deltaArray[0],
+                               aileron=deltaArray[1],
+                               rudder=deltaArray[2],
+                               forwardThrottle=deltaArray[3],
+                               verticalThrottle_1=deltaArray[4],
+                               verticalThrottle_2=deltaArray[5],
+                               verticalThrottle_3=deltaArray[6],
+                               verticalThrottle_4=deltaArray[7])
+        
+        #returns the delta output array
+        return deltaOutput
 
 
+    #creates the function to get the wrench by modifying the deltas
+    def getWrench(self, deltaArray: np.ndarray):
+        #takes the delta array and creates a delta message class from it
+        deltaMessage = MsgDelta(elevator=deltaArray[0],
+                                aileron=deltaArray[1],
+                                rudder=deltaArray[2],
+                                forwardThrottle=deltaArray[3],
+                                verticalThrottle_1=deltaArray[4],
+                                verticalThrottle_2=deltaArray[5],
+                                verticalThrottle_3=deltaArray[6],
+                                verticalThrottle_4=deltaArray[7])
 
-        #############################################################################################################
-        #Forces and moments from the rear port propeller
-        Va_rear_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ v_air_body
+        #gets the calculated wrench
+        calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
 
-        #gets the thrust and the moment from the rear port propeller
-        Thrust_RearPort, Prop_Moment_RearPort = self._motor_thrust_torque(Va_rear_port_prop, delta.verticalThrottle_1)
+        #gets the wrench error
+        wrenchError = self.wrenchDesired - calculatedWrench
 
-        #gets the RearPort Force
-        Force_RearPort = Thrust_RearPort*np.array([[0.0],[0.0],[-1.0]])
+        #gets the mean squared error using the weighting matrix
+        MSError = (wrenchError.T @ self.weightingMatrix @ wrenchError)[0][0]
 
-        #gets the rear port moment
-        Moment_RearPort = Prop_Moment_RearPort*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_1_pos.T, Force_RearPort.T).T
-
-        #adds each component to the whole forces and moment variables
-        fx += Force_RearPort.item(0)
-        fy += Force_RearPort.item(1)
-        fz += Force_RearPort.item(2)
-
-        Mx += Moment_RearPort.item(0)
-        My += Moment_RearPort.item(1)
-        Mz += Moment_RearPort.item(2)
-        #############################################################################################################
-
-        #############################################################################################################
-        #Forces and moments from the front port propeller
-        Va_front_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ v_air_body
-
-        #gets the thrust and the moment from the rear port propeller
-        Thrust_FrontPort, Prop_Moment_FrontPort = self._motor_thrust_torque(Va_front_port_prop, delta.verticalThrottle_2)
-
-        #gets the RearPort Force
-        Force_FrontPort = Thrust_FrontPort*np.array([[0.0],[0.0],[-1.0]])
-
-        #gets the rear port moment
-        Moment_FrontPort = Prop_Moment_FrontPort*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_2_pos.T, Force_FrontPort.T).T
-
-        #adds each component to the whole forces and moment variables
-        fx += Force_FrontPort.item(0)
-        fy += Force_FrontPort.item(1)
-        fz += Force_FrontPort.item(2)
-
-        Mx += Moment_FrontPort.item(0)
-        My += Moment_FrontPort.item(1)
-        Mz += Moment_FrontPort.item(2)
-
-        #############################################################################################################
-
-        #############################################################################################################
-        #Forces and moments from the front starboard propeller
-        Va_front_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ v_air_body
-
-        #gets the thrust and the moment from the rear port propeller
-        Thrust_FrontStarboard, Prop_Moment_FrontStarboard = self._motor_thrust_torque(Va_front_starboard_prop, delta.verticalThrottle_3)
-
-        #gets the RearStarboard Force
-        Force_FrontStarboard = Thrust_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])
-
-        #gets the rear starboard moment
-        Moment_FrontStarboard = Prop_Moment_FrontStarboard*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_3_pos.T, Force_FrontStarboard.T).T
-
-        #adds each component to the whole forces and moment variables
-        fx += Force_FrontStarboard.item(0)
-        fy += Force_FrontStarboard.item(1)
-        fz += Force_FrontStarboard.item(2)
-
-        Mx += Moment_FrontStarboard.item(0)
-        My += Moment_FrontStarboard.item(1)
-        Mz += Moment_FrontStarboard.item(2)
-
-        #############################################################################################################
-
-        #############################################################################################################
-        #Forces and moments from the rear starboard propeller
-
-        #Forces and moments from the front starboard propeller
-        Va_rear_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ v_air_body
-
-        #gets the thrust and the moment from the rear port propeller
-        Thrust_RearStarboard, Prop_Moment_RearStarboard = self._motor_thrust_torque(Va_rear_starboard_prop, delta.verticalThrottle_4)
-
-        #gets the RearStarboard Force
-        Force_RearStarboard = Thrust_RearStarboard*np.array([[0.0],[0.0],[-1.0]])
-
-        #gets the rear starboard moment
-        Moment_RearStarboard = Prop_Moment_RearStarboard*np.array([[0.0],[0.0],[-1.0]]) + np.cross(QUAD.vertical_rotor_4_pos.T, Force_RearStarboard.T).T
-
-        #adds each component to the whole forces and moment variables
-        fx += Force_RearStarboard.item(0)
-        fy += Force_RearStarboard.item(1)
-        fz += Force_RearStarboard.item(2)
-
-        Mx += Moment_RearStarboard.item(0)
-        My += Moment_RearStarboard.item(1)
-        Mz += Moment_RearStarboard.item(2)
-
-        #############################################################################################################
-
-        #returns the forces
-        return np.array([[fx, fy, fz, Mx, My, Mz]]).T
+        #returns the mean squared error
+        return MSError
 
 
-    #gets the motor thrust and torque
-    def _motor_thrust_torque(self, Va: float, delta_t: float)->tuple[float, float]:
+        
 
 
-        #gets the coefficients for the propeller
+#creates the low level control system for just the vertical delta t's
+class LowLevelControl_vertical:
 
-        C_Q0 = QUAD.C_Q0
-        C_Q1 = QUAD.C_Q1
-        C_T0 = QUAD.C_T0
-        C_Q2 = QUAD.C_Q2
-        C_T1 = QUAD.C_T1
-        C_T2 = QUAD.C_T2
-        D_prop = QUAD.D_prop
-        KQ = QUAD.KQ
-        R_motor = QUAD.R_motor
-        i0 = QUAD.i0
+#creates the initialization function
+    def __init__(self,
+                 M: float=0.5,
+                 Va0: float=0.0,
+                 ts: float=0.01):
+        
+        #creates an instance of the Quad dynamics for the control piece
+        self.quad = QuadDynamics(ts=SIM.ts_control)
+
+        #creates the state message
+        self.state = MsgState()
+        
+        # control gains: p-channel
+        p_kp = 0.15
+
+        # control gains: q-channel
+        q_kp = 0.08
+
+        # control gains: r-channel
+        r_kp = 0.1
+
+        self.M = M
+        self.Va0 = Va0
+
+        #stores the time sample rate of the simulation parameters
+        self.Ts = SIM.ts_control
+
+        self.p_ctrl = PControl(kp=p_kp, Ts=self.Ts)
+        self.q_ctrl = PControl(kp=q_kp, Ts=self.Ts)
+        self.r_ctrl = PControl(kp=r_kp, Ts=self.Ts)
+        #self.output = MsgControls()
+        self.output = MsgDelta()
+        self.alpha = 0.99
+
+        #saves the weights for the mixing matrix to mix the forces and torques for the error
+        Fx_bar = 100.0
+        Fy_bar = 100.0
+        Fz_bar = 100.0
+        Mx_bar = 50.0
+        My_bar = 50.0
+        Mz_bar = 50.0
+
+        #creates the weighting matrix
+        self.weightingMatrix = np.diag([1/Fx_bar, 1/Fy_bar, 1/Fz_bar, 1/Mx_bar, 1/My_bar, 1/Mz_bar])
 
 
-        #gets the voltage in, based on the delta_t
-        V_in = QUAD.V_max * delta_t
-        # Quadratic formula to solve for motor speed
-        a = C_Q0 * QUAD.rho * np.power(D_prop, 5) \
-            / ((2.*np.pi)**2)
-        b = (C_Q1 * QUAD.rho * np.power(D_prop, 4)
-             / (2.*np.pi)) * Va + KQ**2/R_motor
-        c = C_Q2 * QUAD.rho * np.power(D_prop, 3) \
-            * Va**2 - (KQ / R_motor) * V_in + KQ * i0        
-        # Consider only positive root
-        Omega_op = (-b + np.sqrt(b**2 - 4*a*c)) / (2.*a)
-        # compute advance ratio
-        J_op = 2 * np.pi * Va / (Omega_op * D_prop)
-        # compute non-dimensionalized coefficients of thrust and torque
-        C_T = C_T2 * J_op**2 + C_T1 * J_op + C_T0
-        C_Q = C_Q2 * J_op**2 + C_Q1 * J_op + C_Q0
-        # add thrust and torque due to propeller
-        n = Omega_op / (2 * np.pi)
-        T_p = QUAD.rho * n**2 * np.power(D_prop, 4) * C_T
-        Q_p = QUAD.rho * n**2 * np.power(D_prop, 5) * C_Q
-        return T_p, Q_p
+        #creates the desired wrench vector
+        self.wrenchDesired = np.ndarray((6,1))
+
+        #defines the bounds for the vertical thrusters
+        delta_t_vertical_1_bound = (0.0, 1.0)
+        delta_t_vertical_2_bound = (0.0, 1.0)
+        delta_t_vertical_3_bound = (0.0, 1.0)
+        delta_t_vertical_4_bound = (0.0, 1.0)
+
+        #puts these together
+        self.delta_t_bounds = (delta_t_vertical_1_bound, delta_t_vertical_2_bound, delta_t_vertical_3_bound, delta_t_vertical_4_bound)
+
+        #creates the initial guess for the delta r portion
+        self.x0_delta_t = (0.5, 0.5, 0.5, 0.5)
+
+        #saves the wind
+        self.wind = np.array([[0.0], [0.0], [0.0]])
+
+    #creates the update function
+    def update(self, f_d: np.ndarray,#desired force 2x1 vector
+                     omega_d: np.ndarray, #desired angular velocity 3x1 vector
+                     state: MsgState, #Quad state
+                     quad: QuadDynamics,
+                     wind: np.ndarray): #the wind in the inertial frame
+        
+        #saves a copy of the quad dynamics class being passed in
+        self.quad = copy.copy(quad)
+
+        #stores the state
+        self.state = state
+
+        #stores the wind
+        self.wind = wind        
+
+        #gets the tau desired vector from the omega desired input and the actual omega
+        tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
+                          [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
+                          [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
+
+        #gets the wrench desired, which is the generalized version of forces and torques
+        self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
+
+        #gets the delta solution
+        delta_t_solution = spo.minimize(fun=self.getWrench, x0=self.x0_delta_t, method='Nelder-Mead', bounds=self.delta_t_bounds)
+        delta_t_star_array = delta_t_solution.x
+
+        #converts that array into a delta message
+        deltaOutput = MsgDelta(verticalThrottle_1=delta_t_star_array[0],
+                               verticalThrottle_2=delta_t_star_array[1],
+                               verticalThrottle_3=delta_t_star_array[2],
+                               verticalThrottle_4=delta_t_star_array[3])
+        
+        #returns the delta output
+        return deltaOutput
+    
+    #creates the get wrench function
+    def getWrench(self, delta_t: np.ndarray):
+
+        #creates the delta message
+        deltaMessage = MsgDelta(verticalThrottle_1=delta_t[0],
+                                verticalThrottle_2=delta_t[1],
+                                verticalThrottle_3=delta_t[2],
+                                verticalThrottle_4=delta_t[3])
+        
+        #gets the calculated wrench
+        calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
+
+        #gets the wrench error
+        wrenchError = self.wrenchDesired - calculatedWrench
+
+        #gets the mean squared error using the weighting matrix
+        MSError = (wrenchError.T @ self.weightingMatrix @ wrenchError)[0][0]
+
+        #returns the Mean squared error
+        return MSError
+    
+
+#low Level controller for control surfaces
+class LowLevelControl_Surfaces:
+
+    #creates the init function
+    def __init__(self,
+                 M: float=0.5,
+                 Va0: float=0.0,
+                 ts: float=0.01):
+        
+        #creates an instance of the Quad dynamics for the control piece
+        self.quad = QuadDynamics(ts=SIM.ts_control)
+        
+        # control gains: p-channel
+        p_kp = 0.15
+
+        # control gains: q-channel
+        q_kp = 0.08
+
+        # control gains: r-channel
+        r_kp = 0.1
+
+        self.M = M
+        self.Va0 = Va0
+
+        #stores the time sample rate of the simulation parameters
+        self.Ts = SIM.ts_control
+
+        self.p_ctrl = PControl(kp=p_kp, Ts=self.Ts)
+        self.q_ctrl = PControl(kp=q_kp, Ts=self.Ts)
+        self.r_ctrl = PControl(kp=r_kp, Ts=self.Ts)
+        #self.output = MsgControls()
+        self.output = MsgDelta()
+        self.alpha = 0.99
 
 
+        #saves the weights for the mixing matrix to mix the forces and torques for the error
+        Fx_bar = 100.0
+        Fy_bar = 100.0
+        Fz_bar = 100.0
+        Mx_bar = 50.0
+        My_bar = 50.0
+        Mz_bar = 50.0
+
+        #creates the weighting matrix
+        self.weightingMatrix = np.diag([1/Fx_bar, 1/Fy_bar, 1/Fz_bar, 1/Mx_bar, 1/My_bar, 1/Mz_bar])
+
+
+        #creates the desired wrench vector
+        self.wrenchDesired = np.ndarray((6,1))
+
+        #creates the bounds, which are all lumped together in this one
+        #defines the delta_a, e, and r and t forward bounds
+        delta_a_bound = (-1.0, 1.0)
+        delta_e_bound = (-1.0, 1.0)
+        delta_r_bound = (-1.0, 1.0)
+        delta_t_forward_bound = (0.0, 1.0)
+
+        #puts them together
+        self.delta_c_bounds = (delta_a_bound, delta_e_bound, delta_r_bound, delta_t_forward_bound)
+
+
+        #creates the initial guess for the delta c portion
+        self.x0_delta_c = (0.0, 0.0, 0.0, 0.5)
+
+        #saves the wind
+        self.wind = np.array([[0.0], [0.0], [0.0]])
+
+    #creates the update function
+    def update(self, f_d: np.ndarray,#desired force 2x1 vector
+                     omega_d: np.ndarray, #desired angular velocity 3x1 vector
+                     state: MsgState, #Quad state
+                     quad: QuadDynamics,
+                     wind: np.ndarray): #the wind in the inertial frame 
+        
+        #saves a copy of the quad dynamics class being passed in
+        self.quad = copy.copy(quad)
+
+        #stores the state
+        self.state = state
+
+        #stores the wind
+        self.wind = wind
+
+        #gets the tau desired vector from the omega desired input and the actual omega
+        tau_d = np.array([
+            [self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
+            [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
+            [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]
+        ])
+
+        #gets the wrench desired, which is the generalized version of forces and torques
+        self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
+
+        #gets the delta c solution
+        delta_c_solution = spo.minimize(fun=self.getWrench, x0=self.x0_delta_c, method='Nelder-Mead', bounds=self.delta_c_bounds)
+
+        delta_c_array = delta_c_solution.x
+
+        deltaOutput = MsgDelta(elevator=delta_c_array[0],
+                               aileron=delta_c_array[1],
+                               rudder=delta_c_array[2],
+                               forwardThrottle=delta_c_array[3])
+
+
+        return deltaOutput
+    
+
+    #creates the get wrench function
+    def getWrench(self, delta_c_array: np.ndarray):
+
+        #takes the delta array and converts it into a delta message
+        deltaMessage = MsgDelta(elevator=delta_c_array[0],
+                                aileron=delta_c_array[1],
+                                rudder=delta_c_array[2],
+                                forwardThrottle=delta_c_array[3])
+
+        #gets the calculated wrench
+        calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
+
+        #gets the wrench error
+        wrenchError = self.wrenchDesired - calculatedWrench
+
+        #gets the mean squared error using the weighting matrix
+        MSError = (wrenchError.T @ self.weightingMatrix @ wrenchError)[0][0]
+
+        #returns the mean squared error
+        return MSError

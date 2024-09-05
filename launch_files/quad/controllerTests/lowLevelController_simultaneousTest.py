@@ -1,5 +1,7 @@
 #this file's purpose is to perform a test of the low level controller 
 
+#for simultaneous control
+
 import os, sys
 # insert parent directory at beginning of python search path
 from pathlib import Path
@@ -12,9 +14,11 @@ import parameters.quad.simulation_parameters as SIM
 from models.quad.quad_dynamics import QuadDynamics
 #imports the low level controller for the Quad,
 #which minimizes the mean squared error
-from controllers.quad.low_level_control import LowLevelControl
+from controllers.quad.low_level_control import LowLevelControl_simultaneousControl
 from message_types.quad.msg_delta import MsgDelta
 from viewers.quad.view_manager import ViewManager
+
+import pandas as pd
 
 
 
@@ -28,13 +32,16 @@ viewers = ViewManager(animation=True, data=True)
 
 
 #instantiates the low level controller
-lowControl = LowLevelControl(M=0.5, Va0=2.0, ts=SIM.ts_simulation)
+lowControl = LowLevelControl_simultaneousControl(M=0.5, Va0=2.0, ts=SIM.ts_simulation)
 
 
 #sets the simulation time
 sim_time = SIM.start_time
 
 printerCounter = 0
+
+#creates an array to store the deltas for the data analysis
+deltaOutputArray = np.ndarray((8,0))
 
 # main simulation loop
 print("Press Command-Q to exit...")
@@ -54,7 +61,18 @@ while sim_time < SIM.end_time:
     delta = lowControl.update(f_d=F_desired,
                               omega_d=omega_desired,
                               state=quad.true_state,
+                              quad=quad,
                               wind=wind)
+    deltaArray = np.array([[delta.elevator],
+                           [delta.aileron],
+                           [delta.rudder],
+                           [delta.forwardThrottle],
+                           [delta.verticalThrottle_1],
+                           [delta.verticalThrottle_2],
+                           [delta.verticalThrottle_3],
+                           [delta.verticalThrottle_4]])
+
+    deltaOutputArray = np.concatenate((deltaOutputArray, deltaArray), axis=1)
     
     quad.update(delta=delta, wind=wind)
 
@@ -66,10 +84,14 @@ while sim_time < SIM.end_time:
                    delta=delta,
                    measurements=None)
     
-    if printerCounter % 100 == 0:
-        a = 0
+
 
     printerCounter += 1
 
     #increments the time
     sim_time += SIM.ts_simulation
+
+#writes the delta output array to a csv
+dataFrame = pd.DataFrame(deltaOutputArray)
+
+dataFrame.to_csv("/home/dben1182/Documents/vtolsim/launch_files/quad/controllerTests/SimultaneousTest.csv", index=False, header=False)
