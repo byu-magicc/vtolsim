@@ -20,6 +20,8 @@ from viewers.quad.view_manager import ViewManager
 from message_types.quad.msg_state import MsgState
 import pandas as pd
 
+from models.quad.trimValues import trimDelta
+
 #creates  the wind#creates the wind
 wind = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T
 
@@ -64,6 +66,9 @@ while sim_time < SIM.end_time:
     estimatedState = quad.true_state
 
     delta, commanded_state = controller.update(cmd=commands, state=quad.true_state)
+
+    #sets the delta to trim
+    delta = trimDelta
 
     current_wind = np.array([[0.0],[0.0],[0.0],[0.0],[0.0],[0.0]]) # get the new wind vector
     wrench = quad.update(delta=delta, wind=current_wind)

@@ -87,7 +87,7 @@ class QuadDynamics:
         #clockwise for vertical thruster 4 (Starboard Front)
         self.verticalThrust_4_direction = -1
 
-
+        self.printerCounter = 0
 
     #creates the update function for the system
     def update(self, delta: MsgDelta, wind: np.ndarray):
@@ -289,7 +289,6 @@ class QuadDynamics:
         velocity_world_frame = R @ velocity_body_frame
 
         self._chi = np.arctan2(velocity_world_frame.item(1), velocity_world_frame.item(0))
-
 
 
 
@@ -526,7 +525,11 @@ class QuadDynamics:
 
         #############################################################################################################
 
+        if self.printerCounter % 100 == 0:
+            thrust = Thrust_Forward
+            a=0
 
+        self.printerCounter += 1
         #returns the forces
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
 
