@@ -184,7 +184,7 @@ class DataViewer:
 
         self._plotter.show_window()
 
-    def update(self, true_state, estimated_state, commanded_state, delta):
+    def update(self, true_state: MsgState, estimated_state: MsgState, commanded_state: MsgState, delta: MsgDelta):
         if self._data_recording_delay >= self._data_recording_period:
             self.__update_data(true_state, estimated_state, commanded_state, delta, self._time)
             self._data_recording_delay = 0
@@ -220,8 +220,7 @@ class DataViewer:
             self._plotter.add_data_point(plot_id='Vg', data_label='Vg', xvalue=currentTime, yvalue=true_state.Vg)
             self._plotter.add_data_point(plot_id='alpha', data_label='alpha', xvalue=currentTime, yvalue=true_state.alpha)
             self._plotter.add_data_point(plot_id='beta', data_label='beta', xvalue=currentTime, yvalue=true_state.beta)
-            self._plotter.add_data_point(plot_id='chi', data_label='chi', xvalue=currentTime, yvalue=true_state.chi)
-
+            self._plotter.add_data_point(plot_id='chi', data_label='chi', xvalue=currentTime, yvalue=self.__rad_to_deg(true_state.chi))
 
             self._plotter.add_data_point(plot_id='elevator', data_label='elevator', xvalue=currentTime, yvalue=delta.elevator)
             self._plotter.add_data_point(plot_id='aileron', data_label='aileron', xvalue=currentTime, yvalue=delta.aileron)
@@ -257,7 +256,7 @@ class DataViewer:
             self._plotter.add_data_point(plot_id='Vg', data_label='Vg_e', xvalue=currentTime, yvalue=estimated_state.Vg)
             self._plotter.add_data_point(plot_id='alpha', data_label='alpha_e', xvalue=currentTime, yvalue=estimated_state.alpha)
             self._plotter.add_data_point(plot_id='beta', data_label='beta_e', xvalue=currentTime, yvalue=estimated_state.beta)
-            self._plotter.add_data_point(plot_id='chi', data_label='chi_e', xvalue=currentTime, yvalue=estimated_state.chi)
+            self._plotter.add_data_point(plot_id='chi', data_label='chi_e', xvalue=currentTime, yvalue=self.__rad_to_deg(estimated_state.chi))
 
         #add the commanded state data
         if commanded_state != None:
@@ -266,6 +265,7 @@ class DataViewer:
             self._plotter.add_data_point(plot_id='north', data_label='north_c', xvalue=currentTime, yvalue=commanded_state.pos[0,0])
             self._plotter.add_data_point(plot_id='east', data_label='east_c', xvalue=currentTime, yvalue=commanded_state.pos[1,0])
             self._plotter.add_data_point(plot_id='altitude', data_label='altitude_c', xvalue=currentTime, yvalue=-commanded_state.pos[2,0])
+            commandedAltitude = -commanded_state.pos[2,0]
             #gets the body frame velocities
             self._plotter.add_data_point(plot_id='u', data_label='u_c', xvalue=currentTime, yvalue=commanded_state.vel[0,0])
             self._plotter.add_data_point(plot_id='v', data_label='v_c', xvalue=currentTime, yvalue=commanded_state.vel[1,0])
@@ -280,7 +280,7 @@ class DataViewer:
             self._plotter.add_data_point(plot_id='r', data_label='r_c', xvalue=currentTime, yvalue=self.__rad_to_deg(commanded_state.omega[2,0]))
             #gets the Airspeed, alpha, beta, groundspeed, and course angle
             self._plotter.add_data_point(plot_id='Va', data_label='Va_c', xvalue=currentTime, yvalue=commanded_state.Va)
-            self._plotter.add_data_point(plot_id='chi', data_label='chi_c', xvalue=currentTime, yvalue=commanded_state.chi)
+            self._plotter.add_data_point(plot_id='chi', data_label='chi_c', xvalue=currentTime, yvalue=self.__rad_to_deg(commanded_state.chi))
 
 
     def process_app(self):

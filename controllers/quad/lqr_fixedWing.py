@@ -15,6 +15,8 @@ from tools.wrap import wrap
 from message_types.quad.msg_autopilot_fixedWing import MsgAutopilotFixedWing
 from message_types.quad.msg_state import MsgState
 
+from tools.rotations import euler_to_rotation
+
 def saturate(input, low_limit, up_limit):
     if input <= low_limit:
         output = low_limit
@@ -149,10 +151,8 @@ class Autopilot:
                          aileron=delta_a,
                          rudder=delta_r,
                          forwardThrottle=delta_t)
-        self.commanded_state.altitude = cmd.altitude_command
+        self.commanded_state.pos[2][0] = -cmd.altitude_command
         self.commanded_state.Va = cmd.airspeed_command
-        self.commanded_state.phi = 0
-        self.commanded_state.theta = 0
         self.commanded_state.chi = cmd.course_command
         return delta, self.commanded_state
 

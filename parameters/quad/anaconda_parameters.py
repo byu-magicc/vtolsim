@@ -8,17 +8,16 @@ from tools.rotations import euler_to_quaternion
 ######################################################################################
                 #Initial Conditions
 ######################################################################################
-
-#initial conditions for the MAV
+#initial conditions for the QUAD
 pn0 = 0.  # initial north position
-pe0 = 0. # initial east position
-pd0 = 0.  # initial down position
-u0 = 0. # initial velocity along body x-axis
+pe0 = 0.  # initial east position
+pd0 = -100.0  # initial down position
+u0 = 25.  # initial velocity along body x-axis
 v0 = 0.  # initial velocity along body y-axis
-w0 = 0. # initial velocity along body z-axis
-phi0 = 0. # initial roll angle
-theta0 =  0.  # initial pitch angle
-psi0 = 0. # initial yaw angle
+w0 = 0.  # initial velocity along body z-axis
+phi0 = 0.  # initial roll angle
+theta0 = 0.  # initial pitch angle
+psi0 = 0.0  # initial yaw angle
 p0 = 0  # initial roll rate
 q0 = 0  # initial pitch rate
 r0 = 0  # initial yaw rate
@@ -35,22 +34,20 @@ e3 = e.item(3)
 ######################################################################################
                 #Physical Parameters
 ######################################################################################
-mass = 1.0 #kg
-Jx = 0.0165#0.008383 #kg m^2
-Jy = 0.025#0.006114
-Jz = 0.0282#0.01435
-Jxz = 0.000048#0.000024
-S_wing = 0.2589#0.19#0.55
-b = 1.4224#0.65#2.8956
-c = 0.3305#0.25#0.18994
+mass = 11.0 #kg
+Jx = 0.8244 #kg m^2
+Jy = 1.135
+Jz = 1.759
+Jxz = 0.1204
+S_wing = 0.55 #surface are of the wing
+b = 2.8956 #wingspan
+c = 0.18994 #mean chord of the QUAD Wing
 
 #other physical parameters
-S_prop = 0.2027
-rho = 1.2682
+S_prop = 0.2027 #surface area of the propellor
+rho = 1.2682 #air density
 e = 0.9
-e_oswald = e
 AR = (b**2) / S_wing
-AR_wing = AR
 gravity = 9.81
 
 #sets the physical positions of the props. That is, where their bases are located.
@@ -73,40 +70,43 @@ epsilon = 0.16
 
 #######################################################################################
 #Coefficients
-C_L_0 = 0.005
-C_D_0 = 0.0022
-C_m_0 = 0.0
-C_L_alpha = 2.819
-C_D_alpha = 0.03
-C_m_alpha = -0.185
-C_L_q = 3.242
-C_D_q = 0.0
-C_m_q = -1.093
-C_L_delta_e = 0.2
-C_D_delta_e = 0.005
-C_m_delta_e = -0.05
-
+C_L_0 = 0.23#
+C_D_0 = 0.043#
+C_m_0 = 0.0135
+C_L_alpha = 5.61#
+C_D_alpha = 0.03#
+C_m_alpha = -2.74
+C_L_q = 7.95#
+C_D_q = 0.0#
+C_m_q = -38.21
+C_L_delta_e = -0.13#
+C_D_delta_e = 0.0135#
+C_m_delta_e = -0.99
+M = 50.0
+alpha0 = 0.47
+epsilon = 0.16
 C_D_p = 0.0
 
-C_Y_0 = 0.0
+
+
+C_Y_0 = 0.0#
 C_ell_0 = 0.0
 C_n_0 = 0.0
-
-C_Y_beta = -0.318
-C_ell_beta = -0.032
-C_n_beta = 0.112
-C_Y_p = 0.078
-C_ell_p = -0.207
-C_n_p = -0.053
-C_Y_r = 0.288
-C_ell_r = 0.036
-C_n_r = -0.104
-C_Y_delta_a = 0.000536
-C_ell_delta_a = 0.018
-C_n_delta_a = -0.00328#-0.011
-C_Y_delta_r = 0.0
-C_ell_delta_r = 0.0
-C_n_delta_r = 0.0
+C_Y_beta = -0.98#
+C_ell_beta = -0.13
+C_n_beta = 0.073
+C_Y_p = 0.0#
+C_ell_p = -0.51
+C_n_p = 0.069
+C_Y_r = 0.0#
+C_ell_r = 0.25
+C_n_r = -0.095
+C_Y_delta_a = 0.075#
+C_ell_delta_a = 0.17
+C_n_delta_a = -0.011
+C_Y_delta_r = 0.19#
+C_ell_delta_r = 0.0024
+C_n_delta_r = -0.069
 
 
 
@@ -119,19 +119,18 @@ D_prop = 20*(0.0254)     # prop diameter in m
 
 
 # Motor parameters
-K_V = 145.                   # from datasheet RPM/V
-KQ = (1. / K_V) * 60. / (2. * np.pi)  # KQ in N-m/A, V-s/rad
+KV_rpm_per_volt = 145.                            # Motor speed constant from datasheet in RPM/V
+KV = (1. / KV_rpm_per_volt) * 60. / (2. * np.pi)  # Back-emf constant, KV in V-s/rad
+KQ = KV                                           # Motor torque constant, KQ in N-m/A
 R_motor = 0.042              # ohms
 i0 = 1.5                     # no-load (zero-torque) current (A)
 
 k_force = 65.0
 k_moment = 5.0
 
+
 # Inputs
-# ncells = 12.
-# V_max = 3.7 * ncells  # max voltage for specified number of battery cells
-# Inputs
-ncells = 3.
+ncells = 12.
 V_max = 3.7 * ncells  # max voltage for specified number of battery cells
 
 
@@ -145,12 +144,10 @@ C_T0 = 0.09357
 
 
 
-
-
-
 ######################################################################################
                 #   Calculation Variables
 ######################################################################################
+#   gamma parameters pulled from page 36 (dynamics)
 #   gamma parameters pulled from page 36 (dynamics)
 gamma = Jx * Jz - (Jxz**2)
 gamma1 = (Jxz * (Jx - Jy + Jz)) / gamma
@@ -161,3 +158,17 @@ gamma5 = (Jz - Jx) / Jy
 gamma6 = Jxz / Jy
 gamma7 = ((Jx - Jy) * Jx + (Jxz**2)) / gamma
 gamma8 = Jx / gamma
+
+#   C values defines on pag 62
+C_p_0         = gamma3 * C_ell_0      + gamma4 * C_n_0
+C_p_beta      = gamma3 * C_ell_beta   + gamma4 * C_n_beta
+C_p_p         = gamma3 * C_ell_p      + gamma4 * C_n_p
+C_p_r         = gamma3 * C_ell_r      + gamma4 * C_n_r
+C_p_delta_a    = gamma3 * C_ell_delta_a + gamma4 * C_n_delta_a
+C_p_delta_r    = gamma3 * C_ell_delta_r + gamma4 * C_n_delta_r
+C_r_0         = gamma4 * C_ell_0      + gamma8 * C_n_0
+C_r_beta      = gamma4 * C_ell_beta   + gamma8 * C_n_beta
+C_r_p         = gamma4 * C_ell_p      + gamma8 * C_n_p
+C_r_r         = gamma4 * C_ell_r      + gamma8 * C_n_r
+C_r_delta_a    = gamma4 * C_ell_delta_a + gamma8 * C_n_delta_a
+C_r_delta_r    = gamma4 * C_ell_delta_r + gamma8 * C_n_delta_r

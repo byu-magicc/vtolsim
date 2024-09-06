@@ -75,8 +75,8 @@ class QuadDynamics:
         # -1 : Clockwise Rotation
 
         #defines the rotations
-        #counterclockwise for the forward prop
-        self.forwardThrust_direction = 1
+        #clockwise for the forward prop
+        self.forwardThrust_direction = -1
 
         #counterclockwise for vertical thruster 1 (Port Front)
         self.verticalThrust_1_direction = 1
@@ -385,7 +385,7 @@ class QuadDynamics:
         )
         
 
-
+        
         #############################################################################################################
         #Forces and moments from the forward prop
 
@@ -394,6 +394,8 @@ class QuadDynamics:
 
         #gets the thrust and the moment from the forward prop
         Thrust_Forward, Prop_Moment_Forward = self._motor_thrust_torque(Va_forward_prop, delta.forwardThrottle)
+
+        Prop_Moment_Forward = 0.0
 
         #gets the force on the airplane from the forward propeller
         #In this case, it is in the positive x direction, so we multiply by the unit vector in the direction the thrust is facing
@@ -415,7 +417,8 @@ class QuadDynamics:
         My += Moment_Forward.item(1)
         Mz += Moment_Forward.item(2)
         #############################################################################################################
-
+        
+        
         #############################################################################################################
         #Forces and moments from the front port propeller
         Va_front_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
@@ -516,7 +519,7 @@ class QuadDynamics:
         Mz += Moment_FrontStarboard.item(2)
 
         #############################################################################################################
-
+        
         #############################################################################################################
         #induced drag section
         #######TODO##############
@@ -525,8 +528,10 @@ class QuadDynamics:
 
         #############################################################################################################
 
-        if self.printerCounter % 100 == 0:
+        if self.printerCounter % 50 == 0:
+            
             thrust = Thrust_Forward
+            moment = Prop_Moment_Forward
             a=0
 
         self.printerCounter += 1

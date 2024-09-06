@@ -12,7 +12,7 @@ import parameters.quad.simulation_parameters as SIM
 from models.quad.quad_dynamics import QuadDynamics
 #imports the low level controller for the Quad,
 #which minimizes the mean squared error
-from tools.signal_generator import SignalGenerator
+from tools.signals import Signals
 
 from controllers.quad.lqr_fixedWing import Autopilot
 from message_types.quad.msg_delta import MsgDelta
@@ -21,6 +21,7 @@ from message_types.quad.msg_state import MsgState
 import pandas as pd
 
 from models.quad.trimValues import trimDelta
+import models.quad.trimValues as TRIM
 
 #creates  the wind#creates the wind
 wind = np.array([[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]).T
@@ -42,9 +43,18 @@ quad.setInitialConditions(initialTrueState=initialState)
 #creates the airspeed, altitude, and course commands
 from message_types.quad.msg_autopilot_fixedWing import MsgAutopilotFixedWing
 commands = MsgAutopilotFixedWing()
-Va_command = 25.0
-altitude_command = 100.0
-course_command = np.radians(0.0)
+Va_command = Signals(dc_offset=25.0,
+                     amplitude=5.0,
+                     start_time=2.0,
+                     start_frequency=0.1)
+altitude_command = Signals(dc_offset=100.0,
+                           amplitude=0.0,
+                           start_time=0.0,
+                           start_frequency=0.05)
+course_command = Signals(dc_offset=np.radians(0.0),
+                         amplitude=np.radians(0.0),
+                         start_time=5.0,
+                         start_frequency=0.015)
 
 
 
@@ -58,9 +68,9 @@ counter = 0
 while sim_time < SIM.end_time:
 
     #gets the commands
-    commands.airspeed_command = Va_command
-    commands.course_command = course_command
-    commands.altitude_command = altitude_command
+    commands.airspeed_command = Va_command.square(sim_time)
+    commands.course_command = course_command.square(sim_time)
+    commands.altitude_command = altitude_command.square(sim_time)
 
     measurements = quad.sensors()
     estimatedState = quad.true_state
@@ -68,15 +78,13 @@ while sim_time < SIM.end_time:
     delta, commanded_state = controller.update(cmd=commands, state=quad.true_state)
 
     #sets the delta to trim
-    delta = trimDelta
+    #delta = trimDelta
 
     current_wind = np.array([[0.0],[0.0],[0.0],[0.0],[0.0],[0.0]]) # get the new wind vector
     wrench = quad.update(delta=delta, wind=current_wind)
 
-
-
     
-    if counter % 1000 == 0:
+    if counter % 100 == 0:
         Fx = wrench[0][0]
         Fy = wrench[1][0]
         Fz = wrench[2][0]
@@ -86,7 +94,7 @@ while sim_time < SIM.end_time:
     viewers.update(sim_time=sim_time,
                    true_state=quad.true_state,
                    estimated_state=quad.true_state,
-                   commanded_state=quad.true_state,
+                   commanded_state=commanded_state,
                    delta=delta,
                    measurements=None)
     
