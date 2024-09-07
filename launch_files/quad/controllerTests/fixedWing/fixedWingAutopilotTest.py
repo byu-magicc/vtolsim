@@ -44,11 +44,11 @@ quad.setInitialConditions(initialTrueState=initialState)
 from message_types.quad.msg_autopilot_fixedWing import MsgAutopilotFixedWing
 commands = MsgAutopilotFixedWing()
 Va_command = Signals(dc_offset=25.0,
-                     amplitude=5.0,
+                     amplitude=0.0,
                      start_time=2.0,
-                     start_frequency=0.1)
+                     start_frequency=0.05)
 altitude_command = Signals(dc_offset=100.0,
-                           amplitude=0.0,
+                           amplitude=10.0,
                            start_time=0.0,
                            start_frequency=0.05)
 course_command = Signals(dc_offset=np.radians(0.0),
@@ -58,13 +58,15 @@ course_command = Signals(dc_offset=np.radians(0.0),
 
 
 
+#creates the vector to store the output wrenches from the flight
+
+
 #instantiates the controller
 controller = Autopilot(ts_control=SIM.ts_control)
 
 sim_time = SIM.start_time
 
 counter = 0
-
 while sim_time < SIM.end_time:
 
     #gets the commands

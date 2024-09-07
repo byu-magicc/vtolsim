@@ -17,6 +17,9 @@ from message_types.quad.msg_state import MsgState
 
 from tools.rotations import euler_to_rotation
 
+#imports the dirty derivative
+from tools.differentiators import DirtyDerivative
+
 def saturate(input, low_limit, up_limit):
     if input <= low_limit:
         output = low_limit
@@ -50,7 +53,7 @@ class Autopilot:
                     np.concatenate((CrLat, np.zeros((1,1))), axis=1)),
                     axis=0)
         BBlat = np.concatenate((M.B_lat[np.ix_([0,1,2,3,4],[0])], np.zeros((1,1))), axis=0)
-        Qlat = np.diag([.001, 1, 1, 1, 1, 0.1]) # v, p, r, phi, chi, intChi
+        Qlat = np.diag([0.001, 1, 1, 1, 1, 0.1]) # v, p, r, phi, chi, intChi
         Rlat = np.diag([1]) # aileron
         Plat = solve_continuous_are(AAlat, BBlat, Qlat, Rlat)
         self.Klat = inv(Rlat) @ BBlat.T @ Plat
@@ -70,6 +73,10 @@ class Autopilot:
         self.p = 0.0
         self.q = 0.0
         self.r = 0.0
+
+
+        #creates the dirty derivatives for the altitude, airspeed, and course errors
+        self.airspeedErrorDiff = DirtyDerivative(Ts=ts_control)
 
     #creates the update function
     def update(self, cmd: MsgAutopilotFixedWing, state: MsgState):
@@ -124,8 +131,11 @@ class Autopilot:
         #saves the error altitude delayed by one
         self.errorAltitudeD1 = errorAltitude
 
+
+        #gets the derivative of the airspeed
         #antiwindup scheme for the airspeed integrator
-        if abs(errorAirspeed) < 5.0:
+        #only integrates when the derivative is lower than a threshold
+        if abs(errorAirspeed < 5.0):
             self.integratorAirspeed += (self.Ts/2)*(errorAirspeed + self.errorAirspeedD1)
         #saves the error airspeed for delayed function
         self.errorAirspeedD1 = errorAirspeed

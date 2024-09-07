@@ -48,7 +48,7 @@ class DirtyDerivative:
     def update(self, 
                y: float,
                )->float:
-        self._y_dot = self._a1 * self._y_dot + self.a2 * (y - self._y_delay_1)
+        self._y_dot = self._a1 * self._y_dot + self._a2 * (y - self._y_delay_1)
         self._y_delta_1 = y
         return self._y_dot
 
