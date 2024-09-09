@@ -1,0 +1,17 @@
+%reads in the csv 
+
+wrench = csvread('fixedWingWrenchOutput.csv');
+
+
+%plots each one out
+Fx = wrench(1,:);
+Fy = wrench(2,:);
+Fz = wrench(3,:);
+Mx = wrench(4,:);
+My = wrench(5,:);
+Mz = wrench(6,:);
+
+
+figure(1);
+title("F");
+plot(Fx);

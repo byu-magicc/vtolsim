@@ -3,7 +3,9 @@
 import os, sys
 # insert parent directory at beginning of python search path
 from pathlib import Path
-sys.path.insert(0,os.fspath(Path(__file__).parents[3]))
+sys.path.insert(0,os.fspath(Path(__file__).parents[4]))
+
+import pandas as pd
 
 import numpy as np
 import parameters.quad.simulation_parameters as SIM
@@ -52,14 +54,14 @@ altitude_command = Signals(dc_offset=100.0,
                            start_time=0.0,
                            start_frequency=0.05)
 course_command = Signals(dc_offset=np.radians(0.0),
-                         amplitude=np.radians(0.0),
+                         amplitude=np.radians(15.0),
                          start_time=5.0,
                          start_frequency=0.015)
 
 
 
 #creates the vector to store the output wrenches from the flight
-
+wrenchVector = np.ndarray((6,1))
 
 #instantiates the controller
 controller = Autopilot(ts_control=SIM.ts_control)
@@ -85,12 +87,9 @@ while sim_time < SIM.end_time:
     current_wind = np.array([[0.0],[0.0],[0.0],[0.0],[0.0],[0.0]]) # get the new wind vector
     wrench = quad.update(delta=delta, wind=current_wind)
 
-    
-    if counter % 100 == 0:
-        Fx = wrench[0][0]
-        Fy = wrench[1][0]
-        Fz = wrench[2][0]
-        a=0
+    #concatenates onto the wrench, which I will use later for the force follower
+    wrenchVector = np.concatenate((wrenchVector, wrench), axis=1)
+    #wrenchVector = wrench
 
 
     viewers.update(sim_time=sim_time,
@@ -104,4 +103,9 @@ while sim_time < SIM.end_time:
     
     sim_time += SIM.ts_simulation
 
+
+
+#writes out the wrench vector to a 
+dataFrame = pd.DataFrame(wrenchVector)
+dataFrame.to_csv('C:\\Users\\dben1\\Documents\\001_School\\Masters\\vtolsim\\launch_files\\quad\\controllerTests\\fixedWing\\fixedWingWrenchOutput.csv', header=False, index=False)
     

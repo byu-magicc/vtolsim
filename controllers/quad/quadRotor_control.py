@@ -48,6 +48,3 @@ class Autopilot:
         self.Kr = 20*np.diag([1., 1., 1.])
         self.Komega = 20*np.diag([1., 1., 1.])
 
-
-    #creates the update function
-    def update(self, trajectory, state)

@@ -361,8 +361,6 @@ class LowLevelControl_simultaneousControl:
 
 
         
-
-
 #creates the low level control system for just the vertical delta t's
 class LowLevelControl_vertical:
 
@@ -533,7 +531,7 @@ class LowLevelControl_Surfaces:
         Mz_bar = 50.0
 
         #creates the weighting matrix
-        self.weightingMatrix = np.diag([1/Fx_bar, 1/Fy_bar, 1/Fz_bar, 1/Mx_bar, 1/My_bar, 1/Mz_bar])
+        self.weightingMatrix = np.diag([1/(Fx_bar**2), 1/(Fy_bar**2), 1/(Fz_bar**2), 1/(Mx_bar**2), 1/(My_bar**2), 1/(Mz_bar**2)])
 
 
         #creates the desired wrench vector
@@ -541,13 +539,13 @@ class LowLevelControl_Surfaces:
 
         #creates the bounds, which are all lumped together in this one
         #defines the delta_a, e, and r and t forward bounds
-        delta_a_bound = (-1.0, 1.0)
         delta_e_bound = (-1.0, 1.0)
+        delta_a_bound = (-1.0, 1.0)
         delta_r_bound = (-1.0, 1.0)
         delta_t_forward_bound = (0.0, 1.0)
 
         #puts them together
-        self.delta_c_bounds = (delta_a_bound, delta_e_bound, delta_r_bound, delta_t_forward_bound)
+        self.delta_c_bounds = (delta_e_bound, delta_a_bound, delta_r_bound, delta_t_forward_bound)
 
 
         #creates the initial guess for the delta c portion
@@ -557,7 +555,7 @@ class LowLevelControl_Surfaces:
         self.wind = np.array([[0.0], [0.0], [0.0]])
 
     #creates the update function
-    def update(self, f_d: np.ndarray,#desired force 2x1 vector
+    def update(self, f_d: np.ndarray,#desired force 3x1 vector
                      omega_d: np.ndarray, #desired angular velocity 3x1 vector
                      state: MsgState, #Quad state
                      quad: QuadDynamics,
@@ -616,3 +614,134 @@ class LowLevelControl_Surfaces:
 
         #returns the mean squared error
         return MSError
+    
+
+#creates the shortened low level controller for control surfaces only
+#Controls: Fx, Fz, Mx, and My, because we are not controlling in the y direction
+class LowLevelControl_SurfacesShortened:
+
+    #creates the init function
+    def __init__(self,
+                 M: float=0.5,
+                 Va0: float=0.0,
+                 ts: float=0.01):
+        
+        #creates an instance of the Quad dynamics for the control piece
+        self.quad = QuadDynamics(ts=SIM.ts_control)
+        
+        # control gains: p-channel
+        p_kp = 0.15
+
+        # control gains: q-channel
+        q_kp = 0.08
+
+        # control gains: r-channel
+        r_kp = 0.1
+
+        self.M = M
+        self.Va0 = Va0
+
+        #stores the time sample rate of the simulation parameters
+        self.Ts = SIM.ts_control
+
+        self.p_ctrl = PControl(kp=p_kp, Ts=self.Ts)
+        self.q_ctrl = PControl(kp=q_kp, Ts=self.Ts)
+        #self.output = MsgControls()
+        self.output = MsgDelta()
+        self.alpha = 0.99
+
+
+
+        #saves the weights for the mixing matrix to mix the forces and torques for the error
+        Fx_bar = 100.0
+        Fy_bar = 0.0
+        Fz_bar = 100.0
+        Mx_bar = 50.0
+        My_bar = 50.0
+        Mz_bar = 0.0
+
+        #creates the weighting matrix
+        self.weightingMatrix = np.diag([1/(Fx_bar**2), 1/(Fy_bar**2), 1/(Fz_bar**2), 1/(Mx_bar**2), 1/(My_bar**2), 1/(Mz_bar**2)])
+
+        #creates the desired wrench vector
+        self.wrenchDesired = np.ndarray((4,1))
+
+        #creates the bounds
+        delta_e_bound = (-1.0, 1.0)
+        delta_a_bound = (-1.0, 1.0)
+        delta_r_bound = (-1.0, 1.0)
+        delta_t_forward_bound = (0.0, 1.0)
+
+
+        self.delta_c_bounds = (delta_e_bound, delta_a_bound, delta_r_bound, delta_t_forward_bound)
+
+        #creates the initial guess for the delta c portion
+        self.x0_delta_c = (0.0, 0.0, 0.0, 0.5)
+
+        #saves the wind
+        self.wind = np.array([[0.0], [0.0], [0.0]])
+
+
+    #creates the update function
+    def update(self, f_d: np.ndarray,#desired force 3x1 vector, where the Fy_desired component is zero
+                     omega_d: np.ndarray, #desired angular velocity 3x1 vector
+                     state: MsgState, #Quad state
+                     quad: QuadDynamics,
+                     wind: np.ndarray): #the wind in the inertial frame 
+        
+
+        
+        #saves a copy of the quad dynamics class being passed in
+        self.quad = copy.copy(quad)
+
+        #stores the state
+        self.state = state
+
+        #stores the wind
+        self.wind = wind
+
+        #gets the tau desired vector from the omega desired input and the actual omega
+        tau_d = np.array([
+            [self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
+            [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
+            [0.0]
+        ])
+
+        #gets the wrench desired
+        self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
+
+        #gets the solution
+        delta_c_solution = spo.minimize(fun=self.getWrench, x0=self.x0_delta_c, method='Nelder-Mead', bounds=self.delta_c_bounds)
+
+        delta_c_array = delta_c_solution.x
+
+        deltaOutput = MsgDelta(elevator=delta_c_array[0],
+                               aileron=delta_c_array[1],
+                               rudder=delta_c_array[2],
+                               forwardThrottle=delta_c_array[3])
+
+
+        return deltaOutput
+
+
+    #creates the get wrench function
+    def getWrench(self, delta_c_array: np.ndarray):
+
+        #takes the delta array and converts it into a delta message
+        deltaMessage = MsgDelta(elevator=delta_c_array[0],
+                                aileron=delta_c_array[1],
+                                rudder=delta_c_array[2],
+                                forwardThrottle=delta_c_array[3])
+
+        #gets the calculated wrench
+        calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
+
+        #gets the wrench error
+        wrenchError = self.wrenchDesired - calculatedWrench
+
+        #gets the mean squared error using the weighting matrix
+        MSError = (wrenchError.T @ self.weightingMatrix @ wrenchError)[0][0]
+
+        #returns the mean squared error
+        return MSError
+   
