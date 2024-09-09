@@ -133,6 +133,8 @@ k_moment = 5.0
 ncells = 12.
 V_max = 3.7 * ncells  # max voltage for specified number of battery cells
 
+#sets the maximum thrust
+Tmax = 40
 
 # Coeffiecients from prop_data fit
 C_Q2 = -0.01664
