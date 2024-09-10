@@ -95,3 +95,5 @@ while sim_time < SIM.end_time:
 dataFrame = pd.DataFrame(deltaOutputArray)
 
 dataFrame.to_csv("/home/dben1182/Documents/vtolsim/launch_files/quad/controllerTests/SimultaneousTest.csv", index=False, header=False)
+
+

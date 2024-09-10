@@ -50,18 +50,21 @@ Va_command = Signals(dc_offset=25.0,
                      start_time=2.0,
                      start_frequency=0.05)
 altitude_command = Signals(dc_offset=100.0,
-                           amplitude=10.0,
+                           amplitude=0.0,
                            start_time=0.0,
                            start_frequency=0.05)
 course_command = Signals(dc_offset=np.radians(0.0),
-                         amplitude=np.radians(15.0),
+                         amplitude=np.radians(0.0),
                          start_time=5.0,
                          start_frequency=0.015)
 
 
 
 #creates the vector to store the output wrenches from the flight
-wrenchVector = np.ndarray((6,1))
+wrenchVector = np.ndarray((6,0))
+
+#creates the vector to store the output deltas from the flight
+deltaOutput = np.ndarray((3,0))
 
 #instantiates the controller
 controller = Autopilot(ts_control=SIM.ts_control)
@@ -89,7 +92,9 @@ while sim_time < SIM.end_time:
 
     #concatenates onto the wrench, which I will use later for the force follower
     wrenchVector = np.concatenate((wrenchVector, wrench), axis=1)
-    #wrenchVector = wrench
+    deltaArray = np.array([[delta.elevator],[delta.aileron],[delta.forwardThrottle]])
+    #concatenates onto the delta output
+    deltaOutput = np.concatenate((deltaOutput, deltaArray), axis=1)
 
 
     viewers.update(sim_time=sim_time,
@@ -106,6 +111,10 @@ while sim_time < SIM.end_time:
 
 
 #writes out the wrench vector to a 
-dataFrame = pd.DataFrame(wrenchVector)
-dataFrame.to_csv('C:\\Users\\dben1\\Documents\\001_School\\Masters\\vtolsim\\launch_files\\quad\\controllerTests\\fixedWing\\fixedWingWrenchOutput.csv', header=False, index=False)
-    
+dataFrame1 = pd.DataFrame(wrenchVector)
+dataFrame1.to_csv('/home/dben1182/Documents/vtolsim/launch_files/quad/controllerTests/fixedWing/desiredWrench.csv', header=False, index=False)
+
+
+#writes the delta out
+dataFrame2 = pd.DataFrame(deltaOutput)
+dataFrame2.to_csv('/home/dben1182/Documents/vtolsim/launch_files/quad/controllerTests/fixedWing/desiredDelta.csv', header=False, index=False)

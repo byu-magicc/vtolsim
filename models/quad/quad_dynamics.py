@@ -76,7 +76,7 @@ class QuadDynamics:
 
         #defines the rotations
         #clockwise for the forward prop
-        self.forwardThrust_direction = -1
+        self.forwardThrust_direction = 1
 
         #counterclockwise for vertical thruster 1 (Port Front)
         self.verticalThrust_1_direction = 1
@@ -338,11 +338,7 @@ class QuadDynamics:
 
         CL = (1 - sigma) * (QUAD.C_L_0 + QUAD.C_L_alpha * self._alpha) \
              + sigma * 2 * np.sign(self._alpha) * sa**2 * ca
-        CD = (1 - sigma) \
-            * (QUAD.C_D_p + \
-               ((QUAD.C_L_0 + QUAD.C_L_alpha * self._alpha)**2)\
-                /(np.pi * QUAD.e * QUAD.AR)) \
-            + sigma * 2 * np.sign(self._alpha) * sa
+        CD = QUAD.C_D_p + ((QUAD.C_L_0 + QUAD.C_L_alpha * self._alpha)**2)/(np.pi * QUAD.e * QUAD.AR)
 
         # compute Lift and Drag Forces
         F_lift = qbar * QUAD.S_wing * (CL + QUAD.C_L_q * q_nondim + QUAD.C_L_delta_e * elevator)
@@ -527,12 +523,6 @@ class QuadDynamics:
 
 
         #############################################################################################################
-
-        if self.printerCounter % 50 == 0:
-            
-            thrust = Thrust_Forward
-            moment = Prop_Moment_Forward
-            a=0
 
         self.printerCounter += 1
         #returns the forces

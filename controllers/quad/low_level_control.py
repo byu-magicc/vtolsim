@@ -555,11 +555,13 @@ class LowLevelControl_Surfaces:
         self.wind = np.array([[0.0], [0.0], [0.0]])
 
     #creates the update function
-    def update(self, f_d: np.ndarray,#desired force 3x1 vector
-                     omega_d: np.ndarray, #desired angular velocity 3x1 vector
+    def update(self, f_d: np.ndarray,#desired force 2x1 vector, Fx, Fz desired
                      state: MsgState, #Quad state
-                     quad: QuadDynamics,
-                     wind: np.ndarray): #the wind in the inertial frame 
+                     quad: QuadDynamics, #passes in instance of the quadplane dynamics class
+                     tau_input: bool = False,#passes in input to set whether we are being input straight torque, or omegas and then need to calculate torques
+                     wind: np.ndarray = np.zeros((3,1)), #the wind in the inertial frame
+                     omega_d: np.ndarray = np.zeros((2,1)), #desired angular velocity p, and q
+                     tau_d: np.ndarray = np.zeros((2,1))):# desired torque
         
         #saves a copy of the quad dynamics class being passed in
         self.quad = copy.copy(quad)
@@ -570,15 +572,21 @@ class LowLevelControl_Surfaces:
         #stores the wind
         self.wind = wind
 
-        #gets the tau desired vector from the omega desired input and the actual omega
-        tau_d = np.array([
-            [self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
-            [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
-            [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]
-        ])
+        #creates the desired tau
+        tau_desired = np.zeros((3,1))
+
+        #case tau directly input
+        if tau_input:
+            tau_desired = tau_d
+        #case omegas to tau
+        else:
+            #gets the tau desired vector from the omega desired input and the actual omega
+            tau_desired = np.array([[self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
+                                    [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
+                                    [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
 
         #gets the wrench desired, which is the generalized version of forces and torques
-        self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
+        self.wrenchDesired = np.concatenate((f_d, tau_desired), axis=0)
 
         #gets the delta c solution
         delta_c_solution = spo.minimize(fun=self.getWrench, x0=self.x0_delta_c, method='Nelder-Mead', bounds=self.delta_c_bounds)
@@ -654,14 +662,12 @@ class LowLevelControl_SurfacesShortened:
 
         #saves the weights for the mixing matrix to mix the forces and torques for the error
         Fx_bar = 100.0
-        Fy_bar = 0.0
         Fz_bar = 100.0
         Mx_bar = 50.0
         My_bar = 50.0
-        Mz_bar = 0.0
 
         #creates the weighting matrix
-        self.weightingMatrix = np.diag([1/(Fx_bar**2), 1/(Fy_bar**2), 1/(Fz_bar**2), 1/(Mx_bar**2), 1/(My_bar**2), 1/(Mz_bar**2)])
+        self.weightingMatrix = np.diag([1/(Fx_bar**2), 1/(Fz_bar**2), 1/(Mx_bar**2), 1/(My_bar**2)])
 
         #creates the desired wrench vector
         self.wrenchDesired = np.ndarray((4,1))
@@ -669,26 +675,26 @@ class LowLevelControl_SurfacesShortened:
         #creates the bounds
         delta_e_bound = (-1.0, 1.0)
         delta_a_bound = (-1.0, 1.0)
-        delta_r_bound = (-1.0, 1.0)
         delta_t_forward_bound = (0.0, 1.0)
 
 
-        self.delta_c_bounds = (delta_e_bound, delta_a_bound, delta_r_bound, delta_t_forward_bound)
+        self.delta_c_bounds = (delta_e_bound, delta_a_bound, delta_t_forward_bound)
 
         #creates the initial guess for the delta c portion
-        self.x0_delta_c = (0.0, 0.0, 0.0, 0.5)
+        self.x0_delta_c = (0.0, 0.0, 0.5)
 
         #saves the wind
         self.wind = np.array([[0.0], [0.0], [0.0]])
 
 
     #creates the update function
-    def update(self, f_d: np.ndarray,#desired force 3x1 vector, where the Fy_desired component is zero
-                     omega_d: np.ndarray, #desired angular velocity 3x1 vector
+    def update(self, f_d: np.ndarray,#desired force 2x1 vector, Fx, Fz desired
                      state: MsgState, #Quad state
-                     quad: QuadDynamics,
-                     wind: np.ndarray): #the wind in the inertial frame 
-        
+                     quad: QuadDynamics, #passes in instance of the quadplane dynamics class
+                     tau_input: bool = False,#passes in input to set whether we are being input straight torque, or omegas and then need to calculate torques
+                     wind: np.ndarray = np.zeros((3,1)), #the wind in the inertial frame
+                     omega_d: np.ndarray = np.zeros((2,1)), #desired angular velocity p, and q
+                     tau_d: np.ndarray = np.zeros((2,1))):# desired torque
 
         
         #saves a copy of the quad dynamics class being passed in
@@ -700,15 +706,25 @@ class LowLevelControl_SurfacesShortened:
         #stores the wind
         self.wind = wind
 
-        #gets the tau desired vector from the omega desired input and the actual omega
-        tau_d = np.array([
-            [self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
-            [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
-            [0.0]
-        ])
+        tau_desired = np.zeros((2,1))
+
+        #chooses whether to take the input tau or the input omegas
+        #case tau input directly
+        if tau_input:
+            tau_desired = tau_d
+
+        #case input omegas and use p control
+        else:
+            #gets the tau desired vector from the omega desired input and the actual omega
+            tau_desired = np.array([
+                [self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
+                [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))]])
+
+
+
 
         #gets the wrench desired
-        self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
+        self.wrenchDesired = np.concatenate((f_d, tau_desired), axis=0)
 
         #gets the solution
         delta_c_solution = spo.minimize(fun=self.getWrench, x0=self.x0_delta_c, method='Nelder-Mead', bounds=self.delta_c_bounds)
@@ -717,8 +733,7 @@ class LowLevelControl_SurfacesShortened:
 
         deltaOutput = MsgDelta(elevator=delta_c_array[0],
                                aileron=delta_c_array[1],
-                               rudder=delta_c_array[2],
-                               forwardThrottle=delta_c_array[3])
+                               forwardThrottle=delta_c_array[2])
 
 
         return deltaOutput
@@ -730,14 +745,18 @@ class LowLevelControl_SurfacesShortened:
         #takes the delta array and converts it into a delta message
         deltaMessage = MsgDelta(elevator=delta_c_array[0],
                                 aileron=delta_c_array[1],
-                                rudder=delta_c_array[2],
-                                forwardThrottle=delta_c_array[3])
+                                forwardThrottle=delta_c_array[2])
 
         #gets the calculated wrench
         calculatedWrench = self.quad._forces_moments(delta=deltaMessage)
 
+        shortenedCalculatedWrench = np.array([[calculatedWrench[0][0]],
+                                              [calculatedWrench[2][0]],
+                                              [calculatedWrench[3][0]],
+                                              [calculatedWrench[4][0]]])
+
         #gets the wrench error
-        wrenchError = self.wrenchDesired - calculatedWrench
+        wrenchError = self.wrenchDesired - shortenedCalculatedWrench
 
         #gets the mean squared error using the weighting matrix
         MSError = (wrenchError.T @ self.weightingMatrix @ wrenchError)[0][0]

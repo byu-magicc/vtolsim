@@ -57,10 +57,10 @@ gravity = 9.81
 forward_rotor_pos = np.array([[-0.3], [0.0], [0.0]])
 
 #sets the locations of the vertical propellers
-vertical_rotor_1_pos = np.array([[-0.5], [-0.5], [0.0]])
-vertical_rotor_2_pos = np.array([[0.5], [-0.5], [0.0]])
-vertical_rotor_3_pos = np.array([[0.5], [0.5], [0.0]])
-vertical_rotor_4_pos = np.array([[-0.5], [0.5], [0.0]])
+vertical_rotor_1_pos = np.array([[0.5], [-0.5], [0.0]])#Port Front
+vertical_rotor_2_pos = np.array([[-0.5], [-0.5], [0.0]])#Port Rear
+vertical_rotor_3_pos = np.array([[-0.5], [0.5], [0.0]])#Starboard Rear
+vertical_rotor_4_pos = np.array([[0.5], [0.5], [0.0]])#Starboard Front
 
 #some necessary parameters
 M = 50.0
