@@ -550,12 +550,9 @@ class QuadDynamics:
         #gets the voltage in, based on the delta_t
         V_in = QUAD.V_max * delta_t
         # Quadratic formula to solve for motor speed
-        a = C_Q0 * QUAD.rho * np.power(D_prop, 5) \
-            / ((2.*np.pi)**2)
-        b = (C_Q1 * QUAD.rho * np.power(D_prop, 4)
-             / (2.*np.pi)) * Va + KQ**2/R_motor
-        c = C_Q2 * QUAD.rho * np.power(D_prop, 3) \
-            * Va**2 - (KQ / R_motor) * V_in + KQ * i0        
+        a = C_Q0 * QUAD.rho * np.power(D_prop, 5)/((2.*np.pi)**2)
+        b = (C_Q1 * QUAD.rho * np.power(D_prop, 4)/ (2.*np.pi)) * Va + KQ**2/R_motor
+        c = C_Q2 * QUAD.rho * np.power(D_prop, 3)* Va**2 - (KQ / R_motor) * V_in + KQ * i0        
         # Consider only positive root
         Omega_op = (-b + np.sqrt(b**2 - 4*a*c)) / (2.*a)
         # compute advance ratio
