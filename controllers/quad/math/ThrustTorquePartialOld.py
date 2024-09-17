@@ -47,16 +47,21 @@ Q_p = rho*(n**2)*(D_prop**5)*C_Q
 
 #Gets the derivative of T_p and Q_p with respect to delta_t
 
+
+########################################################################
+#Thrust Gradient
+#gets the partial derivative of the Thrust with respect to the c coefficient
+#where the C coefficient
 partial_F_C = sp.diff(T_p, c_sym)
 
-print('partial F C')
+print('partial of F with respect to C')
 display(partial_F_C)
 
 partial_C_delta_t = sp.diff(c, delta_t)
-print('partial C delta')
+print('partial of C with respect to delta_t')
 display(partial_C_delta_t)
 
-print("partial F C")
+print("partial of F with respect to C")
 print(sp.latex(partial_F_C))
 
 print("a")
@@ -68,14 +73,33 @@ print(sp.latex(b))
 print("c")
 print(sp.latex(c))
 
-print("partial C delta")
+print("partial of C with respect to delta")
 print(partial_C_delta_t)
 
-
+print('partial T p')
 partial_T_p = sp.diff(T_p, delta_t)
+########################################################################
 
+
+#########################################################################
+#Aerodynamic Moment Gradient
+
+#gets the partial derivative of the moment with respect to the c coefficient
+partial_M_C = sp.diff(Q_p, c_sym)
+
+print('partial of M with respect to C')
+display(partial_M_C)
+
+print('partial of M Latex')
+print(sp.latex(partial_M_C))
+
+
+print('partial Q p')
 partial_Q_p = sp.diff(Q_p, delta_t)
+display(partial_Q_p)
+#########################################################################
 
+#converts the 
 
 
 
