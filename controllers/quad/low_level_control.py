@@ -1,4 +1,7 @@
 #This file implements the controller for the lower levels of the system
+
+
+
 import numpy as np
 from controllers.quad.pid_control import PControl
 
@@ -18,6 +21,8 @@ from tools.rotations import quaternion_to_rotation
 import scipy.optimize as spo
 
 import copy
+
+from controllers.quad.JacobianCalculation import getJacobians
 
 #instantiates the dynamics for the quadplane
 from models.quad.quad_dynamics import QuadDynamics
@@ -264,6 +269,10 @@ class LowLevelControl_simultaneousControl:
         self.weightingMatrix = np.diag([1/Fx_bar, 1/Fy_bar, 1/Fz_bar, 1/Mx_bar, 1/My_bar, 1/Mz_bar])
 
 
+        #creates the weighting submatrices
+        self.Q_F = np.diag([1/Fx_bar, 1/Fy_bar, 1/Fz_bar])
+        self.Q_M = np.diag([1/Mx_bar, 1/My_bar, 1/Mz_bar])
+
         #creates the desired wrench vector
         self.wrenchDesired = np.ndarray((6,1))
 
@@ -316,7 +325,7 @@ class LowLevelControl_simultaneousControl:
         self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
 
         #gets the delta output
-        delta_solution = spo.minimize(fun=self.getWrench, x0=self.x0_delta, method='Nelder-Mead', bounds=self.delta_bounds)
+        delta_solution = spo.minimize(fun=self.getWrench, x0=self.x0_delta, method='Newton-CG', jac=self.getObjectiveGradient, bounds=self.delta_bounds)
 
         #gets the delta array
         deltaArray = delta_solution.x
@@ -358,6 +367,33 @@ class LowLevelControl_simultaneousControl:
 
         #returns the mean squared error
         return MSError
+
+    #creates a function to compute the objective gradient
+    def getObjectiveGradient(self, delta_in):
+        
+        #gets the groundspeed vector in the body frame
+        groundspeed = self.state.vel
+        #first calculates the airspeed
+        airspeed = groundspeed - self.wind
+
+        #gets the Jacobians
+        F_Jacobian, M_Jacobian = getJacobians(delta=delta_in, state=self.state, airspeed=airspeed)
+
+        #gets the desired forces and torques
+        F_d = self.wrenchDesired[1:3]
+        M_d = self.wrenchDesired[3:6]
+
+        #gets the forces and torques based on the delta input
+        wrenchActual = self.quad._forces_moments(delta=delta_in)
+        F_actual = wrenchActual[1:3]
+        M_actual = wrenchActual[3:6]
+
+        #gets the whole gradient objective
+        gr_obj = F_Jacobian*2*self.Q_F*(F_actual-F_d) + M_Jacobian*2*self.Q_M*(M_actual - M_d)
+
+        return gr_obj
+
+
 
 
         
@@ -763,4 +799,10 @@ class LowLevelControl_SurfacesShortened:
 
         #returns the mean squared error
         return MSError
-   
+    
+
+
+
+
+
+
