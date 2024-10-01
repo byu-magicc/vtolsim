@@ -30,6 +30,8 @@ from models.quad.quad_dynamics import QuadDynamics
 #saves the trim
 from models.quad.trimValues import trimDelta
 
+import time
+
 
 #creates the Low Level Control class for successive control, which
 #FIRST finds the delta_c* and SECOND finds the delta_t*
@@ -298,6 +300,9 @@ class LowLevelControl_simultaneousControl:
         #creates the initial guess
         self.x0_delta = (0.0, 0.0, 0.0, 0.5, 0.5, 0.5, 0.5, 0.5)
 
+
+        #creates the array to store the completion time
+
     #creates the update function
     def update(self,
                f_d: np.ndarray, #desired force vector
@@ -319,13 +324,19 @@ class LowLevelControl_simultaneousControl:
         tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
                           [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
                           [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
-        
+    
 
         #gets the wrench desired by concatenation
         self.wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
 
         #gets the delta output
-        delta_solution = spo.minimize(fun=self.getWrench, x0=self.x0_delta, method='Newton-CG', jac=self.getObjectiveGradient, bounds=self.delta_bounds)
+        delta_solution = spo.minimize(fun=self.getWrench, 
+                                      x0=self.x0_delta, 
+                                      method='Nelder-Mead', 
+                                      bounds=self.delta_bounds)
+        
+        #sets the x0 guess to the current delta solution
+        self.x0_delta = delta_solution.x
 
         #gets the delta array
         deltaArray = delta_solution.x
@@ -368,23 +379,36 @@ class LowLevelControl_simultaneousControl:
         #returns the mean squared error
         return MSError
 
+
+    #######TODO########## I need to fix this
     #creates a function to compute the objective gradient
-    def getObjectiveGradient(self, delta_in):
+    def getObjectiveGradient(self, delta_in: np.ndarray):
         
+
+        #converts the delta_in as an 8x1 array to a delta message
+        deltaMessage = MsgDelta(elevator=delta_in[0],
+                                aileron=delta_in[1],
+                                rudder=delta_in[2],
+                                forwardThrottle=delta_in[3],
+                                verticalThrottle_1=delta_in[4],
+                                verticalThrottle_2=delta_in[5],
+                                verticalThrottle_3=delta_in[6],
+                                verticalThrottle_4=delta_in[7])
+
         #gets the groundspeed vector in the body frame
         groundspeed = self.state.vel
         #first calculates the airspeed
-        airspeed = groundspeed - self.wind
+        airspeed = groundspeed - self.wind[0:3]
 
         #gets the Jacobians
-        F_Jacobian, M_Jacobian = getJacobians(delta=delta_in, state=self.state, airspeed=airspeed)
+        F_Jacobian, M_Jacobian = getJacobians(delta=deltaMessage, state=self.state, airspeed=airspeed)
 
         #gets the desired forces and torques
         F_d = self.wrenchDesired[1:3]
         M_d = self.wrenchDesired[3:6]
 
         #gets the forces and torques based on the delta input
-        wrenchActual = self.quad._forces_moments(delta=delta_in)
+        wrenchActual = self.quad._forces_moments(delta=deltaMessage)
         F_actual = wrenchActual[1:3]
         M_actual = wrenchActual[3:6]
 

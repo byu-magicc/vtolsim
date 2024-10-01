@@ -20,6 +20,8 @@ from viewers.quad.view_manager import ViewManager
 
 import pandas as pd
 
+import time
+
 
 
 
@@ -43,6 +45,9 @@ printerCounter = 0
 #creates an array to store the deltas for the data analysis
 deltaOutputArray = np.ndarray((8,0))
 
+#creates array to store the completion times of the 
+completion_times = []
+
 # main simulation loop
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
@@ -57,12 +62,17 @@ while sim_time < SIM.end_time:
     #sets the p, q, r desired
     omega_desired = np.array([[0.0], [0.0], [0.0]])
 
+    #gets the start time
+    control_start_time = time.time()
     #gets the delta output for the system
     delta = lowControl.update(f_d=F_desired,
                               omega_d=omega_desired,
                               state=quad.true_state,
                               quad=quad,
                               wind=wind)
+    #gets the control end time
+    control_end_time = time.time()
+
     deltaArray = np.array([[delta.elevator],
                            [delta.aileron],
                            [delta.rudder],
@@ -85,15 +95,23 @@ while sim_time < SIM.end_time:
                    measurements=None)
     
 
+    #appends on the control start and end times
+    completion_times.append(control_end_time - control_start_time)
 
     printerCounter += 1
 
     #increments the time
     sim_time += SIM.ts_simulation
 
+
+controlDataFrame = pd.DataFrame(completion_times)
+controlDataFrame.to_csv('//home//dben1182//Documents//vtolsim//launch_files//quad//controllerTests//vtolSim_control_alloc_times.csv', header=False, index=False)
+
+
+
 #writes the delta output array to a csv
 dataFrame = pd.DataFrame(deltaOutputArray)
 
-dataFrame.to_csv("/home/dben1182/Documents/vtolsim/launch_files/quad/controllerTests/SimultaneousTest.csv", index=False, header=False)
+dataFrame.to_csv("//home//dben1182//Documents//vtolsim//launch_files//quad//controllerTests//SimultaneousTest.csv", index=False, header=False)
 
 
