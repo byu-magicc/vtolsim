@@ -50,6 +50,9 @@ delta_e = sp.symbols('delta_e')
 delta_a = sp.symbols('delta_a')
 delta_r = sp.symbols('delta_r')
 
+#creates the delta vector
+delta_c = sp.Matrix([delta_e, delta_a, delta_r])
+
 #splits up the omega
 p = sp.symbols('p')
 q = sp.symbols('q')
@@ -95,10 +98,10 @@ fy_aerodynamic = qbar * S_wing * (
                       + C_Y_delta_a * delta_a
                       + C_Y_delta_r * delta_r)
 # compute logitudinal torque in body frame
-Mx_aerodynamic = qbar * S_wing * c * (
+My_aerodynamic = qbar * S_wing * c * (
         C_m_0 + C_m_alpha * alpha + C_m_q * q + C_m_delta_e * delta_e)
 # compute lateral torques in body frame
-My_aerodynamic  = qbar * S_wing * b * (
+Mx_aerodynamic  = qbar * S_wing * b * (
         C_ell_0
         + C_ell_beta * beta
         + C_ell_p * p
@@ -124,5 +127,10 @@ wrenchAerodynamic = sp.Matrix([[fx_aerodynamic],
 
 
 display(wrenchAerodynamic)
+
+#gets the jacobian of the wrench vector
+wrenchJacobian = wrenchAerodynamic.jacobian(delta_c)
+print('Wrench Jacobian: ')
+display(wrenchJacobian)
 
 # %%

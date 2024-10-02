@@ -357,14 +357,14 @@ class QuadDynamics:
                 + QUAD.C_Y_delta_r * rudder)
         
         # compute logitudinal torque in body frame
-        Mx = qbar * QUAD.S_wing * QUAD.c * (
+        My = qbar * QUAD.S_wing * QUAD.c * (
                 QUAD.C_m_0
                 + QUAD.C_m_alpha * self._alpha
                 + QUAD.C_m_q * q_nondim
                 + QUAD.C_m_delta_e * elevator
         )
         # compute lateral torques in body frame
-        My  = qbar * QUAD.S_wing * QUAD.b * (
+        Mx  = qbar * QUAD.S_wing * QUAD.b * (
                 QUAD.C_ell_0
                 + QUAD.C_ell_beta * self._beta
                 + QUAD.C_ell_p * p_nondim
