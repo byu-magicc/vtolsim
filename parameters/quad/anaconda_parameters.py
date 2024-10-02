@@ -68,6 +68,16 @@ alpha0 = np.deg2rad(15) #0.47
 epsilon = 0.16
 
 
+#defines the directions of each of the propellors
+propDirections = np.array([1.0,#forward propellor
+                           -1.0, #front port propeller
+                           1.0, #rear port propeller
+                           -1.0, #rear starboard propeller
+                           1.0]) #front starboard propeller
+
+
+
+
 #######################################################################################
 #Coefficients
 C_L_0 = 0.23#

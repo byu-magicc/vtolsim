@@ -357,14 +357,14 @@ class QuadDynamics:
                 + QUAD.C_Y_delta_r * rudder)
         
         # compute logitudinal torque in body frame
-        My = qbar * QUAD.S_wing * QUAD.c * (
+        Mx = qbar * QUAD.S_wing * QUAD.c * (
                 QUAD.C_m_0
                 + QUAD.C_m_alpha * self._alpha
                 + QUAD.C_m_q * q_nondim
                 + QUAD.C_m_delta_e * elevator
         )
         # compute lateral torques in body frame
-        Mx  = qbar * QUAD.S_wing * QUAD.b * (
+        My  = qbar * QUAD.S_wing * QUAD.b * (
                 QUAD.C_ell_0
                 + QUAD.C_ell_beta * self._beta
                 + QUAD.C_ell_p * p_nondim
@@ -514,16 +514,7 @@ class QuadDynamics:
         My += Moment_FrontStarboard.item(1)
         Mz += Moment_FrontStarboard.item(2)
 
-        #############################################################################################################
-        
-        #############################################################################################################
-        #induced drag section
-        #######TODO##############
-        #need to add all of the induced drag stuff here
-
-
-        #############################################################################################################
-
+    
         self.printerCounter += 1
         #returns the forces
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
@@ -583,6 +574,7 @@ class QuadDynamics:
         self.true_state.beta = self._beta
         self.true_state.Vg = self._Vg
         self.true_state.chi = self._chi
+        self.true_state.v_air = self.v_air
 
     #function to set initial conditions for the state
     def setInitialConditions(self, initialTrueState: MsgState):

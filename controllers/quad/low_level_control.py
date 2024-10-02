@@ -22,7 +22,7 @@ import scipy.optimize as spo
 
 import copy
 
-from controllers.quad.JacobianCalculation import getJacobians
+from controllers.quad.math.old.JacobianCalculation import getJacobians
 
 #instantiates the dynamics for the quadplane
 from models.quad.quad_dynamics import QuadDynamics
