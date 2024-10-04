@@ -74,7 +74,7 @@ class Autopilot:
         self.q = 0.0
         self.r = 0.0
 
-
+        self.counter = 0
         #creates the dirty derivatives for the altitude, airspeed, and course errors
         self.airspeedErrorDiff = DirtyDerivative(Ts=ts_control)
 
@@ -164,6 +164,11 @@ class Autopilot:
         self.commanded_state.pos[2][0] = -cmd.altitude_command
         self.commanded_state.Va = cmd.airspeed_command
         self.commanded_state.chi = cmd.course_command
+
+        if self.counter % 10 == 0:
+            a = 0
+
+        self.counter += 1
         return delta, self.commanded_state
 
 

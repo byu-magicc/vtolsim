@@ -50,6 +50,8 @@ e = 0.9
 AR = (b**2) / S_wing
 gravity = 9.81
 
+num_rotors = 5
+
 #sets the physical positions of the props. That is, where their bases are located.
 #in units of meters
 
@@ -62,11 +64,32 @@ vertical_rotor_2_pos = np.array([[-0.5], [-0.5], [0.0]])#Port Rear
 vertical_rotor_3_pos = np.array([[-0.5], [0.5], [0.0]])#Starboard Rear
 vertical_rotor_4_pos = np.array([[0.5], [0.5], [0.0]])#Starboard Front
 
-#some necessary parameters
-M = 50.0
-alpha0 = np.deg2rad(15) #0.47
-epsilon = 0.16
+#creates the array of all rotor positions
+rotorPositions = [forward_rotor_pos, vertical_rotor_1_pos, vertical_rotor_2_pos, vertical_rotor_3_pos, vertical_rotor_4_pos]
 
+
+#defines the normal vector for each propeller
+forward_rotor_normal = np.array([[1.0], [0.0], [0.0]])
+
+#sets the locations of the vertical propellers
+vertical_rotor_1_normal = np.array([[0.0], [0.0], [-1.0]])#Port Front
+vertical_rotor_2_normal = np.array([[0.0], [0.0], [-1.0]])#Port Rear
+vertical_rotor_3_normal = np.array([[0.0], [0.0], [-1.0]])#Starboard Rear
+vertical_rotor_4_normal = np.array([[0.0], [0.0], [-1.0]])#Starboard Front
+#array of all normal vectors
+normalVectors = [forward_rotor_normal, vertical_rotor_1_normal, vertical_rotor_2_normal, vertical_rotor_3_normal, vertical_rotor_4_normal, ]
+
+
+#finds the cross products between the positions of each rotor,
+#and the normal vector for each
+leverMomentForward = (np.cross(forward_rotor_pos.T, forward_rotor_normal.T)).T
+leverMomentV1 = (np.cross(vertical_rotor_1_pos.T, vertical_rotor_1_normal.T)).T
+leverMomentV2 = (np.cross(vertical_rotor_2_pos.T, vertical_rotor_2_normal.T)).T
+leverMomentV3 = (np.cross(vertical_rotor_3_pos.T, vertical_rotor_3_normal.T)).T
+leverMomentV4 = (np.cross(vertical_rotor_4_pos.T, vertical_rotor_4_normal.T)).T
+
+#gets the list of the lever moments
+leverMoments = [leverMomentForward,leverMomentV1,leverMomentV2,leverMomentV3,leverMomentV4]
 
 #defines the directions of each of the propellors
 propDirections = np.array([1.0,#forward propellor
@@ -74,6 +97,12 @@ propDirections = np.array([1.0,#forward propellor
                            1.0, #rear port propeller
                            -1.0, #rear starboard propeller
                            1.0]) #front starboard propeller
+
+
+#some necessary parameters
+M = 50.0
+alpha0 = np.deg2rad(15) #0.47
+epsilon = 0.16
 
 
 

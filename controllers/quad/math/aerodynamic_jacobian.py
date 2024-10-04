@@ -11,7 +11,7 @@ import parameters.quad.anaconda_parameters as QUAD
 from IPython.display import display
 
 C_L_0 = sp.symbols('C_{L_0}')
-C_D_0 = sp.symbols('C_{E_0}')
+C_D_0 = sp.symbols('C_{D_0}')
 C_m_0 = sp.symbols('C_{m_0}')
 C_L_alpha = sp.symbols('C_{L_{\\alpha}}')
 C_D_alpha = sp.symbols('C_{D_{\\alpha}}')

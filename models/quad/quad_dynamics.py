@@ -379,7 +379,10 @@ class QuadDynamics:
                 + QUAD.C_n_delta_a * aileron
                 + QUAD.C_n_delta_r * rudder
         )
-        
+
+        #creates breakpoint to see where things go.
+        if (self.printerCounter % 10 == 0):
+            a = 0        
 
         
         #############################################################################################################
@@ -391,7 +394,6 @@ class QuadDynamics:
         #gets the thrust and the moment from the forward prop
         Thrust_Forward, Prop_Moment_Forward = self._motor_thrust_torque(Va_forward_prop, delta.forwardThrottle)
 
-        Prop_Moment_Forward = 0.0
 
         #gets the force on the airplane from the forward propeller
         #In this case, it is in the positive x direction, so we multiply by the unit vector in the direction the thrust is facing
@@ -514,8 +516,12 @@ class QuadDynamics:
         My += Moment_FrontStarboard.item(1)
         Mz += Moment_FrontStarboard.item(2)
 
+        #creates breakpoint to see where things go.
+        if (self.printerCounter % 10 == 0):
+            a = 0
     
         self.printerCounter += 1
+
         #returns the forces
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
 

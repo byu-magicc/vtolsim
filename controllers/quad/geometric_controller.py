@@ -1,9 +1,9 @@
 #creates the geometric controller for the airplane
 
 import numpy as np
-from message_types.msg_trajectory import MsgTrajectory
-from message_types.msg_state import MsgState
-from message_types.msg_delta import MsgDelta
+from message_types.quad.msg_trajectory import MsgTrajectory
+from message_types.quad.msg_state import MsgState
+from message_types.quad.msg_delta import MsgDelta
 import parameters.quad.anaconda_parameters as QUAD
 from tools.differentiators import RotationDerivative
 from tools.lie_group import vee_SO3, antisymmetric
@@ -12,7 +12,7 @@ from scipy.linalg import expm
 from tools.rotations import quaternion_to_euler, quaternion_to_rotation, vee, hat
 import parameters.quad.geometric_control_parameters as GEOM
 from controllers.quad.geometric_control.optimal_pitch import compute_thrust, find_pitch_thrust, find_thrust_from_theta
-from controllers.quad.low_level_control import LowLevelControl_successiveControl
+from controllers.quad.old.low_level_control import LowLevelControl_successiveControl
 
 
 

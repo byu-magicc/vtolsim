@@ -8,8 +8,8 @@ import numpy as np
 from scipy.optimize import minimize
 from tools.rotations import euler_to_quaternion, quaternion_to_euler_vec
 from tools.jacobians import jacobian
-from message_types.msg_delta import MsgDelta
-from models.vtol_dynamics import VtolDynamics
+from message_types.vtol.msg_delta import MsgDelta
+from models.vtol.vtol_dynamics import VtolDynamics
 
 
 def compute_trim(vtol: VtolDynamics, 

@@ -1,4 +1,4 @@
-#this file uses the follower that just uses the vertical rotors
+#implements a controller for the control surfaces and forward throttle test
 
 import os, sys
 # insert parent directory at beginning of python search path
@@ -12,9 +12,10 @@ import parameters.quad.simulation_parameters as SIM
 from models.quad.quad_dynamics import QuadDynamics
 #imports the low level controller for the Quad,
 #which minimizes the mean squared error
-from controllers.quad.low_level_control import LowLevelControl_vertical
+from controllers.quad.old.low_level_control import LowLevelControl_Surfaces
 from message_types.quad.msg_delta import MsgDelta
 from viewers.quad.view_manager import ViewManager
+from message_types.quad.msg_state import MsgState
 
 import pandas as pd
 
@@ -27,8 +28,11 @@ quad = QuadDynamics(SIM.ts_simulation)
 viewers = ViewManager(animation=True, data=True)
 
 
+
+
+
 #instantiates the low level controller
-lowControl = LowLevelControl_vertical(M=0.5, Va0=2.0, ts=SIM.ts_simulation)
+lowControl = LowLevelControl_Surfaces(M=0.5, Va0=25.0, ts=SIM.ts_simulation)
 
 #creates an array to store the deltas for the data analysis
 deltaOutputArray = np.ndarray((8,0))
@@ -92,4 +96,4 @@ while sim_time < SIM.end_time:
 #writes the delta output array to a csv
 dataFrame = pd.DataFrame(deltaOutputArray)
 
-dataFrame.to_csv("/home/dben1182/Documents/vtolsim/launch_files/quad/controllerTests/VerticalTest.csv", index=False, header=False)
+dataFrame.to_csv("/home/dben1182/Documents/vtolsim/launch_files/quad/controllerTests/ControlTest.csv", index=False, header=False)

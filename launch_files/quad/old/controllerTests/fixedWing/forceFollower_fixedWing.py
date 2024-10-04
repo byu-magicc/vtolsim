@@ -17,7 +17,7 @@ from models.quad.quad_dynamics import QuadDynamics
 #which minimizes the mean squared error
 from tools.signals import Signals
 
-from controllers.quad.low_level_control import LowLevelControl_SurfacesShortened
+from controllers.quad.old.low_level_control import LowLevelControl_SurfacesShortened
 from message_types.quad.msg_delta import MsgDelta
 from viewers.quad.view_manager import ViewManager
 from message_types.quad.msg_state import MsgState
