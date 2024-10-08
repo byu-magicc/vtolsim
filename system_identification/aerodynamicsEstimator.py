@@ -22,6 +22,8 @@ from message_types.quad.msg_aerodynamics import ChosenAerodynamicSet
 #imports the stationary kalman filter class
 from system_identification.stationaryKalmanFilter import stationaryKalmanFilter
 
+#imports all of the different classes for the 5 sets
+from message_types.quad.msg_aerodynamics import MsgC_L_D, MsgC_Y, MsgC_l, MsgC_m, MsgC_n
 
 
 import parameters.quad.simulation_parameters as SIM
@@ -59,13 +61,13 @@ class C_Y_Estimator:
         #creates the mixing matrix
         self.mixingMatrix = 0
 
-        #sets the y matrix length
-        numYCoefs = 6
-        #creates the Y coefficient matrix
-        self.Y_Coef = np.ndarray((numYCoefs,1))
+        #instantiates a Y coefficients message class
+        self.MsgC_Y = MsgC_Y()
 
+        #creates the coefficient set
+        self.coefficientSet = 0
         #instantiates the kalman filter
-        self.YKalmanFilter = stationaryKalmanFilter(x_length=numYCoefs, y_width=1)
+        self.YKalmanFilter = stationaryKalmanFilter(x_length=self.MsgC_Y.getSetLength(), y_width=1)
 
     #creates the update function
     def update(self, sensorMeasurements: MsgSensors, state: MsgState, delta: MsgDelta, thrust):
@@ -86,8 +88,9 @@ class C_Y_Estimator:
         y_n = np.array([[accel_y]])
 
         #gets the y coefficients by updating the kalman fulter
-        self.Y_Coef = self.YKalmanFilter.update(y_n=y_n, a_n=a_n)
-
+        self.coefficientSet = self.YKalmanFilter.update(y_n=y_n, a_n=a_n)
+        #writes the message using the
+        self.MsgC_Y.setCoefficients(coefficients=self.coefficientSet)
     
     #function to update and get the mixing matrix
     def getMixingMatrix(self, state: MsgState, delta: MsgDelta):
@@ -97,11 +100,11 @@ class C_Y_Estimator:
         #gets the airspeed
         Va = state.Va
         #gets the roll rate
-        p = state.omega[0][0]
+        p = (state.omega)[0][0]
         #gets the pitch rate
-        q = state.omega[1][0]
+        q = (state.omega)[1][0]
         #gets the yaw rate
-        r = state.omega[2][0]
+        r = (state.omega)[2][0]
         #gets the delta_a
         delta_a = delta.aileron
         #gets the delta_r
@@ -115,7 +118,7 @@ class C_Y_Estimator:
 
     #function that returns the submessage
     def getMessage(self):
-        return self.Y_Coef
+        return self.MsgC_Y
 
 
 #creates the Lift and Drag Coefficient estimation class
@@ -126,13 +129,14 @@ class C_L_D_Estimator:
         #creates the mixing matrix
         self.mixingMatrix = 0
 
-        #sets the y matrix length
-        numLDCoefs = 8
-        #creates the Y coefficient matrix
-        self.L_D_Coef = np.ndarray((numLDCoefs,1))
+        #instantiates the lift drag coefficients message class
+        self.MsgC_L_D = MsgC_L_D()
+
+        #creates the coefficient set
+        self.coefficientSet = 0
 
         #instantiates the kalman filter
-        self.L_D_KalmanFilter = stationaryKalmanFilter(x_length=numLDCoefs, y_width=2)
+        self.L_D_KalmanFilter = stationaryKalmanFilter(x_length=self.MsgC_L_D.getSetLength(), y_width=2)
 
     #creates the update function
     def update(self, sensorMeasurements: MsgSensors, state: MsgState, delta: MsgDelta, thrust):
@@ -156,18 +160,21 @@ class C_L_D_Estimator:
         y_n = np.array([[accel_x], [accel_z]]) - np.array([[thrust/mass], [0.0]])        
 
         #gets the coefficient set
-        self.L_D_Coef = self.L_D_KalmanFilter.update(y_n=y_n, a_n=a_n)
+        self.coefficientSet = self.L_D_KalmanFilter.update(y_n=y_n, a_n=a_n)
+        #writes that to the aerodynamic message
+        self.MsgC_L_D.setCoefficients(coefficients=self.coefficientSet)
 
     #creates the helpef function to create the mixing matrix
     def getMixingMatrix(self, state: MsgState, delta: MsgDelta):
 
         #gets alpha, the angle of attach
         alpha = state.alpha
-        p = state.omega[0][0]
+        #gets the roll rate
+        p = (state.omega)[0][0]
         #gets the pitch rate
-        q = state.omega[1][0]
+        q = (state.omega)[1][0]
         #gets the yaw rate
-        r = state.omega[2][0]
+        r = (state.omega)[2][0]
         #gets the airspeed
         Va = state.Va
         #gets the elevator's delta
@@ -193,6 +200,9 @@ class C_L_D_Estimator:
     def getCoefficientMessage(self):
         return self.MsgC_L_D
 
+    #function that returns the submessage
+    def getMessage(self):
+        return self.MsgC_L_D
 
 #creates the l coefficient estimation class
 class C_l_Estimator:
@@ -201,11 +211,13 @@ class C_l_Estimator:
         #creates the mixing matrix
         self.mixingMatrix = 0 
 
-        num_ell_coefficients = 6
+        #instantiates the l coefficients message class
+        self.MsgC_l = MsgC_l()
 
-        self.ell_Coef = np.ndarray((num_ell_coefficients, 1))
+        #coefficient set
+        self.coefficientSet = 0
         #instantiates the kalman filter
-        self.l_KalmanFilter = stationaryKalmanFilter(x_length=num_ell_coefficients, y_width=1)
+        self.l_KalmanFilter = stationaryKalmanFilter(x_length=self.MsgC_l.getSetLength(), y_width=1)
 
         #instantiates the three dirty derivative functions
         #creates dirty derivative function for p
@@ -221,12 +233,12 @@ class C_l_Estimator:
         #uses p, q, and r from the estimator, and not the direct gyro measurements.
         #we do this because the estimator already low pass filters the gyro measurements,
         #and subtracts the estimated bias, which gives a much more accurate estimate for everything
-        #gets p
-        p = state.omega[0][0]
+        #gets the roll rate
+        p = (state.omega)[0][0]
         #gets the pitch rate
-        q = state.omega[1][0]
+        q = (state.omega)[1][0]
         #gets the yaw rate
-        r = state.omega[2][0]
+        r = (state.omega)[2][0]
         #calls the three dirty derivative functions to get p_dot, q_dot, and r_dot
         p_dot = self.pDirtyDerivative.update(y=p)
         #calls for q_dot
@@ -261,7 +273,9 @@ class C_l_Estimator:
         y_n = np.array([[Jx*p_dot - Jy*q*r + Jz*q*r - Jxz*r_dot - Jxz*p*q]])
 
         #updates the coefficient set
-        self.ell_Coef = self.l_KalmanFilter.update(y_n, a_n)
+        self.coefficientSet = self.l_KalmanFilter.update(y_n, a_n)
+        #saves those coefficients to the message class
+        self.MsgC_l.setCoefficients(coefficients=self.coefficientSet)
 
 
     #helper function to get the mixing matrix
@@ -271,11 +285,12 @@ class C_l_Estimator:
         beta = state.beta
         #gets the airspeed
         Va = state.Va
-        p = state.omega[0][0]
+        #gets the roll rate
+        p = (state.omega)[0][0]
         #gets the pitch rate
-        q = state.omega[1][0]
+        q = (state.omega)[1][0]
         #gets the yaw rate
-        r = state.omega[2][0]
+        r = (state.omega)[2][0]
         #gets the aileron delta a
         delta_a = delta.aileron
         #gets the delta_r
@@ -292,7 +307,7 @@ class C_l_Estimator:
 
     #function that returns the submessage
     def getMessage(self):
-        return self.ell_Coef
+        return self.MsgC_l
 
 #creates the m coefficient estimation class
 class C_m_Estimator:
@@ -300,12 +315,14 @@ class C_m_Estimator:
     #creates the initialization function
     def __init__(self):
 
-        num_m_coefficients = 4
+        #creates the mixing matrix
+        self.mixingMatrix = 0
 
-        self.m_Coef = np.ndarray((num_m_coefficients, 1))
+        #instantiates a Msg_M class
+        self.MsgC_m = MsgC_m()
 
         #instantiates the kalman filter
-        self.mKalmanFilter = stationaryKalmanFilter(x_length=num_m_coefficients, y_width=1)
+        self.mKalmanFilter = stationaryKalmanFilter(x_length=self.MsgC_m.getSetLength(), y_width=1)
 
         #instantiates the three dirty derivative functions
         #creates dirty derivative function for p
@@ -339,11 +356,12 @@ class C_m_Estimator:
         #saves c
         c = QUAD.c
 
-        p = state.omega[0][0]
+        #gets the roll rate
+        p = (state.omega)[0][0]
         #gets the pitch rate
-        q = state.omega[1][0]
+        q = (state.omega)[1][0]
         #gets the yaw rate
-        r = state.omega[2][0]
+        r = (state.omega)[2][0]
 
         #gets the derivative of p, q, and r
         p_dot = self.pDirtyDerivative.update(y=p)
@@ -360,9 +378,10 @@ class C_m_Estimator:
         y_n = np.array([[Jy*q_dot + p*(Jx*r + Jxz*p) - r*(Jz*p + Jxz*r)]])
 
         #gets the coefficient set
-        self.m_Coef = self.mKalmanFilter.update(y_n=y_n, a_n=a_n)
+        coefficientSet = self.mKalmanFilter.update(y_n=y_n, a_n=a_n)
 
-
+        #sets it to the message
+        self.MsgC_m.setCoefficients(coefficients=coefficientSet)
 
     #gets the mixing matrix
     def getMixingMatrix(self, state: MsgState, delta: MsgDelta):
@@ -371,12 +390,11 @@ class C_m_Estimator:
         alpha = state.alpha
 
         #gets the roll rate
-        p = state.omega[0][0]
+        p = (state.omega)[0][0]
         #gets the pitch rate
-        q = state.omega[1][0]
+        q = (state.omega)[1][0]
         #gets the yaw rate
-        r = state.omega[2][0]
-
+        r = (state.omega)[2][0]
         #gets the delta e
         delta_e = delta.elevator
 
@@ -394,7 +412,7 @@ class C_m_Estimator:
 
     #function that returns the submessage
     def getMessage(self):
-        return self.m_Coef
+        return self.MsgC_m
 
 #creates the n coefficient estimation class
 class C_n_Estimator:
@@ -405,12 +423,11 @@ class C_n_Estimator:
         #creates the mixing matrix
         self.mixingMatrix = 0
 
-        numNCoefficients = 6
-
-        self.nCoef = np.ndarray((numNCoefficients, 1))
+        #instantiates the Msg_n class
+        self.MsgC_n = MsgC_n()
 
         #instantiates the kalman filter
-        self.nKalmanFilter = stationaryKalmanFilter(x_length=numNCoefficients, y_width=1)
+        self.nKalmanFilter = stationaryKalmanFilter(x_length=self.MsgC_n.getSetLength(), y_width=1)
 
         #instantiates the three dirty derivative functions
         #creates dirty derivative function for p
@@ -443,11 +460,11 @@ class C_n_Estimator:
         b = QUAD.b
 
         #gets the roll rate
-        p = state.omega[0][0]
+        p = (state.omega)[0][0]
         #gets the pitch rate
-        q = state.omega[1][0]
+        q = (state.omega)[1][0]
         #gets the yaw rate
-        r = state.omega[2][0]
+        r = (state.omega)[2][0]
 
         #gets the p_dot, q_dot, and r_dot
         p_dot = self.pDirtyDerivative.update(y=p)
@@ -464,8 +481,10 @@ class C_n_Estimator:
         y_n = np.array([[-Jx*p*q + Jy*p*q + Jz*r_dot - Jxz*p_dot + Jxz*q*r]])
 
         #gets the coefficients
-        self.nCoef = self.nKalmanFilter.update(y_n, a_n)
+        coefficientSet = self.nKalmanFilter.update(y_n, a_n)
 
+        #writes it to the message
+        self.MsgC_n.setCoefficients(coefficients=coefficientSet)
 
     #gets mixing matrix
     def getMixingMatrix(self, state: MsgState, delta: MsgDelta):
@@ -474,12 +493,13 @@ class C_n_Estimator:
         #saves the beta
         beta = state.beta
 
+
         #gets the roll rate
-        p = state.omega[0][0]
+        p = (state.omega)[0][0]
         #gets the pitch rate
-        q = state.omega[1][0]
+        q = (state.omega)[1][0]
         #gets the yaw rate
-        r = state.omega[2][0]
+        r = (state.omega)[2][0]
 
         #delta a
         delta_a = delta.aileron
@@ -501,7 +521,7 @@ class C_n_Estimator:
 
     #function that returns the submessage
     def getMessage(self):
-        return self.nCoef
+        return self.MsgC_n
     
 
 #creates the Aerodynamics Estimator master class

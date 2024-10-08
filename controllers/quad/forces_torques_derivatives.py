@@ -21,6 +21,7 @@ class wrenchCalculation:
 
         #creates the counter
         self.counter = 0
+
     
     #function that returns the forces, moments, force derivatives, and moment derivatives
     #This will be useful for the jacobian
@@ -110,11 +111,14 @@ class wrenchCalculation:
         if (self.counter % 10 == 0):
             a = 0
 
+        #gets the Jacobian for the output
+        wrenchJacobian = self.wrenchJacobian(delta=delta, state=state)
+
 
         #increments the counter
         self.counter += 1
 
-        return wrenchOutput
+        return wrenchOutput, wrenchJacobian
 
 
 
@@ -463,4 +467,30 @@ class wrenchCalculation:
         return forcesBodyFrame, momentsBodyFrame
 
 
+    #function that converts delta message to delta array
+    def delta_message_to_array(self, deltaMessage: MsgDelta)->np.ndarray:
 
+        temp = np.array([deltaMessage.elevator,
+                         deltaMessage.aileron,
+                         deltaMessage.rudder,
+                         deltaMessage.forwardThrottle,
+                         deltaMessage.verticalThrottle_1,
+                         deltaMessage.verticalThrottle_2,
+                         deltaMessage.verticalThrottle_3,
+                         deltaMessage.verticalThrottle_4])
+        
+        return temp
+    
+    #function that converts delta array to delta message
+    def delta_array_to_message(self, deltaArray: np.ndarray)->MsgDelta:
+
+        deltaMessage = MsgDelta(elevator=deltaArray.item(0),
+                                aileron=deltaArray.item(1),
+                                rudder=deltaArray.item(2),
+                                forwardThrottle=deltaArray.item(3),
+                                verticalThrottle_1=deltaArray.item(4),
+                                verticalThrottle_2=deltaArray.item(5),
+                                verticalThrottle_3=deltaArray.item(6),
+                                verticalThrottle_4=deltaArray.item(7))
+        
+        return deltaMessage

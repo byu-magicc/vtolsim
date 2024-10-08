@@ -136,11 +136,11 @@ class Signals:
 
     def doublet(self, time):
         '''doublet function'''
-        if ((time >= self.start_time) and (time < self.start_time + self.duration - self.phase)) or \
-            ((time >= self.start_time + 2*self.duration - self.phase) and (time < self.start_time + 2*self.duration)):
+        if ((time >= self.start_time) and (time < (self.start_time + self.duration/2.0 - self.phase))) or \
+            ((time >= self.start_time + self.duration - self.phase) and (time < self.start_time + self.duration)):
             y = self.amplitude
-        elif (time >= self.start_time + self.duration - self.phase) \
-                and (time <= self.start_time + 2*self.duration - self.phase):
+        elif (time >= self.start_time + self.duration/2.0 - self.phase) \
+                and (time <= self.start_time + self.duration - self.phase):
             y = -self.amplitude
         else:
             y = 0.0

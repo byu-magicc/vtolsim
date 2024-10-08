@@ -5,10 +5,10 @@ from message_types.quad.msg_delta import MsgDelta
 
 #saves each of the trims
 
-elevatorTrim = -0.124778
-aileronTrim = 0.001836
-rudderTrim = -0.000303
-forwardThrottleTrim = 0.676752
+elevatorTrim = -0.0401
+aileronTrim = -0.001836
+rudderTrim = 0.0
+forwardThrottleTrim = 0.80595
 
 #--------------------------------------------------------------------------
 #------------------------------TODO----------------------------------------
