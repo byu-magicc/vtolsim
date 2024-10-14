@@ -76,16 +76,16 @@ class QuadDynamics:
 
         #defines the rotations
         #clockwise for the forward prop
-        self.forwardThrust_direction = 1
+        self.forwardThrust_direction = QUAD.propDirections[0]
 
         #counterclockwise for vertical thruster 1 (Port Front)
-        self.verticalThrust_1_direction = 1
+        self.verticalThrust_1_direction = QUAD.propDirections[1]
         #clockwise for vertical thruster 2 (Port Rear)
-        self.verticalThrust_2_direction = -1
+        self.verticalThrust_2_direction = QUAD.propDirections[2]
         #counterclockwise for vertical thruster 3 (Starboard Rear)
-        self.verticalThrust_3_direction = 1
+        self.verticalThrust_3_direction = QUAD.propDirections[3]
         #clockwise for vertical thruster 4 (Starboard Front)
-        self.verticalThrust_4_direction = -1
+        self.verticalThrust_4_direction = QUAD.propDirections[4]
 
         self.printerCounter = 0
 
@@ -389,7 +389,7 @@ class QuadDynamics:
         )
 
         #creates breakpoint to see where things go.
-        if (self.printerCounter % 10 == 0):
+        if (self.printerCounter % 100 == 0) and (self.printerCounter > 400):
             a = 0        
 
         
@@ -410,9 +410,11 @@ class QuadDynamics:
         #gets the moment, which is a little more complicated
         ##############################*******************************************************************************************
         #I may need to change this to account for the direction of the prop rotation
+        #gets the lever moment from the thrust and the lever arm
+        Lever_Moment_Forward = np.cross(QUAD.forward_rotor_pos.T, Force_Forward.T).T
         #I am currently choosing it to rotate clockwise, when at the back, looking to the front of the airplane
         Moment_Forward = self.forwardThrust_direction*Prop_Moment_Forward*np.array([[1.0],[0.0],[0.0]])\
-                         + np.cross(QUAD.forward_rotor_pos.T, Force_Forward.T).T
+                         + Lever_Moment_Forward
 
         #adds each component to the whole forces and moment variables
         fx += Force_Forward.item(0)
@@ -435,10 +437,13 @@ class QuadDynamics:
         #gets the RearPort Force
         Force_FrontPort = Thrust_FrontPort*np.array([[0.0],[0.0],[-1.0]])
 
-        #gets the rear port moment
-        Moment_FrontPort = self.verticalThrust_1_direction*Prop_Moment_FrontPort*np.array([[0.0],[0.0],[-1.0]]) \
-                           + np.cross(QUAD.vertical_rotor_2_pos.T, Force_FrontPort.T).T
+        #gets the lever moment front port
+        Lever_Moment_Front_Port = np.cross(QUAD.vertical_rotor_1_pos.T, Force_FrontPort.T).T
 
+        #gets the front port moment
+        Moment_FrontPort = self.verticalThrust_1_direction*Prop_Moment_FrontPort*np.array([[0.0],[0.0],[-1.0]]) \
+                           + Lever_Moment_Front_Port
+        
         #adds each component to the whole forces and moment variables
         fx += Force_FrontPort.item(0)
         fy += Force_FrontPort.item(1)
@@ -460,9 +465,12 @@ class QuadDynamics:
         #gets the RearPort Force
         Force_RearPort = Thrust_RearPort*np.array([[0.0],[0.0],[-1.0]])
 
+        #gets the Lever Moment rear port
+        Lever_Moment_Rear_Port = np.cross(QUAD.vertical_rotor_2_pos.T, Force_RearPort.T).T
+
         #gets the rear port moment
         Moment_RearPort = self.verticalThrust_2_direction*Prop_Moment_RearPort*np.array([[0.0],[0.0],[-1.0]]) \
-                          + np.cross(QUAD.vertical_rotor_1_pos.T, Force_RearPort.T).T
+                          + Lever_Moment_Rear_Port
 
         #adds each component to the whole forces and moment variables
         fx += Force_RearPort.item(0)
@@ -486,9 +494,11 @@ class QuadDynamics:
         #gets the RearStarboard Force
         Force_RearStarboard = Thrust_RearStarboard*np.array([[0.0],[0.0],[-1.0]])
 
+        #gets the lever moment rear starboard
+        Lever_Moment_Rear_Starboard = np.cross(QUAD.vertical_rotor_3_pos.T, Force_RearStarboard.T).T
         #gets the rear starboard moment
         Moment_RearStarboard = self.verticalThrust_3_direction*Prop_Moment_RearStarboard*np.array([[0.0],[0.0],[-1.0]]) \
-                               + np.cross(QUAD.vertical_rotor_4_pos.T, Force_RearStarboard.T).T
+                               + Lever_Moment_Rear_Starboard
 
         #adds each component to the whole forces and moment variables
         fx += Force_RearStarboard.item(0)
@@ -511,9 +521,11 @@ class QuadDynamics:
         #gets the RearStarboard Force
         Force_FrontStarboard = Thrust_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])
 
-        #gets the rear starboard moment
+        #gets the front starboard Lever Moment
+        Lever_Moment_Front_Starboard = np.cross(QUAD.vertical_rotor_4_pos.T, Force_FrontStarboard.T).T
+        #gets the front starboard moment
         Moment_FrontStarboard = self.verticalThrust_4_direction*Prop_Moment_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])\
-                                 + np.cross(QUAD.vertical_rotor_3_pos.T, Force_FrontStarboard.T).T
+                                 + Lever_Moment_Front_Starboard
 
         #adds each component to the whole forces and moment variables
         fx += Force_FrontStarboard.item(0)
@@ -525,7 +537,7 @@ class QuadDynamics:
         Mz += Moment_FrontStarboard.item(2)
 
         #creates breakpoint to see where things go.
-        if (self.printerCounter % 10 == 0):
+        if (self.printerCounter % 200 == 0):
             a = 0
     
         self.printerCounter += 1

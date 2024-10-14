@@ -22,6 +22,8 @@ class wrenchCalculation:
         #creates the counter
         self.counter = 0
 
+
+
     
     #function that returns the forces, moments, force derivatives, and moment derivatives
     #This will be useful for the jacobian
@@ -32,9 +34,6 @@ class wrenchCalculation:
     #1. wrench Output, based on the current state
     #2. Wrench Jacobian, based on the delta inputs
     def forces_moments_derivatives(self, delta: MsgDelta, state: MsgState):
-
-
-
 
         #gets the whole state out
         pos = state.pos
@@ -108,7 +107,7 @@ class wrenchCalculation:
         wrenchOutput = np.array([[fx],[fz],[Mx],[My],[Mz]])
 
         #creates breakpoint to see where things go.
-        if (self.counter % 10 == 0):
+        if (self.counter % 200 == 0):
             a = 0
 
         #gets the Jacobian for the output
@@ -119,8 +118,6 @@ class wrenchCalculation:
         self.counter += 1
 
         return wrenchOutput, wrenchJacobian
-
-
 
 
     #creates a function that obtains the total forces and torques achieved
@@ -164,9 +161,9 @@ class wrenchCalculation:
             Mx += Moment.item(0)
             My += Moment.item(1)
             Mz += Moment.item(2)
+            if self.counter % 200 == 0:
+                a = 0
 
-        if self.counter % 10 == 0:
-            a = 0
 
         #gets the aerodynamic forces and torques
         #these are already in body frame
@@ -188,7 +185,8 @@ class wrenchCalculation:
         My += My_aerodynamic
         Mz += Mz_aerodynamic
 
-
+        if self.counter % 200 == 0:
+            a = 0
 
         #creates the wrench return vector
         wrench_achieved = np.array([[fx],[fz],[Mx],[My],[Mz]])
@@ -350,6 +348,9 @@ class wrenchCalculation:
                 QUAD.rho * Omega_op**2 * np.power(D_prop, 4) * C_T_der / (2 * np.pi)**2
             Q_p_der = QUAD.rho * Omega_op * Omega_op_der * np.power(D_prop, 5) * C_Q / (2 * np.pi**2) + \
                 QUAD.rho * Omega_op**2 * np.power(D_prop, 5) * C_Q_der / (2 * np.pi)**2
+            
+            #takes into account the direction of the rotation of the propeller
+            Q_p = (QUAD.propDirections)[i]*Q_p
 
             thrust.append(T_p)
             torque.append(Q_p)
@@ -467,30 +468,4 @@ class wrenchCalculation:
         return forcesBodyFrame, momentsBodyFrame
 
 
-    #function that converts delta message to delta array
-    def delta_message_to_array(self, deltaMessage: MsgDelta)->np.ndarray:
 
-        temp = np.array([deltaMessage.elevator,
-                         deltaMessage.aileron,
-                         deltaMessage.rudder,
-                         deltaMessage.forwardThrottle,
-                         deltaMessage.verticalThrottle_1,
-                         deltaMessage.verticalThrottle_2,
-                         deltaMessage.verticalThrottle_3,
-                         deltaMessage.verticalThrottle_4])
-        
-        return temp
-    
-    #function that converts delta array to delta message
-    def delta_array_to_message(self, deltaArray: np.ndarray)->MsgDelta:
-
-        deltaMessage = MsgDelta(elevator=deltaArray.item(0),
-                                aileron=deltaArray.item(1),
-                                rudder=deltaArray.item(2),
-                                forwardThrottle=deltaArray.item(3),
-                                verticalThrottle_1=deltaArray.item(4),
-                                verticalThrottle_2=deltaArray.item(5),
-                                verticalThrottle_3=deltaArray.item(6),
-                                verticalThrottle_4=deltaArray.item(7))
-        
-        return deltaMessage

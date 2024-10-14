@@ -51,3 +51,14 @@ actuatorBounds_delta_t = [(0.0, 1.0), #delta throttle vertical 1
                          (0.0, 1.0), #delta throttle vertical 2
                          (0.0, 1.0), #delta throttle vertical 3
                          (0.0, 1.0)] #delta throttle vertical 4
+
+
+#saves the bounds for finding the complete delta
+actuatorBounds = [(-1.0, 1.0), #delta elevator
+                  (-1.0, 1.0), #delta aileron
+                  (-1.0, 1.0), #delta rudder 
+                  (0.0, 1.0), #delta throttle forward
+                  (0.0, 1.0), #delta throttle vertical 1
+                  (0.0, 1.0), #delta throttle vertical 2
+                  (0.0, 1.0), #delta throttle vertical 3
+                  (0.0, 1.0)] #delta throttle vertical 4

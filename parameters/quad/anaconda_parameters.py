@@ -93,10 +93,10 @@ leverMoments = [leverMomentForward,leverMomentV1,leverMomentV2,leverMomentV3,lev
 
 #defines the directions of each of the propellors
 propDirections = np.array([1.0,#forward propellor
-                           -1.0, #front port propeller
-                           1.0, #rear port propeller
-                           -1.0, #rear starboard propeller
-                           1.0]) #front starboard propeller
+                           1.0, #front port propeller
+                           -1.0, #rear port propeller
+                           1.0, #rear starboard propeller
+                           -1.0]) #front starboard propeller
 
 
 #some necessary parameters
