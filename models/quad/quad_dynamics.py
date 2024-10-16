@@ -17,8 +17,14 @@ from message_types.quad.msg_delta import MsgDelta
 class QuadDynamics:
 
     #creates the initialization function
-    def __init__(self, ts: float):
+    #saves the timestep for simulation, as well as the 
+    #bool to enable whether the quadrotors will be enabled or disabled in the dynamics
+    def __init__(self, ts: float,
+                 quadRotorsEnabled = True):
         self._ts = ts
+
+        #saves the quadrotors enabled bool
+        self.quadRotorsEnabled = quadRotorsEnabled
 
 
         #creates the state array and initializes them to the original positions
@@ -319,7 +325,7 @@ class QuadDynamics:
         r = self._state.item(12)
 
         #gets the gravitational force
-        f_g = QUAD.mass * QUAD.gravity * R.T @ np.array([[0.], [0.], [1.]])
+        f_g = R.T @ np.array([[0.], [0.], [QUAD.mass * QUAD.gravity]])
 
         #gets each portion of the gravitational force
         fx = f_g.item(0)
@@ -329,6 +335,9 @@ class QuadDynamics:
         qbar = 0.5 * QUAD.rho * self._Va**2
         ca = np.cos(self._alpha)
         sa = np.sin(self._alpha)
+
+        if self.printerCounter % 42 == 0:
+            a = 0
 
         if self._Va > 1:
             p_nondim = p * QUAD.b / (2 * self._Va)  # nondimensionalize p
@@ -363,7 +372,8 @@ class QuadDynamics:
                 + QUAD.C_Y_r * r_nondim
                 + QUAD.C_Y_delta_a * aileron
                 + QUAD.C_Y_delta_r * rudder)
-        
+        if self.printerCounter % 42 == 0:
+            a = 0
         # compute logitudinal torque in body frame
         My = qbar * QUAD.S_wing * QUAD.c * (
                 QUAD.C_m_0
@@ -371,6 +381,7 @@ class QuadDynamics:
                 + QUAD.C_m_q * q_nondim
                 + QUAD.C_m_delta_e * elevator
         )
+
         # compute lateral torques in body frame
         Mx  = qbar * QUAD.S_wing * QUAD.b * (
                 QUAD.C_ell_0
@@ -426,118 +437,119 @@ class QuadDynamics:
         Mz += Moment_Forward.item(2)
         #############################################################################################################
         
-        
-        #############################################################################################################
-        #Forces and moments from the front port propeller
-        Va_front_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+        if self.quadRotorsEnabled:
+                
+            #############################################################################################################
+            #Forces and moments from the front port propeller
+            Va_front_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
 
-        #gets the thrust and the moment from the rear port propeller
-        Thrust_FrontPort, Prop_Moment_FrontPort = self._motor_thrust_torque(Va_front_port_prop, delta.verticalThrottle_2)
-        self.Thrust_Vertical_1 = Thrust_FrontPort
-        #gets the RearPort Force
-        Force_FrontPort = Thrust_FrontPort*np.array([[0.0],[0.0],[-1.0]])
+            #gets the thrust and the moment from the rear port propeller
+            Thrust_FrontPort, Prop_Moment_FrontPort = self._motor_thrust_torque(Va_front_port_prop, delta.verticalThrottle_2)
+            self.Thrust_Vertical_1 = Thrust_FrontPort
+            #gets the RearPort Force
+            Force_FrontPort = Thrust_FrontPort*np.array([[0.0],[0.0],[-1.0]])
 
-        #gets the lever moment front port
-        Lever_Moment_Front_Port = np.cross(QUAD.vertical_rotor_1_pos.T, Force_FrontPort.T).T
+            #gets the lever moment front port
+            Lever_Moment_Front_Port = np.cross(QUAD.vertical_rotor_1_pos.T, Force_FrontPort.T).T
 
-        #gets the front port moment
-        Moment_FrontPort = self.verticalThrust_1_direction*Prop_Moment_FrontPort*np.array([[0.0],[0.0],[-1.0]]) \
-                           + Lever_Moment_Front_Port
-        
-        #adds each component to the whole forces and moment variables
-        fx += Force_FrontPort.item(0)
-        fy += Force_FrontPort.item(1)
-        fz += Force_FrontPort.item(2)
+            #gets the front port moment
+            Moment_FrontPort = self.verticalThrust_1_direction*Prop_Moment_FrontPort*np.array([[0.0],[0.0],[-1.0]]) \
+                            + Lever_Moment_Front_Port
+            
+            #adds each component to the whole forces and moment variables
+            fx += Force_FrontPort.item(0)
+            fy += Force_FrontPort.item(1)
+            fz += Force_FrontPort.item(2)
 
-        Mx += Moment_FrontPort.item(0)
-        My += Moment_FrontPort.item(1)
-        Mz += Moment_FrontPort.item(2)
+            Mx += Moment_FrontPort.item(0)
+            My += Moment_FrontPort.item(1)
+            Mz += Moment_FrontPort.item(2)
 
-        #############################################################################################################
+            #############################################################################################################
 
-        #############################################################################################################
-        #Forces and moments from the rear port propeller
-        Va_rear_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+            #############################################################################################################
+            #Forces and moments from the rear port propeller
+            Va_rear_port_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
 
-        #gets the thrust and the moment from the rear port propeller
-        Thrust_RearPort, Prop_Moment_RearPort = self._motor_thrust_torque(Va_rear_port_prop, delta.verticalThrottle_1)
-        self.Thrust_Vertical_2 = Thrust_RearPort
-        #gets the RearPort Force
-        Force_RearPort = Thrust_RearPort*np.array([[0.0],[0.0],[-1.0]])
+            #gets the thrust and the moment from the rear port propeller
+            Thrust_RearPort, Prop_Moment_RearPort = self._motor_thrust_torque(Va_rear_port_prop, delta.verticalThrottle_1)
+            self.Thrust_Vertical_2 = Thrust_RearPort
+            #gets the RearPort Force
+            Force_RearPort = Thrust_RearPort*np.array([[0.0],[0.0],[-1.0]])
 
-        #gets the Lever Moment rear port
-        Lever_Moment_Rear_Port = np.cross(QUAD.vertical_rotor_2_pos.T, Force_RearPort.T).T
+            #gets the Lever Moment rear port
+            Lever_Moment_Rear_Port = np.cross(QUAD.vertical_rotor_2_pos.T, Force_RearPort.T).T
 
-        #gets the rear port moment
-        Moment_RearPort = self.verticalThrust_2_direction*Prop_Moment_RearPort*np.array([[0.0],[0.0],[-1.0]]) \
-                          + Lever_Moment_Rear_Port
+            #gets the rear port moment
+            Moment_RearPort = self.verticalThrust_2_direction*Prop_Moment_RearPort*np.array([[0.0],[0.0],[-1.0]]) \
+                            + Lever_Moment_Rear_Port
 
-        #adds each component to the whole forces and moment variables
-        fx += Force_RearPort.item(0)
-        fy += Force_RearPort.item(1)
-        fz += Force_RearPort.item(2)
+            #adds each component to the whole forces and moment variables
+            fx += Force_RearPort.item(0)
+            fy += Force_RearPort.item(1)
+            fz += Force_RearPort.item(2)
 
-        Mx += Moment_RearPort.item(0)
-        My += Moment_RearPort.item(1)
-        Mz += Moment_RearPort.item(2)
-        #############################################################################################################
+            Mx += Moment_RearPort.item(0)
+            My += Moment_RearPort.item(1)
+            Mz += Moment_RearPort.item(2)
+            #############################################################################################################
 
-        #############################################################################################################
-        #Forces and moments from the rear starboard propeller
+            #############################################################################################################
+            #Forces and moments from the rear starboard propeller
 
-        #Forces and moments from the front starboard propeller
-        Va_rear_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+            #Forces and moments from the front starboard propeller
+            Va_rear_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
 
-        #gets the thrust and the moment from the rear port propeller
-        Thrust_RearStarboard, Prop_Moment_RearStarboard = self._motor_thrust_torque(Va_rear_starboard_prop, delta.verticalThrottle_4)
-        self.Thrust_Vertical_3 = Thrust_RearStarboard
-        #gets the RearStarboard Force
-        Force_RearStarboard = Thrust_RearStarboard*np.array([[0.0],[0.0],[-1.0]])
+            #gets the thrust and the moment from the rear port propeller
+            Thrust_RearStarboard, Prop_Moment_RearStarboard = self._motor_thrust_torque(Va_rear_starboard_prop, delta.verticalThrottle_4)
+            self.Thrust_Vertical_3 = Thrust_RearStarboard
+            #gets the RearStarboard Force
+            Force_RearStarboard = Thrust_RearStarboard*np.array([[0.0],[0.0],[-1.0]])
 
-        #gets the lever moment rear starboard
-        Lever_Moment_Rear_Starboard = np.cross(QUAD.vertical_rotor_3_pos.T, Force_RearStarboard.T).T
-        #gets the rear starboard moment
-        Moment_RearStarboard = self.verticalThrust_3_direction*Prop_Moment_RearStarboard*np.array([[0.0],[0.0],[-1.0]]) \
-                               + Lever_Moment_Rear_Starboard
+            #gets the lever moment rear starboard
+            Lever_Moment_Rear_Starboard = np.cross(QUAD.vertical_rotor_3_pos.T, Force_RearStarboard.T).T
+            #gets the rear starboard moment
+            Moment_RearStarboard = self.verticalThrust_3_direction*Prop_Moment_RearStarboard*np.array([[0.0],[0.0],[-1.0]]) \
+                                + Lever_Moment_Rear_Starboard
 
-        #adds each component to the whole forces and moment variables
-        fx += Force_RearStarboard.item(0)
-        fy += Force_RearStarboard.item(1)
-        fz += Force_RearStarboard.item(2)
+            #adds each component to the whole forces and moment variables
+            fx += Force_RearStarboard.item(0)
+            fy += Force_RearStarboard.item(1)
+            fz += Force_RearStarboard.item(2)
 
-        Mx += Moment_RearStarboard.item(0)
-        My += Moment_RearStarboard.item(1)
-        Mz += Moment_RearStarboard.item(2)
+            Mx += Moment_RearStarboard.item(0)
+            My += Moment_RearStarboard.item(1)
+            Mz += Moment_RearStarboard.item(2)
 
-        #############################################################################################################
+            #############################################################################################################
 
-        #############################################################################################################
-        #Forces and moments from the front starboard propeller
-        Va_front_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
+            #############################################################################################################
+            #Forces and moments from the front starboard propeller
+            Va_front_starboard_prop = np.array([[0.0],[0.0],[-1.0]]).T @ self.v_air
 
-        #gets the thrust and the moment from the rear port propeller
-        Thrust_FrontStarboard, Prop_Moment_FrontStarboard = self._motor_thrust_torque(Va_front_starboard_prop, delta.verticalThrottle_3)
-        self.Thrust_Vertical_4 = Thrust_FrontStarboard
-        #gets the RearStarboard Force
-        Force_FrontStarboard = Thrust_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])
+            #gets the thrust and the moment from the rear port propeller
+            Thrust_FrontStarboard, Prop_Moment_FrontStarboard = self._motor_thrust_torque(Va_front_starboard_prop, delta.verticalThrottle_3)
+            self.Thrust_Vertical_4 = Thrust_FrontStarboard
+            #gets the RearStarboard Force
+            Force_FrontStarboard = Thrust_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])
 
-        #gets the front starboard Lever Moment
-        Lever_Moment_Front_Starboard = np.cross(QUAD.vertical_rotor_4_pos.T, Force_FrontStarboard.T).T
-        #gets the front starboard moment
-        Moment_FrontStarboard = self.verticalThrust_4_direction*Prop_Moment_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])\
-                                 + Lever_Moment_Front_Starboard
+            #gets the front starboard Lever Moment
+            Lever_Moment_Front_Starboard = np.cross(QUAD.vertical_rotor_4_pos.T, Force_FrontStarboard.T).T
+            #gets the front starboard moment
+            Moment_FrontStarboard = self.verticalThrust_4_direction*Prop_Moment_FrontStarboard*np.array([[0.0],[0.0],[-1.0]])\
+                                    + Lever_Moment_Front_Starboard
 
-        #adds each component to the whole forces and moment variables
-        fx += Force_FrontStarboard.item(0)
-        fy += Force_FrontStarboard.item(1)
-        fz += Force_FrontStarboard.item(2)
+            #adds each component to the whole forces and moment variables
+            fx += Force_FrontStarboard.item(0)
+            fy += Force_FrontStarboard.item(1)
+            fz += Force_FrontStarboard.item(2)
 
-        Mx += Moment_FrontStarboard.item(0)
-        My += Moment_FrontStarboard.item(1)
-        Mz += Moment_FrontStarboard.item(2)
+            Mx += Moment_FrontStarboard.item(0)
+            My += Moment_FrontStarboard.item(1)
+            Mz += Moment_FrontStarboard.item(2)
 
-        #creates breakpoint to see where things go.
-        if (self.printerCounter % 200 == 0):
+    #creates breakpoint to see where things go.
+        if (self.printerCounter % 42 == 0):
             a = 0
     
         self.printerCounter += 1

@@ -17,8 +17,10 @@ from message_types.quad.msg_state import MsgState
 
 class wrenchCalculation:
     #creates the initialization function
-    def __init__(self):
-
+    def __init__(self, quadrotorsEnabled: bool = True):
+        
+        #saves whether the quadrotors are enabled
+        self.quadrotorsEnabled = quadrotorsEnabled
         #creates the counter
         self.counter = 0
 
@@ -145,24 +147,25 @@ class wrenchCalculation:
 
         #iterates through and adds the resultant moments and forces to the total forces and moments
         for i in range(QUAD.num_rotors):
+            
+            if i == 0 or self.quadrotorsEnabled:
+                #gets the forward force
+                Force = rotor_thrust[i]*QUAD.normalVectors[i]
 
-            #gets the forward force
-            Force = rotor_thrust[i]*QUAD.normalVectors[i]
+                #gets the propeller moment forward
+                Prop_Moment_Forward = rotor_torque[i]*QUAD.normalVectors[i]
 
-            #gets the propeller moment forward
-            Prop_Moment_Forward = rotor_torque[i]*QUAD.normalVectors[i]
+                #gets the total moment
+                Moment = Prop_Moment_Forward + rotor_thrust[i]*QUAD.leverMoments[i]
 
-            #gets the total moment
-            Moment = Prop_Moment_Forward + rotor_thrust[i]*QUAD.leverMoments[i]
+                fx += Force.item(0)
+                fz += Force.item(2)
 
-            fx += Force.item(0)
-            fz += Force.item(2)
-
-            Mx += Moment.item(0)
-            My += Moment.item(1)
-            Mz += Moment.item(2)
-            if self.counter % 200 == 0:
-                a = 0
+                Mx += Moment.item(0)
+                My += Moment.item(1)
+                Mz += Moment.item(2)
+                if self.counter % 200 == 0:
+                    a = 0
 
 
         #gets the aerodynamic forces and torques
