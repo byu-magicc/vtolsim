@@ -23,6 +23,10 @@ import csv
 
 import pandas as pd
 
+from tools.rotations import quaternion_to_euler
+
+
+
 
 #instantiates the quad
 
@@ -32,6 +36,8 @@ quad = QuadDynamics(ts=SIM.ts_simulation)
 autopilot = Autopilot(ts_control=SIM.ts_control)
 #creates the view manager
 viewers = ViewManager(animation=True, data=True)
+
+
 
 
 
@@ -60,6 +66,12 @@ actualWrench = np.ndarray((6,0))
 
 #creates the deltas
 deltaArray = np.ndarray((8,0))
+
+#creates a length 13 array to store the state of the system for comparison with mavsim
+stateArray = np.ndarray((13,0))
+
+#creates the array for the euler angles
+euler = np.ndarray((3,0))
 
 sim_time = SIM.start_time
 end_time = SIM.end_time
@@ -102,6 +114,21 @@ while sim_time < end_time:
     deltaArrayTemp = delta.to_array()
 
     deltaArray = np.concatenate((deltaArray, deltaArrayTemp), axis=1)
+
+    #gets the state
+    quadState = quad._state
+
+    stateArray = np.concatenate((stateArray, quadState), axis=1)
+
+    #gets the quaternion
+    quaternion = quadState[6:10]
+
+    #gets the euler
+    phi, theta, psi = quaternion_to_euler(quaternion=quaternion)
+
+    eulerAngles = np.array([[phi],[theta],[psi]])
+
+    euler = np.concatenate((euler, eulerAngles), axis=1)
     ###########################################################################################################L
 
 
@@ -131,3 +158,9 @@ df1.to_csv("/home/dben1182/Documents/vtolsim/launch_files/quad/dynamicsVerificat
 df2 = pd.DataFrame(actualWrench)
 df2.to_csv("/home/dben1182/Documents/vtolsim/launch_files/quad/dynamicsVerification/vtolsimWrench.csv", header=False, index=False)
 
+
+df3 = pd.DataFrame(stateArray)
+df3.to_csv("/home/dben1182/Documents/vtolsim/launch_files/quad/dynamicsVerification/vtolsimState.csv", header=False, index=False)
+
+df4 = pd.DataFrame(euler)
+df4.to_csv("/home/dben1182/Documents/vtolsim/launch_files/quad/dynamicsVerification/vtolsimEulerAngles.csv", header=False, index=False)

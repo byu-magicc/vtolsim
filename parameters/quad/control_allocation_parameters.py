@@ -2,8 +2,16 @@
 
 import numpy as np
 
+Fx_bar = 100.0
+Fz_bar = 100.0
+Mx_bar = 50.0
+My_bar = 50.0
+Mz_bar = 50.0
+
+
+
 # weighting matrix for minimization of difference between desired and achieved force/torque
-K_Wrench = np.diag([1.0, 1.0, 1.0, 1.0, 1.0])
+K_Wrench = np.diag([1/(Fx_bar**2), 1/(Fz_bar**2), 1/(Mx_bar**2), 1/(My_bar**2), 1/(Mz_bar**2)])
 
 # initial guesses for the actuators and where they should go to.
 init_actuators = np.array([0.0, #delta Elevator

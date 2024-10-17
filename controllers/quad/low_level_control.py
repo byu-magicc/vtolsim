@@ -52,7 +52,8 @@ class LowLevelControl_simultaneousControl:
 
     #creates the initialization function
     def __init__(self,
-                 ts: float=0.01):
+                 ts: float=0.01,
+                 torqueControl = False):
         
         #instantiates the wrench calculation class
         self.wrenchCalculator = wrenchCalculation()
@@ -60,7 +61,12 @@ class LowLevelControl_simultaneousControl:
         #creates instance of the state class
         self.state = MsgState()
 
-        #stores the wind
+        #saves the time sample rate
+        self.Ts = ts
+
+        #saves the torque control variable. torqueControl determines whether we will directly control
+        #the torque, or whether we will use a desire roll, pitch and yaw rate to find the desired torque
+        self.torqueControl = torqueControl
 
         #saves the wind
         self.wind = np.array([[0.0], [0.0], [0.0]])       
@@ -100,14 +106,21 @@ class LowLevelControl_simultaneousControl:
         #store the wrench actual
         self.wrenchActual = np.ndarray((5,1))
 
+        self.wrenchActualOut = np.ndarray()
+
+        self.printerCounter = 0
+
+        self.objectiveCounter = 0
+
 
 
 
     #creates the update function
     def update(self, f_d: np.ndarray,#desired force 2x1 vector
-                     omega_d: np.ndarray, #desired angular velocity 3x1 vector
                      state: MsgState, #Quad state
-                     wind: np.ndarray): #the wind in the inertial frame
+                     wind: np.ndarray, #the wind in the inertial frame
+                     omega_d: np.ndarray, #desired angular velocity 3x1 vector
+                     tau_desired: np.ndarray): #the desired torque array
         
         #stores the state
         self.state = state
@@ -115,13 +128,18 @@ class LowLevelControl_simultaneousControl:
         #stores the wind
         self.wind = wind
 
-        #get the desired torque vector from:
-        #1. The desired omega input and
-        #2. The actual omega input
-        #by updating the proportional controllers for each variable
-        tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
-                          [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
-                          [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
+        #case, we are doing direct torque control
+        if self.torqueControl:
+            tau_d = tau_desired
+        #otherwise we are going to use the omegas thing
+        else:
+            #get the desired torque vector from:
+            #1. The desired omega input and
+            #2. The actual omega input
+            #by updating the proportional controllers for each variable
+            tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
+                              [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
+                              [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
         
         #gets the wrench desired 
         wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
@@ -129,6 +147,8 @@ class LowLevelControl_simultaneousControl:
         #gets the delta solution
         delta = self.computeOptimization(wrenchDesired=wrenchDesired)
 
+
+        self.printerCounter += 1
         #returns the delta
         return delta
         
@@ -140,6 +160,7 @@ class LowLevelControl_simultaneousControl:
         #creates the x0
         x0_delta_c = np.concatenate((self.delta_c_previous_solution, np.array([0.0, 0.0, 0.0, 0.0])))
 
+        self.objectiveCounter = 0
         #calls the minimization function from the 
         delta_result = minimize(fun=self.objectiveFunction,
                                 x0=x0_delta_c,
@@ -148,10 +169,10 @@ class LowLevelControl_simultaneousControl:
                                 jac=False,
                                 options={'maxiter': CAP.max_iter})
         
-
         deltaArray = delta_result.x
         #saves the previous solution
         self.previous_solution = deltaArray
+
 
         #gets the delta
         deltaFinal = MsgDelta()
@@ -182,7 +203,8 @@ class LowLevelControl_simultaneousControl:
                                                              state=self.state)
 
         #gets the wrench error
-        wrenchError = wrenchDesired - wrench_actual
+        wrenchError = wrench_actual - wrenchDesired
+
 
         #gets the objective, which is the magnitude of the wrench error,
         #with the scaling factor of the K_Tau matrix
@@ -198,6 +220,7 @@ class LowLevelControl_simultaneousControl:
         # each of the 8 delta control inputs)
         objective_gradient = -wrench_actualJacobian @ K_Wrench @ wrenchError
 
+        self.objectiveCounter += 1
         #returns the objective and the objective gradient
         return objective#TODO, objective_gradient
     
@@ -567,3 +590,6 @@ class LowLevelControl_reference:
         return self.error
 
 
+
+  
+        

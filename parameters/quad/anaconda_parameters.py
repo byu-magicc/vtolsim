@@ -92,7 +92,7 @@ leverMomentV4 = (np.cross(vertical_rotor_4_pos.T, vertical_rotor_4_normal.T)).T
 leverMoments = [leverMomentForward,leverMomentV1,leverMomentV2,leverMomentV3,leverMomentV4]
 
 #defines the directions of each of the propellors
-propDirections = np.array([1.0,#forward propellor
+propDirections = np.array([-1.0,#forward propellor
                            1.0, #front port propeller
                            -1.0, #rear port propeller
                            1.0, #rear starboard propeller

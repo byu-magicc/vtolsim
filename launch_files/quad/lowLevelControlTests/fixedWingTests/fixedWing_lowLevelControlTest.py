@@ -32,7 +32,7 @@ viewers = ViewManager(animation=True, data=True)
 wrenchCalculator = wrenchCalculation()
 
 #creates the low level controller
-lowLevelController = LowLevelControl_simultaneousControl(ts=SIM.ts_simulation)
+lowLevelController = LowLevelControl_simultaneousControl(ts=SIM.ts_simulation, torqueControl=True)
 
 commands = MsgAutopilotFixedWing()
 
@@ -57,7 +57,7 @@ actualWrench = np.ndarray((6,0))
 counter = 0
 
 #creates the settle time to set how long it takes to settle
-settleTime = 15.0
+settleTime = 10.0
 
 settleCount = int(settleTime/SIM.ts_simulation)
 
@@ -79,7 +79,8 @@ while sim_time < end_time:
 
     #sets the f_d
     f_d = np.array([[0.0],[0.0]])
-
+    #sets the tau_d
+    tau_d = np.array([[0.0],[0.0],[0.0]])
     #sets the omega
     omega_d = np.array([[0.0],[0.0],[0.0]])
 
@@ -92,6 +93,7 @@ while sim_time < end_time:
     else:
         delta = lowLevelController.update(f_d=f_d,
                                           omega_d=omega_d,
+                                          tau_desired=tau_d,
                                           state=quad.true_state,
                                           wind=wind)
 
