@@ -1,4 +1,6 @@
-#This file implements the testing for the low level controller. We are going to
+#we ran through another maneuver and recorded the force and torque output for that
+#aircraft in that maneuver. So, now we are going to run through that same procedure,
+#but with the force and torque following method
 
 import os, sys
 
@@ -50,6 +52,10 @@ course_command = Signals(dc_offset=np.radians(0.0),
                          start_frequency=0.015)
 
 
+#creates in the desired wrench vector
+wrenchDesired = (pd.read_csv('/home/dben1182/Documents/vtolsim/launch_files/quad/dynamicsVerification/vtolsimWrench.csv')).values
+
+
 #creates the vector for the actual forces and moments
 actualWrench = np.ndarray((6,0))
 
@@ -60,7 +66,6 @@ counter = 0
 settleTime = 10.0
 
 settleCount = int(settleTime/SIM.ts_simulation)
-
 
 sim_time = SIM.start_time
 end_time = SIM.end_time
@@ -78,9 +83,8 @@ while sim_time < end_time:
     measurements = quad.sensors()
 
     #sets the f_d
-    f_d = np.array([[0.0],[0.0]])
-    #sets the tau_d
-    tau_d = np.array([[0.0],[0.0],[0.0]])
+    f_d = wrenchDesired[0:2, counter]
+    tau_d = wrenchDesired[2:5, counter]
     #sets the omega
     omega_d = np.array([[0.0],[0.0],[0.0]])
 

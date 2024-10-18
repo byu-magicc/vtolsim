@@ -97,7 +97,7 @@ while sim_time < end_time:
     if counter < settleCount:
         delta, commanded_state = autopilot.update(commands, estimated_state)
     else:
-        delta = lowLevelController.update(f_d=f_d,
+        delta = lowLevelController.update(f_desired=f_d,
                                           omega_d=omega_d,
                                           state=quad.true_state,
                                           wind=wind)

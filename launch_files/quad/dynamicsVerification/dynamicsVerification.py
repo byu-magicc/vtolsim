@@ -45,16 +45,16 @@ commands = MsgAutopilotFixedWing()
 
 Va_command = Signals(dc_offset=25.0,
                      amplitude=0.0,
-                     start_time=2.0,
-                     start_frequency=0.01)
+                     start_time=0.0,
+                     start_frequency=0.05)
 altitude_command = Signals(dc_offset=100.0,
-                           amplitude=0.0,
+                           amplitude=5.0,
                            start_time=0.0,
                            start_frequency=0.05)
 course_command = Signals(dc_offset=np.radians(0.0),
                          amplitude=np.radians(0.0),
                          start_time=5.0,
-                         start_frequency=0.015)
+                         start_frequency=0.01)
 
 
 #creates the vector for the actual forces and moments through all time steps

@@ -305,8 +305,6 @@ class QuadDynamics:
         self._chi = np.arctan2(velocity_world_frame.item(1), velocity_world_frame.item(0))
 
 
-
-
     #creates the forces moments function
     def _forces_moments(self, delta: MsgDelta)->np.ndarray:
 
@@ -558,7 +556,6 @@ class QuadDynamics:
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
 
 
-    
     def _motor_thrust_torque(self, Va: float, delta_t: float)->tuple[float, float]:
 
 

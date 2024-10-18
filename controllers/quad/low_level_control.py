@@ -106,7 +106,7 @@ class LowLevelControl_simultaneousControl:
         #store the wrench actual
         self.wrenchActual = np.ndarray((5,1))
 
-        self.wrenchActualOut = np.ndarray()
+
 
         self.printerCounter = 0
 
@@ -116,7 +116,7 @@ class LowLevelControl_simultaneousControl:
 
 
     #creates the update function
-    def update(self, f_d: np.ndarray,#desired force 2x1 vector
+    def update(self, f_desired: np.ndarray,#desired force 2x1 vector
                      state: MsgState, #Quad state
                      wind: np.ndarray, #the wind in the inertial frame
                      omega_d: np.ndarray, #desired angular velocity 3x1 vector
@@ -127,6 +127,8 @@ class LowLevelControl_simultaneousControl:
 
         #stores the wind
         self.wind = wind
+
+
 
         #case, we are doing direct torque control
         if self.torqueControl:
@@ -141,6 +143,11 @@ class LowLevelControl_simultaneousControl:
                               [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
                               [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
         
+        #reshapes f_d and tau_d
+        f_d = f_desired.reshape(2,1)
+
+        tau_d = tau_d.reshape(3,1)
+
         #gets the wrench desired 
         wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
 
