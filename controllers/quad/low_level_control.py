@@ -106,7 +106,6 @@ class LowLevelControl_simultaneousControl:
         #store the wrench actual
         self.wrenchActual = np.ndarray((5,1))
 
-        self.wrenchActualOut = np.ndarray()
 
         self.printerCounter = 0
 
