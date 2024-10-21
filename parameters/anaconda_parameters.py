@@ -8,10 +8,10 @@ from tools.rotations import euler_to_quaternion
 ######################################################################################
                 #Initial Conditions
 ######################################################################################
-#   Initial conditions for QUADplane
-north0 = 0.  # initial north position
-east0 = 0.  # initial east position
-down0 = -100.0  # initial down position
+#initial conditions for the QUAD
+pn0 = 0.  # initial north position
+pe0 = 0.  # initial east position
+pd0 = -100.0  # initial down position
 u0 = 25.  # initial velocity along body x-axis
 v0 = 0.  # initial velocity along body y-axis
 w0 = 0.  # initial velocity along body z-axis
@@ -82,14 +82,14 @@ normalVectors = [forward_rotor_normal, vertical_rotor_1_normal, vertical_rotor_2
 
 #finds the cross products between the positions of each rotor,
 #and the normal vector for each
-leverMomentForward = (np.cross(forward_rotor_pos.T, forward_rotor_normal.T)).T
-leverMomentV1 = (np.cross(vertical_rotor_1_pos.T, vertical_rotor_1_normal.T)).T
-leverMomentV2 = (np.cross(vertical_rotor_2_pos.T, vertical_rotor_2_normal.T)).T
-leverMomentV3 = (np.cross(vertical_rotor_3_pos.T, vertical_rotor_3_normal.T)).T
-leverMomentV4 = (np.cross(vertical_rotor_4_pos.T, vertical_rotor_4_normal.T)).T
+leverArmForward = (np.cross(forward_rotor_pos.T, forward_rotor_normal.T)).T
+leverArmV1 = (np.cross(vertical_rotor_1_pos.T, vertical_rotor_1_normal.T)).T
+leverArmV2 = (np.cross(vertical_rotor_2_pos.T, vertical_rotor_2_normal.T)).T
+leverArmV3 = (np.cross(vertical_rotor_3_pos.T, vertical_rotor_3_normal.T)).T
+leverArmV4 = (np.cross(vertical_rotor_4_pos.T, vertical_rotor_4_normal.T)).T
 
 #gets the list of the lever moments
-leverMoments = [leverMomentForward,leverMomentV1,leverMomentV2,leverMomentV3,leverMomentV4]
+leverArms = [leverArmForward,leverArmV1,leverArmV2,leverArmV3,leverArmV4]
 
 #defines the directions of each of the propellors
 propDirections = np.array([-1.0,#forward propellor

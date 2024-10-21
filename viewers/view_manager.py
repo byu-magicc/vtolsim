@@ -1,12 +1,12 @@
 import pyqtgraph as pg
-from viewers.quad.quad_viewer import QuadViewer
-from viewers.quad.data_viewer import DataViewer
+from viewers.quad_viewer import QuadViewer
+from viewers.data_viewer import DataViewer
 
 #imports the simulation parameters
-import parameters.quad.simulation_parameters as SIM
-from message_types.quad.msg_state import MsgState
-from message_types.quad.msg_sensors import MsgSensors
-from message_types.quad.msg_delta import MsgDelta
+import parameters.simulation_parameters as SIM
+from message_types.msg_state import MsgState
+from message_types.msg_sensors import MsgSensors
+from message_types.msg_delta import MsgDelta
 
 
 #creates the view manager class
@@ -24,12 +24,6 @@ class ViewManager:
         self.animation_flag = animation
         self.save_plots_flag = save_plots
         # initialize video 
-        if self.video_flag is True:
-            from viewers.vtol.video_writer import videoWriter
-            self.video = videoWriter(
-                video_name=video_name,
-                bounding_box=(0, 0, 1000, 1000),
-                output_rate=SIM.ts_video)
         # initialize the other visualization
         if self.animation_flag or self.data_plot_flag or self.sensor_plot_flag: 
             self.app = pg.QtWidgets.QApplication([]) 

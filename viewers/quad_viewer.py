@@ -7,13 +7,13 @@ quad_viewer:
 
 import pyqtgraph.opengl as gl
 import pyqtgraph.Vector as Vector
-from viewers.quad.draw_quadplane import DrawQuadplane
+from viewers.draw_quadplane import DrawQuadplane
 #from viewers.draw_vtol_convergence import DrawVtol
 import numpy as np
-from viewers.vtol.draw_trajectory import DrawTrajectory
+
 from time import time
 
-from message_types.quad.msg_state import MsgState
+from message_types.msg_state import MsgState
 
 #creates the QuadViewer class
 class QuadViewer():
@@ -78,6 +78,4 @@ class QuadViewer():
     def close(self):
         self.window.close()
 
-    def addTrajectory(self, points):
-        blue = np.array([[30, 144, 255, 255]])/255.
-        self.trajectory = DrawTrajectory(points, blue, self.window)
+

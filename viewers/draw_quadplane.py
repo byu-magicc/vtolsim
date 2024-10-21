@@ -5,7 +5,7 @@ import pyqtgraph.opengl as gl
 from tools.rotations import euler_to_rotation
 
 
-from message_types.quad.msg_state import MsgState
+from message_types.msg_state import MsgState
 
 import pyqtgraph.opengl as gl
 

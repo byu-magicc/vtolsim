@@ -1,9 +1,9 @@
 import numpy as np
-from viewers.quad.plotter import Plotter
+from viewers.plotter import Plotter
 from tools.wrap import wrap
 from tools.rotations import rotation_to_euler
-from message_types.quad.msg_state import MsgState
-from message_types.quad.msg_delta import MsgDelta
+from message_types.msg_state import MsgState
+from message_types.msg_delta import MsgDelta
 
 
 #creates the data viewer class
