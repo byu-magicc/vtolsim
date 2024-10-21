@@ -6,7 +6,7 @@ from enum import Enum
 
 import numpy as np
 
-import parameters.quad.anaconda_parameters as QUAD
+import parameters.anaconda_parameters as QUAD
 
 #defines the enumeration for the specified coefficients sets
 class ChosenAerodynamicSet(Enum):
