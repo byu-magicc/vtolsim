@@ -11,7 +11,7 @@ sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
 from models.mav_dynamics import MavDynamics
 import parameters.simulation_parameters as SIM
-import parameters.aerosonde_parameters as MAV
+import parameters.anaconda_parameters as MAV
 
 state = np.array([[5], [2], [-20], [5],
                         [0], [0], [1], [0], [0],

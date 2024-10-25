@@ -7,7 +7,7 @@ autopilot block for mavsim_python - Total Energy Control System
 """
 import numpy as np
 import parameters.control_parameters as AP
-import parameters.aerosonde_parameters as MAV
+import parameters.anaconda_parameters as MAV
 from controllers.pi_control import PIControl
 from controllers.pd_control_with_rate import PDControlWithRate
 from message_types.msg_state import MsgState

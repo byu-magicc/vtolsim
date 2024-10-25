@@ -14,7 +14,7 @@ from models.mav_dynamics import QuadDynamics as MavDynamicsForces
 # load message types
 #from message_types.msg_state import MsgState
 from message_types.msg_delta import MsgDelta
-import parameters.aerosonde_parameters as MAV
+import parameters.anaconda_parameters as MAV
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler
 
 

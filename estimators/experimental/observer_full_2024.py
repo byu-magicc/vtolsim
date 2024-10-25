@@ -10,7 +10,7 @@ from scipy import stats
 import parameters.control_parameters as CTRL
 import parameters.simulation_parameters as SIM
 import parameters.sensor_parameters as SENSOR
-import parameters.aerosonde_parameters as MAV
+import parameters.anaconda_parameters as MAV
 from tools.rotations import euler_to_rotation
 from tools.wrap import wrap
 from message_types.msg_state import MsgState

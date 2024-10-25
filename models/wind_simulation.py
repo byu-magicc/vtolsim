@@ -5,7 +5,7 @@ process to represent wind gusts. (Follows section 4.4 in uav book)
 """
 from tools.transfer_function import TransferFunction
 import numpy as np
-import parameters.aerosonde_parameters as SIM
+import parameters.anaconda_parameters as SIM
 
 
 class WindSimulation:

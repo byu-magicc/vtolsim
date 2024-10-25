@@ -7,7 +7,7 @@ compute_ss_model
 """
 import numpy as np
 from scipy.optimize import minimize
-import parameters.aerosonde_parameters as MAV
+import parameters.anaconda_parameters as MAV
 from parameters.simulation_parameters import ts_simulation as Ts
 from message_types.msg_delta import MsgDelta
 from tools.rotations import euler_to_quaternion, quaternion_to_euler

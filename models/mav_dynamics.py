@@ -12,7 +12,7 @@ mavsim_python
 """
 import numpy as np
 from message_types.msg_state import MsgState
-import parameters.aerosonde_parameters as MAV
+import parameters.anaconda_parameters as MAV
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler
 
 class QuadDynamics:

@@ -11,7 +11,7 @@ mavsim_python
 """
 import numpy as np
 from message_types.msg_sensors import MsgSensors
-import parameters.aerosonde_parameters as MAV
+import parameters.anaconda_parameters as MAV
 import parameters.sensor_parameters as SENSOR
 from models.mav_dynamics_control import MavDynamics as MavDynamicsNoSensors
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler, euler_to_rotation
