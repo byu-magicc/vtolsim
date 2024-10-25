@@ -1,9 +1,9 @@
 import numpy as np
-import models.quad.model_coef as TF
-import parameters.quad.anaconda_parameters as QUAD
+import models.model_coef as TF
+import parameters.aerosonde_parameters as MAV
 
-gravity = QUAD.gravity  # gravity constant
-rho = QUAD.rho  # density of air
+gravity = MAV.gravity  # gravity constant
+rho = MAV.rho  # density of air
 sigma = 0.05  # low pass filter gain for derivative
 Va0 = TF.Va_trim
 

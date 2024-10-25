@@ -1,0 +1,14 @@
+13.1 Implement the gimbal pointing algorithm described in section 13.2.
+planner_parameters.py so that the buildings have a maximum
+height of one meter, and modify the path planner so that the MAV
+moves between two fixed locations.  Implement the gimbal pointing algorithm given
+by equations (13.13) and (13.14).
+
+- Implement the functions in gimbal.py
+
+13.2 Implement the geolocation algorithms described in section 13.3. Use
+the gimbal-pointing routine developed in the previous problem to point
+the gimbal at the target. 
+
+- Implement the functions in geolocation.py 
+- Record or demonstrate your work.

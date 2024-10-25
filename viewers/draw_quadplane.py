@@ -19,9 +19,9 @@ class DrawQuadplane():
         #saves the unit length
         self.unit_length = scale
         #gets the position of the vtol
-        quad_position = state.pos
+        quad_position = np.array([[state.north],[state.east],[-state.altitude]])
         #gets the body to inertial rotation matrix
-        R_bi = state.R
+        R_bi = euler_to_rotation(phi=state.phi, theta=state.theta, psi=state.psi)
         #converts to north east down for rendering
         self.R_ned = np.array([[0, 1, 0],
                                [1, 0, 0],
@@ -293,8 +293,8 @@ class DrawQuadplane():
     def update(self, state: MsgState):
 
         #gets the North, East, Down position of the aircraft
-        quad_position = state.pos
-        R_bi = state.R
+        quad_position = np.array([[state.north],[state.east],[-state.altitude]])
+        R_bi = euler_to_rotation(phi=state.phi, theta=state.theta, psi=state.psi)
         self.quad_fuselage = self.update_object(self.quad_fuselage,
                                             self.fuselage_points,
                                             self.fuselage_index,
@@ -428,6 +428,8 @@ class DrawQuadplane():
                                                           self.rotor_meshColors,
                                                           R_bi @ self.R_rotor,
                                                           quad_position + R_bi @ self.forwardPropulsion_rotorPosition)
+        
+        banana = 0
 
     #function to add object
     def add_object(self, points, index, colors, R, position):

@@ -42,7 +42,11 @@ class QuadViewer():
         self.vtol_plot = []
         self.ts_refresh = ts_refresh
         self.t = time()
-        self.t_next = self.t    
+        self.t_next = self.t
+
+        self.counter = 0
+
+
 
     def update(self, state: MsgState):
         # initialize the drawing the first time update() is called
@@ -50,7 +54,7 @@ class QuadViewer():
             self.vtol_plot = DrawQuadplane(state, self.window)
             # update the center of the camera view to the quadrotor location
             # defined in ENU coordinates
-            view_location = Vector(state.pos.item(1), state.pos.item(0), -state.pos.item(2))
+            view_location = Vector(state.east, state.north, state.altitude)
             self.window.opts['center'] = view_location
             # redraw
             self.app.processEvents()
@@ -62,7 +66,7 @@ class QuadViewer():
                 self.vtol_plot.update(state)
                 self.t = t
                 self.t_next = t + self.ts_refresh
-            view_location = Vector(state.pos.item(1), state.pos.item(0), -state.pos.item(2))
+            view_location = Vector(state.east, state.north, state.altitude)
             self.window.opts['center'] = view_location
             self.app.processEvents()
             self._plot_delay += self._dt
@@ -73,6 +77,11 @@ class QuadViewer():
             #     # update the center of the camera view to the vtol location
             #     # defined in ENU coordinates
             #     # redraw
+        
+        if self.counter % 1 == 0:
+            banana = 0
+
+        self.counter += 1
 
 
     def close(self):
