@@ -1,5 +1,5 @@
 import numpy as np
-import parameters.anaconda_parameters as MAV
+import parameters.anaconda_parameters as QUAD
 
 # size of the waypoint array used for the path planner.  This is the
 # maximum number of waypoints that might be transmitted to the path
@@ -7,13 +7,13 @@ import parameters.anaconda_parameters as MAV
 size_waypoint_array = 100
 
 # airspeed commanded by planner
-Va0 = MAV.u0
+Va0 = QUAD.u0
 
 # max possible roll angle
 phi_max = np.radians(25.)
 
 # minimum turn radius
-R_min = Va0**2. / MAV.gravity / np.tan(phi_max)
+R_min = Va0**2. / QUAD.gravity / np.tan(phi_max)
 #print(R_min)
 
 # create random city map

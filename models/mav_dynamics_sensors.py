@@ -11,9 +11,9 @@ mavsim_python
 """
 import numpy as np
 from message_types.msg_sensors import MsgSensors
-import parameters.anaconda_parameters as MAV
+import parameters.anaconda_parameters as QUAD
 import parameters.sensor_parameters as SENSOR
-from models.mav_dynamics_control import MavDynamics as MavDynamicsNoSensors
+from models.mav_dynamics_control import QuadDynamicsControl as MavDynamicsNoSensors
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler, euler_to_rotation
 
 class MavDynamics(MavDynamicsNoSensors):
@@ -42,14 +42,14 @@ class MavDynamics(MavDynamicsNoSensors):
         self._sensors.gyro_z = self._state.item(12) \
                               + np.random.normal(SENSOR.gyro_z_bias, SENSOR.gyro_sigma)
         # simulate accelerometers(units of g)
-        self._sensors.accel_x = self._forces.item(0)/MAV.mass \
-                                + MAV.gravity*np.sin(theta) \
+        self._sensors.accel_x = self._forces.item(0)/QUAD.mass \
+                                + QUAD.gravity*np.sin(theta) \
                                 + np.random.normal(0., SENSOR.accel_sigma)
-        self._sensors.accel_y = self._forces.item(1)/MAV.mass \
-                                - MAV.gravity*np.cos(theta)*np.sin(phi) \
+        self._sensors.accel_y = self._forces.item(1)/QUAD.mass \
+                                - QUAD.gravity*np.cos(theta)*np.sin(phi) \
                                 + np.random.normal(0., SENSOR.accel_sigma)
-        self._sensors.accel_z = self._forces.item(2)/MAV.mass \
-                                - MAV.gravity*np.cos(theta)*np.cos(phi) \
+        self._sensors.accel_z = self._forces.item(2)/QUAD.mass \
+                                - QUAD.gravity*np.cos(theta)*np.cos(phi) \
                                 + np.random.normal(0., SENSOR.accel_sigma)
         # simulate magnetometers
         # magnetic field in provo has magnetic declination of 12.5 degrees
@@ -64,9 +64,9 @@ class MavDynamics(MavDynamicsNoSensors):
         self._sensors.mag_y = mag_body.item(1) + np.random.normal(0., SENSOR.mag_sigma)
         self._sensors.mag_z = mag_body.item(2) + np.random.normal(0., SENSOR.mag_sigma)
         # simulate pressure sensors
-        self._sensors.abs_pressure = -MAV.rho * MAV.gravity * self._state.item(2) \
+        self._sensors.abs_pressure = -QUAD.rho * QUAD.gravity * self._state.item(2) \
                             + np.random.normal(0., SENSOR.abs_pres_sigma)
-        self._sensors.diff_pressure = 0.5 * MAV.rho * self._Va**2 \
+        self._sensors.diff_pressure = 0.5 * QUAD.rho * self._Va**2 \
                             + np.random.normal(0., SENSOR.diff_pres_sigma)
         # simulate GPS sensor
         if self._t_gps >= SENSOR.ts_gps:

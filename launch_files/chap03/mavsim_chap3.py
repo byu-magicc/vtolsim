@@ -16,14 +16,14 @@ sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
 import parameters.simulation_parameters as SIM
 from message_types.msg_delta import MsgDelta
-from models.mav_dynamics import MavDynamics
+from models.quad_dynamics import QuadDynamics
 from viewers.view_manager import ViewManager
 import time
 
 #quitter = QuitListener()
     
 # initialize elements of the architecture
-mav = MavDynamics(SIM.ts_simulation)
+mav = QuadDynamics(SIM.ts_simulation)
 delta = MsgDelta()
 viewers = ViewManager(mav=True, 
                       data=True,

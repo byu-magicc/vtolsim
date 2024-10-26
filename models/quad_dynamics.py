@@ -12,7 +12,7 @@ mavsim_python
 """
 import numpy as np
 from message_types.msg_state import MsgState
-import parameters.anaconda_parameters as MAV
+import parameters.anaconda_parameters as QUAD
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler
 
 class QuadDynamics:
@@ -24,19 +24,19 @@ class QuadDynamics:
         # We will also need a variety of other elements that are functions of the _state and the wind.
         # self.true_state is a 19x1 vector that is estimated and used by the autopilot to control the aircraft:
         # true_state = [pn, pe, h, Va, alpha, beta, phi, theta, chi, p, q, r, Vg, wn, we, psi, gyro_bx, gyro_by, gyro_bz]
-        self._state = np.array([[MAV.north0],  # (0)
-                               [MAV.east0],   # (1)
-                               [MAV.down0],   # (2)
-                               [MAV.u0],    # (3)
-                               [MAV.v0],    # (4)
-                               [MAV.w0],    # (5)
-                               [MAV.e0],    # (6)
-                               [MAV.e1],    # (7)
-                               [MAV.e2],    # (8)
-                               [MAV.e3],    # (9)
-                               [MAV.p0],    # (10)
-                               [MAV.q0],    # (11)
-                               [MAV.r0],    # (12)
+        self._state = np.array([[QUAD.north0],  # (0)
+                               [QUAD.east0],   # (1)
+                               [QUAD.down0],   # (2)
+                               [QUAD.u0],    # (3)
+                               [QUAD.v0],    # (4)
+                               [QUAD.w0],    # (5)
+                               [QUAD.e0],    # (6)
+                               [QUAD.e1],    # (7)
+                               [QUAD.e2],    # (8)
+                               [QUAD.e3],    # (9)
+                               [QUAD.p0],    # (10)
+                               [QUAD.q0],    # (11)
+                               [QUAD.r0],    # (12)
                                [0],   # (13)
                                [0],   # (14)
                                ])
@@ -114,9 +114,9 @@ class QuadDynamics:
         down_dot = pos_dot.item(2)
 
         # position dynamics
-        u_dot = r*v - q*w + fx/MAV.mass
-        v_dot = p*w - r*u + fy/MAV.mass
-        w_dot = q*u - p*v + fz/MAV.mass
+        u_dot = r*v - q*w + fx/QUAD.mass
+        v_dot = p*w - r*u + fy/QUAD.mass
+        w_dot = q*u - p*v + fz/QUAD.mass
 
         # rotational kinematics
         e0_dot = 0.5 * (-p*e1 - q*e2 - r*e3)
@@ -125,9 +125,9 @@ class QuadDynamics:
         e3_dot = 0.5 * (r*e0 + q*e1 -p*e2)
 
         # rotatonal dynamics
-        p_dot = MAV.gamma1*p*q - MAV.gamma2*q*r + MAV.gamma3*l + MAV.gamma4*n
-        q_dot = MAV.gamma5*p*r - MAV.gamma6*(p**2-r**2) + m/MAV.Jy
-        r_dot = MAV.gamma7*p*q - MAV.gamma1*q*r + MAV.gamma4*l + MAV.gamma8*n
+        p_dot = QUAD.gamma1*p*q - QUAD.gamma2*q*r + QUAD.gamma3*l + QUAD.gamma4*n
+        q_dot = QUAD.gamma5*p*r - QUAD.gamma6*(p**2-r**2) + m/QUAD.Jy
+        r_dot = QUAD.gamma7*p*q - QUAD.gamma1*q*r + QUAD.gamma4*l + QUAD.gamma8*n
 
         # collect the derivative of the states
         x_dot = np.array([[north_dot, east_dot, down_dot, u_dot, v_dot, w_dot,

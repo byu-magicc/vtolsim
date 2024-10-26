@@ -7,12 +7,12 @@ import os, sys
 from pathlib import Path
 sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
-from models.mav_dynamics_control import MavDynamics
+from models.mav_dynamics_control import QuadDynamicsControl
 from models.compute_models import compute_ss_model, compute_tf_model, euler_state, quaternion_state, f_euler, df_dx, df_du, dT_dVa, dT_ddelta_t
 import parameters.simulation_parameters as SIM
 from message_types.msg_delta import MsgDelta
 
-mav = MavDynamics(SIM.ts_simulation)
+mav = QuadDynamicsControl(SIM.ts_simulation)
 
 trim_state = np.array([[0.000000, -0.000000, -100.000000, 24.968743, 0.000000, 1.249755, 0.999687, 0.000000, 0.025003, 0.000000, 0.000000, 0.000000, 0.000000]]).T
 trim_input = MsgDelta(elevator=-0.124778,

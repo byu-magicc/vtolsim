@@ -10,22 +10,22 @@ mavsim_python
         7/13/2023 - RWB
 """
 import numpy as np
-from models.mav_dynamics import QuadDynamics as MavDynamicsForces
+from models.quad_dynamics import QuadDynamics
 # load message types
 #from message_types.msg_state import MsgState
 from message_types.msg_delta import MsgDelta
-import parameters.anaconda_parameters as MAV
+import parameters.anaconda_parameters as QUAD
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler
 
 
-class MavDynamics(MavDynamicsForces):
+class QuadDynamicsControl(QuadDynamics):
     def __init__(self, Ts: float):
         super().__init__(Ts)
         # store wind data for fast recall since it is used at various points in simulation
         self._wind = np.array([[0.], [0.], [0.]])  # wind in NED frame in meters/sec
         # store forces to avoid recalculation in the sensors function
         self._forces = np.array([[0.], [0.], [0.]])
-        self._Va = MAV.u0
+        self._Va = QUAD.u0
         self._alpha = 0
         self._beta = 0
         # update velocity data and forces and moments
@@ -97,76 +97,84 @@ class MavDynamics(MavDynamicsForces):
 
         # compute gravitational forces
         R = quaternion_to_rotation(self._state[6:10]) # rotation from body to world frame
-        f_g = R.T @ np.array([[0.], [0.], [MAV.mass * MAV.gravity]])
+        f_g = R.T @ np.array([[0.], [0.], [QUAD.mass * QUAD.gravity]])
         fx = f_g.item(0)
         fy = f_g.item(1)
         fz = f_g.item(2)
 
         # intermediate variables
-        qbar = 0.5 * MAV.rho * self._Va**2
+        qbar = 0.5 * QUAD.rho * self._Va**2
         ca = np.cos(self._alpha)
         sa = np.sin(self._alpha)
-        p_nondim = p * MAV.b / (2 * self._Va)  # nondimensionalize p
-        q_nondim = q * MAV.c / (2 * self._Va)  # nondimensionalize q
-        r_nondim = r * MAV.b / (2 * self._Va)  # nondimensionalize r
+        p_nondim = p * QUAD.b / (2 * self._Va)  # nondimensionalize p
+        q_nondim = q * QUAD.c / (2 * self._Va)  # nondimensionalize q
+        r_nondim = r * QUAD.b / (2 * self._Va)  # nondimensionalize r
 
         # compute Lift and Drag coefficients
-        tmp1 = np.exp(-MAV.M * (self._alpha - MAV.alpha0))
-        tmp2 = np.exp(MAV.M * (self._alpha + MAV.alpha0))
+        tmp1 = np.exp(-QUAD.M * (self._alpha - QUAD.alpha0))
+        tmp2 = np.exp(QUAD.M * (self._alpha + QUAD.alpha0))
         sigma = (1 + tmp1 + tmp2) / ((1 + tmp1) * (1 + tmp2))
-        CL = (1 - sigma) * (MAV.C_L_0 + MAV.C_L_alpha * self._alpha) \
+        CL = (1 - sigma) * (QUAD.C_L_0 + QUAD.C_L_alpha * self._alpha) \
              + sigma * 2 * np.sign(self._alpha) * sa**2 * ca
-        CD = MAV.C_D_p + ((MAV.C_L_0 + MAV.C_L_alpha * self._alpha)**2)/(np.pi * MAV.e * MAV.AR)
+        CD = QUAD.C_D_p + ((QUAD.C_L_0 + QUAD.C_L_alpha * self._alpha)**2)/(np.pi * QUAD.e * QUAD.AR)
         # compute Lift and Drag Forces
-        F_lift = qbar * MAV.S_wing * (
+        F_lift = qbar * QUAD.S_wing * (
                 CL
-                + MAV.C_L_q * q_nondim
-                + MAV.C_L_delta_e * delta.elevator
+                + QUAD.C_L_q * q_nondim
+                + QUAD.C_L_delta_e * delta.elevator
         )
-        F_drag = qbar * MAV.S_wing * (
+        F_drag = qbar * QUAD.S_wing * (
                 CD
-                + MAV.C_D_q * q_nondim
-                + MAV.C_D_delta_e * delta.elevator
+                + QUAD.C_D_q * q_nondim
+                + QUAD.C_D_delta_e * delta.elevator
         )
         # compute longitudinal forces in body frame
         fx = fx - ca * F_drag + sa * F_lift
         fz = fz - sa * F_drag - ca * F_lift
         # compute lateral forces in body frame
-        fy += qbar * MAV.S_wing * (
-                MAV.C_Y_0
-                + MAV.C_Y_beta * self._beta
-                + MAV.C_Y_p * p_nondim
-                + MAV.C_Y_r * r_nondim
-                + MAV.C_Y_delta_a * delta.aileron
-                + MAV.C_Y_delta_r * delta.rudder
+        fy += qbar * QUAD.S_wing * (
+                QUAD.C_Y_0
+                + QUAD.C_Y_beta * self._beta
+                + QUAD.C_Y_p * p_nondim
+                + QUAD.C_Y_r * r_nondim
+                + QUAD.C_Y_delta_a * delta.aileron
+                + QUAD.C_Y_delta_r * delta.rudder
         )
         # compute logitudinal torque in body frame
-        My = qbar * MAV.S_wing * MAV.c * (
-                MAV.C_m_0
-                + MAV.C_m_alpha * self._alpha
-                + MAV.C_m_q * q_nondim
-                + MAV.C_m_delta_e * delta.elevator
+        My = qbar * QUAD.S_wing * QUAD.c * (
+                QUAD.C_m_0
+                + QUAD.C_m_alpha * self._alpha
+                + QUAD.C_m_q * q_nondim
+                + QUAD.C_m_delta_e * delta.elevator
         )
         # compute lateral torques in body frame
-        Mx = qbar * MAV.S_wing * MAV.b * (
-                MAV.C_ell_0
-                + MAV.C_ell_beta * self._beta
-                + MAV.C_ell_p * p_nondim
-                + MAV.C_ell_r * r_nondim
-                + MAV.C_ell_delta_a * delta.aileron
-                + MAV.C_ell_delta_r * delta.rudder
+        Mx = qbar * QUAD.S_wing * QUAD.b * (
+                QUAD.C_ell_0
+                + QUAD.C_ell_beta * self._beta
+                + QUAD.C_ell_p * p_nondim
+                + QUAD.C_ell_r * r_nondim
+                + QUAD.C_ell_delta_a * delta.aileron
+                + QUAD.C_ell_delta_r * delta.rudder
         )
-        Mz = qbar * MAV.S_wing * MAV.b * (
-                MAV.C_n_0 + MAV.C_n_beta * self._beta
-                + MAV.C_n_p * p_nondim
-                + MAV.C_n_r * r_nondim
-                + MAV.C_n_delta_a * delta.aileron
-                + MAV.C_n_delta_r * delta.rudder
+        Mz = qbar * QUAD.S_wing * QUAD.b * (
+                QUAD.C_n_0 + QUAD.C_n_beta * self._beta
+                + QUAD.C_n_p * p_nondim
+                + QUAD.C_n_r * r_nondim
+                + QUAD.C_n_delta_a * delta.aileron
+                + QUAD.C_n_delta_r * delta.rudder
         )
+
+
+
+
 
         thrust_prop, torque_prop = self._motor_thrust_torque(self._Va, delta.forwardThrottle)
         fx += thrust_prop
         Mx += -torque_prop
+
+
+
+
 
         self._forces[0] = fx
         self._forces[1] = fy
@@ -178,26 +186,26 @@ class MavDynamics(MavDynamicsForces):
         compute thrust and torque due to propeller
         '''
         # map delta_t throttle command(0 to 1) into motor input voltage
-        v_in = MAV.V_max * delta_t
+        v_in = QUAD.V_max * delta_t
         # Quadratic formula to solve for motor speed
-        a = MAV.C_Q0 * MAV.rho * np.power(MAV.D_prop, 5) \
+        a = QUAD.C_Q0 * QUAD.rho * np.power(QUAD.D_prop, 5) \
             / ((2.*np.pi)**2)
-        b = (MAV.C_Q1 * MAV.rho * np.power(MAV.D_prop, 4)
-             / (2.*np.pi)) * Va + MAV.KQ * MAV.KV / MAV.R_motor
-        c = MAV.C_Q2 * MAV.rho * np.power(MAV.D_prop, 3) \
-            * Va**2 - (MAV.KQ / MAV.R_motor) * v_in + MAV.KQ * MAV.i0
+        b = (QUAD.C_Q1 * QUAD.rho * np.power(QUAD.D_prop, 4)
+             / (2.*np.pi)) * Va + QUAD.KQ * QUAD.KV / QUAD.R_motor
+        c = QUAD.C_Q2 * QUAD.rho * np.power(QUAD.D_prop, 3) \
+            * Va**2 - (QUAD.KQ / QUAD.R_motor) * v_in + QUAD.KQ * QUAD.i0
        
         # Angular speed of propeller
         omega_p = (-b + np.sqrt(b**2 - 4*a*c)) / (2.*a)
         # compute advance ratio
-        J_p = 2 * np.pi * Va / (omega_p * MAV.D_prop)
+        J_p = 2 * np.pi * Va / (omega_p * QUAD.D_prop)
         # compute non-dimensionalized coefficients of thrust and torque
-        C_T = MAV.C_T2 * J_p**2 + MAV.C_T1 * J_p + MAV.C_T0
-        C_Q = MAV.C_Q2 * J_p**2 + MAV.C_Q1 * J_p + MAV.C_Q0
+        C_T = QUAD.C_T2 * J_p**2 + QUAD.C_T1 * J_p + QUAD.C_T0
+        C_Q = QUAD.C_Q2 * J_p**2 + QUAD.C_Q1 * J_p + QUAD.C_Q0
         # compute propeller thrust and torque
         n = omega_p / (2 * np.pi)
-        thrust_prop = MAV.rho * n**2 * np.power(MAV.D_prop, 4) * C_T
-        torque_prop = MAV.rho * n**2 * np.power(MAV.D_prop, 5) * C_Q
+        thrust_prop = QUAD.rho * n**2 * np.power(QUAD.D_prop, 4) * C_T
+        torque_prop = QUAD.rho * n**2 * np.power(QUAD.D_prop, 5) * C_Q
 
         return thrust_prop, torque_prop
 

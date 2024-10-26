@@ -8,12 +8,12 @@ from pathlib import Path
 sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
 import parameters.simulation_parameters as SIM
-from models.mav_dynamics_control import MavDynamics
+from models.mav_dynamics_control import QuadDynamicsControl
 from message_types.msg_delta import MsgDelta
 from models.wind_simulation import WindSimulation
 
 wind = WindSimulation(SIM.ts_simulation)
-mav = MavDynamics(SIM.ts_simulation)
+mav = QuadDynamicsControl(SIM.ts_simulation)
 
 delta = MsgDelta()
 delta.elevator = -0.2

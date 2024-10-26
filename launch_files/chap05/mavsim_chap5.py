@@ -14,7 +14,7 @@ sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 #from tools.quit_listener import QuitListener
 import numpy as np
 import parameters.simulation_parameters as SIM
-from models.mav_dynamics_control import MavDynamics
+from models.mav_dynamics_control import QuadDynamicsControl
 from models.wind_simulation import WindSimulation
 from models.trim import compute_trim
 from models.compute_models import compute_model
@@ -26,7 +26,7 @@ import time
 
 # initialize elements of the architecture
 wind = WindSimulation(SIM.ts_simulation)
-mav = MavDynamics(SIM.ts_simulation)
+mav = QuadDynamicsControl(SIM.ts_simulation)
 viewers = ViewManager(mav=True, 
                       data=True,
                       video=False, video_name='chap5.mp4')

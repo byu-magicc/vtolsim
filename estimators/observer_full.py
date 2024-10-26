@@ -10,7 +10,7 @@ from scipy import stats
 import parameters.control_parameters as CTRL
 import parameters.simulation_parameters as SIM
 import parameters.sensor_parameters as SENSOR
-import parameters.anaconda_parameters as MAV
+import parameters.anaconda_parameters as QUAD
 from tools.rotations import euler_to_rotation
 from tools.wrap import wrap
 from message_types.msg_state import MsgState
@@ -58,15 +58,15 @@ class Observer:
                 15**2,  # we
                 ]), 
             xhat0=np.array([[
-                MAV.north0,  # pn
-                MAV.east0,  # pe
-                MAV.down0,  # pd
-                MAV.Va0,  # u
+                QUAD.north0,  # pn
+                QUAD.east0,  # pe
+                QUAD.down0,  # pd
+                QUAD.Va0,  # u
                 0,  # v
                 0,  # w
                 0,  # phi
                 0,  # theta
-                MAV.psi0,  # psi
+                QUAD.psi0,  # psi
                 0,  # bx
                 0,  # by
                 0,  # bz

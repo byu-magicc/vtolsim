@@ -16,7 +16,7 @@ sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
 import parameters.simulation_parameters as SIM
 from tools.signals import Signals
-from models.mav_dynamics_control import MavDynamics
+from models.mav_dynamics_control import QuadDynamicsControl
 from models.wind_simulation import WindSimulation
 from controllers.autopilot import Autopilot
 #from controllers.autopilot_tecs import Autopilot
@@ -29,7 +29,7 @@ from message_types.msg_sensors import MsgSensors
 
 # initialize elements of the architecture
 wind = WindSimulation(SIM.ts_simulation)
-mav = MavDynamics(SIM.ts_simulation)
+mav = QuadDynamicsControl(SIM.ts_simulation)
 autopilot = Autopilot(SIM.ts_simulation)
 viewers = ViewManager(data=True,
                       animation=True)
