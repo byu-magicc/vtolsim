@@ -24,9 +24,9 @@ class QuadDynamics:
         # We will also need a variety of other elements that are functions of the _state and the wind.
         # self.true_state is a 19x1 vector that is estimated and used by the autopilot to control the aircraft:
         # true_state = [pn, pe, h, Va, alpha, beta, phi, theta, chi, p, q, r, Vg, wn, we, psi, gyro_bx, gyro_by, gyro_bz]
-        self._state = np.array([[QUAD.north0],  # (0)
-                               [QUAD.east0],   # (1)
-                               [QUAD.down0],   # (2)
+        self._state = np.array([[QUAD.pn0],  # (0)
+                               [QUAD.pe0],   # (1)
+                               [QUAD.pd0],   # (2)
                                [QUAD.u0],    # (3)
                                [QUAD.v0],    # (4)
                                [QUAD.w0],    # (5)
@@ -37,8 +37,6 @@ class QuadDynamics:
                                [QUAD.p0],    # (10)
                                [QUAD.q0],    # (11)
                                [QUAD.r0],    # (12)
-                               [0],   # (13)
-                               [0],   # (14)
                                ])
         # initialize true_state message
         self.true_state = MsgState()

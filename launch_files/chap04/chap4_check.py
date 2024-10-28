@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
 import parameters.simulation_parameters as SIM
-from models.mav_dynamics_control import QuadDynamicsControl
+from models.quad_dynamics_control import QuadDynamicsControl
 from message_types.msg_delta import MsgDelta
 from models.wind_simulation import WindSimulation
 

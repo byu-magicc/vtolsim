@@ -34,6 +34,9 @@ class QuadDynamicsControl(QuadDynamics):
         # update the message class for the true state
         self._update_true_state()
 
+        #creates an airspeed vector and initializes it to the groundspeed portion
+        self.v_air = self._state[3:6]
+
 
     ###################################
     # public functions
@@ -66,10 +69,10 @@ class QuadDynamicsControl(QuadDynamics):
         wind_body_frame += gust  # add the gust
         self._wind = R @ wind_body_frame  # wind in the world frame
         # velocity vector relative to the airmass
-        v_air = self._state[3:6] - wind_body_frame
-        ur = v_air.item(0)
-        vr = v_air.item(1)
-        wr = v_air.item(2)
+        self.v_air = self._state[3:6] - wind_body_frame
+        ur = self.v_air.item(0)
+        vr = self.v_air.item(1)
+        wr = self.v_air.item(2)
         # compute airspeed
         self._Va = np.sqrt(ur**2 + vr**2 + wr**2)
         # compute angle of attack
@@ -165,14 +168,43 @@ class QuadDynamicsControl(QuadDynamics):
         )
 
 
+        #creates the array of the throttles
+        throttles = np.array([[delta.forwardThrottle],
+                              [delta.verticalThrottle_1],
+                              [delta.verticalThrottle_2],
+                              [delta.verticalThrottle_3],
+                              [delta.verticalThrottle_4]])
 
 
+        #iterates through the five propellers and obtains their respective contribution to the dynamics
+        for i in range(QUAD.num_rotors):
 
-        thrust_prop, torque_prop = self._motor_thrust_torque(self._Va, delta.forwardThrottle)
-        fx += thrust_prop
-        Mx += -torque_prop
+            #gets the airspeed through the current propeller
+            Va_Prop = ((QUAD.normalVectors)[i]).T @ self.v_air
 
+            #gets the rotor thrusts and moment
+            thrust_rotor, moment_rotor = self._motor_thrust_torque(Va_Prop, throttles[i][0])
 
+            #gets the force, the thrust times the unit vector in the out direction
+            Force_rotor = thrust_rotor*((QUAD.normalVectors)[i])
+
+            #obtains the aerodynamic moment
+            aero_moment = ((QUAD.propDirections)[i])*moment_rotor*((QUAD.rotorPositions)[i])
+
+            #obtains the lever moment
+            lever_moment = thrust_rotor*((QUAD.leverArms)[i])
+
+            #gets the total moment
+            total_moment = lever_moment + aero_moment
+
+            #adds the forces and moments
+            fx += Force_rotor.item(0)
+            fy += Force_rotor.item(1)
+            fz += Force_rotor.item(2)
+            #does the same for the moments
+            Mx += total_moment.item(0)
+            My += total_moment.item(1)
+            Mz += total_moment.item(2)
 
 
 

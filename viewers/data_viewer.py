@@ -261,7 +261,7 @@ class DataViewer:
             #gets the inertial frame positions
             self._plotter.add_data_point(plot_id='north', data_label='north_c', xvalue=currentTime, yvalue=commanded_state.north)
             self._plotter.add_data_point(plot_id='east', data_label='east_c', xvalue=currentTime, yvalue=commanded_state.east)
-            self._plotter.add_data_point(plot_id='altitude', data_label='altitude_c', xvalue=currentTime, yvalue=-commanded_state.altitude)
+            self._plotter.add_data_point(plot_id='altitude', data_label='altitude_c', xvalue=currentTime, yvalue=commanded_state.altitude)
 
             #gets the body frame velocities
             self._plotter.add_data_point(plot_id='u', data_label='u_c', xvalue=currentTime, yvalue=commanded_state.u)

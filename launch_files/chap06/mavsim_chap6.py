@@ -16,7 +16,7 @@ sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
 import parameters.simulation_parameters as SIM
 from tools.signals import Signals
-from models.mav_dynamics_control import QuadDynamicsControl
+from models.quad_dynamics_control import QuadDynamicsControl
 from models.wind_simulation import WindSimulation
 from controllers.autopilot import Autopilot
 #from controllers.autopilot_tecs import Autopilot
@@ -25,11 +25,13 @@ from viewers.view_manager import ViewManager
 import time
 from message_types.msg_sensors import MsgSensors
 
+import pandas as pd
+
 #quitter = QuitListener()
 
 # initialize elements of the architecture
 wind = WindSimulation(SIM.ts_simulation)
-mav = QuadDynamicsControl(SIM.ts_simulation)
+quad = QuadDynamicsControl(SIM.ts_simulation)
 autopilot = Autopilot(SIM.ts_simulation)
 viewers = ViewManager(data=True,
                       animation=True)
@@ -52,7 +54,11 @@ course_command = Signals(dc_offset=np.radians(0.0),
 
 # initialize the simulation time
 sim_time = SIM.start_time
-end_time = 300
+end_time = SIM.end_time
+
+
+#creates a vector to store the state through all the time steps, and so we can compare it to mavsim
+stateStorageVector = np.ndarray((13,0))
 
 # main simulation loop
 print("Press 'Esc' to exit...")
@@ -64,22 +70,25 @@ while sim_time < end_time:
     commands.altitude_command = altitude_command.square(sim_time)
 
     # -------autopilot-------------
-    estimated_state = mav.true_state  # uses true states in the control
+    estimated_state = quad.true_state  # uses true states in the control
     delta, commanded_state = autopilot.update(commands, estimated_state)
 
     # -------physical system-------------
     current_wind = wind.update()  # get the new wind vector
-    mav.update(delta, current_wind)  # propagate the MAV dynamics
+    quad.update(delta, current_wind)  # propagate the MAV dynamics
 
     # ------- update viewers -------
     viewers.update(
         sim_time,
-        true_state=mav.true_state,  # true states
+        true_state=quad.true_state,  # true states
         commanded_state=commanded_state,  # commanded states
         delta=delta, # inputs to MAV
         measurements=MsgSensors(),
-        estimated_state=mav.true_state
+        estimated_state=quad.true_state
     )
+
+    #concatenates on the state
+    stateStorageVector = np.concatenate((stateStorageVector, quad._state), axis=1)
        
     # -------Check to Quit the Loop-------
     # if quitter.check_quit():
@@ -91,6 +100,9 @@ while sim_time < end_time:
 
 viewers.close(dataplot_name="ch6_data_plot")
 
+outputPath = "/home/dben1182/Documents/vtolsim/outputFiles/Dynamics_verification/vtolsimState.csv"
 
+df = pd.DataFrame(stateStorageVector)
 
+df.to_csv(outputPath, header=False, index=False)
 

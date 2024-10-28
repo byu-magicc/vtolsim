@@ -7,7 +7,7 @@ import os, sys
 from pathlib import Path
 sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
-from models.mav_dynamics_control import QuadDynamicsControl
+from models.quad_dynamics_control import QuadDynamicsControl
 from models.compute_models import compute_ss_model, compute_tf_model, euler_state, quaternion_state, f_euler, df_dx, df_du, dT_dVa, dT_ddelta_t
 import parameters.simulation_parameters as SIM
 from message_types.msg_delta import MsgDelta

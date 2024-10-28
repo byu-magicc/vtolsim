@@ -14,7 +14,7 @@ sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 # use QuitListener for Linux or PC <- doesn't work on Mac
 #from python_tools.quit_listener import QuitListener
 import parameters.simulation_parameters as SIM
-from models.mav_dynamics_control import QuadDynamicsControl
+from models.quad_dynamics_control import QuadDynamicsControl
 from models.wind_simulation import WindSimulation
 from message_types.msg_delta import MsgDelta
 from viewers.view_manager import ViewManager
