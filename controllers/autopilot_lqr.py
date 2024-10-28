@@ -103,7 +103,8 @@ class Autopilot:
         delta = MsgDelta(elevator=delta_e,
                          aileron=delta_a,
                          rudder=delta_r,
-                         forwardThrottle=delta_t)
+                         forwardThrottle=delta_t,
+                         )
         self.commanded_state.altitude = cmd.altitude_command
         self.commanded_state.Va = cmd.airspeed_command
         self.commanded_state.phi = 0
