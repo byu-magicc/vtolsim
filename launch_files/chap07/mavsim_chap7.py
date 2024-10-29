@@ -17,7 +17,7 @@ import parameters.simulation_parameters as SIM
 from tools.signals import Signals
 from models.mav_dynamics_sensors import MavDynamics
 from models.wind_simulation import WindSimulation
-from controllers.autopilot import Autopilot
+from controllers.autopilot_fixedWing import Autopilot
 from viewers.view_manager import ViewManager
 import time
 
@@ -32,7 +32,7 @@ viewers = ViewManager(mav=True,
                       video=False, video_name='chap7.mp4')
 
 # autopilot commands
-from message_types.msg_autopilot import MsgAutopilot
+from message_types.msg_autopilot_fixedWing import MsgAutopilot
 commands = MsgAutopilot()
 Va_command = Signals(dc_offset=25.0,
                      amplitude=3.0,

@@ -14,6 +14,8 @@ import parameters.anaconda_parameters as QUAD
 from message_types.msg_delta import MsgDelta
 from message_types.msg_state import MsgState
 
+from tools.rotations import euler_to_rotation
+
 
 class wrenchCalculation:
     #creates the initialization function
@@ -23,9 +25,6 @@ class wrenchCalculation:
         self.quadrotorsEnabled = quadrotorsEnabled
         #creates the counter
         self.counter = 0
-
-
-
     
     #function that returns the forces, moments, force derivatives, and moment derivatives
     #This will be useful for the jacobian
@@ -37,19 +36,8 @@ class wrenchCalculation:
     #2. Wrench Jacobian, based on the delta inputs
     def forces_moments_derivatives(self, delta: MsgDelta, state: MsgState):
 
-        #gets the whole state out
-        pos = state.pos
-        #gets the body frame velocity
-        velocity = state.vel
-        #gets the rotation matrix
-        R = state.R
-        #gets the rotational rates
-        omega = state.omega
-
-        #splits up the omega
-        p = omega.item(0)
-        q = omega.item(1)
-        r = omega.item(2)
+        #obtains the rotation matrix
+        R = euler_to_rotation(phi=state.phi, theta=state.theta, psi=state.psi)
 
 
         #gets the individual variables in the state
@@ -121,7 +109,6 @@ class wrenchCalculation:
 
         return wrenchOutput, wrenchJacobian
 
-
     #creates a function that obtains the total forces and torques achieved
     def force_torque_achieved(self, delta: MsgDelta, state: MsgState):
 
@@ -156,7 +143,7 @@ class wrenchCalculation:
                 Prop_Moment_Forward = rotor_torque[i]*QUAD.normalVectors[i]
 
                 #gets the total moment
-                Moment = Prop_Moment_Forward + rotor_thrust[i]*QUAD.leverMoments[i]
+                Moment = Prop_Moment_Forward + rotor_thrust[i]*QUAD.leverArms[i]
 
                 fx += Force.item(0)
                 fz += Force.item(2)
@@ -194,7 +181,6 @@ class wrenchCalculation:
         #creates the wrench return vector
         wrench_achieved = np.array([[fx],[fz],[Mx],[My],[Mz]])
         return wrench_achieved
-
 
     #creates a function that obtains the Jacobian of the wrench
     def wrenchJacobian(self, delta: MsgDelta, state: MsgState):
@@ -241,20 +227,20 @@ class wrenchCalculation:
                        Gamma*QUAD.b*QUAD.C_ell_delta_a,
                        Gamma*QUAD.b*QUAD.C_ell_delta_r,
                        QUAD.forward_rotor_normal[2][0]*rotor_moment_ders[0],
-                       QUAD.leverMomentV1[0][0]*rotor_force_ders[1],
-                       QUAD.leverMomentV2[0][0]*rotor_force_ders[2],
-                       QUAD.leverMomentV3[0][0]*rotor_force_ders[3],
-                       QUAD.leverMomentV4[0][0]*rotor_force_ders[4]
+                       QUAD.leverArmV1[0][0]*rotor_force_ders[1],
+                       QUAD.leverArmV2[0][0]*rotor_force_ders[2],
+                       QUAD.leverArmV3[0][0]*rotor_force_ders[3],
+                       QUAD.leverArmV4[0][0]*rotor_force_ders[4]
                        ]
 
         My_Gradient = [Gamma * QUAD.c * QUAD.C_m_delta_e,
                        0,
                        0,
                        0.0,
-                       QUAD.leverMomentV1[1][0]*rotor_force_ders[1],
-                       QUAD.leverMomentV2[1][0]*rotor_force_ders[2],
-                       QUAD.leverMomentV3[1][0]*rotor_force_ders[3],
-                       QUAD.leverMomentV4[1][0]*rotor_force_ders[4]
+                       QUAD.leverArmV1[1][0]*rotor_force_ders[1],
+                       QUAD.leverArmV2[1][0]*rotor_force_ders[2],
+                       QUAD.leverArmV3[1][0]*rotor_force_ders[3],
+                       QUAD.leverArmV4[1][0]*rotor_force_ders[4]
                        ]
 
         Mz_Gradient = [0.0,
@@ -362,7 +348,6 @@ class wrenchCalculation:
 
         return thrust, torque, thrust_der, torque_der
 
-
     #function that gets the total force and torque achieved
     def aerodynamic_force_torque(self, delta: MsgDelta, state: MsgState)->tuple[np.ndarray, np.ndarray]:
 
@@ -372,19 +357,10 @@ class wrenchCalculation:
         aileron = delta.aileron
         rudder = delta.rudder
 
-        #gets the whole state out
-        pos = state.pos
-        #gets the body frame velocity
-        velocity = state.vel
-        #gets the rotation matrix
-        R = state.R
-        #gets the rotational rates
-        omega = state.omega
-
         #splits up the omega
-        p = omega.item(0)
-        q = omega.item(1)
-        r = omega.item(2)
+        p = state.p
+        q = state.q
+        r = state.r
 
 
         #gets the individual variables in the state
@@ -465,7 +441,5 @@ class wrenchCalculation:
 
         if self.counter % 10 == 0:
             a = 0
-
-
 
         return forcesBodyFrame, momentsBodyFrame

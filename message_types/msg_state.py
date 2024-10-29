@@ -91,6 +91,8 @@ class MsgState:
         self.p = float(0.)
         self.q = float(0.)
         self.r = float(0.)
+        #full airspeed vector
+        self.v_air = np.array([[0.0],[0.0],[0.0]])
         self.Vg = float(25.)
         self.gamma = float(0.)
         self.chi = float(0.)

@@ -18,7 +18,7 @@ import parameters.simulation_parameters as SIM
 from tools.signals import Signals
 from models.quad_dynamics_control import QuadDynamicsControl
 from models.wind_simulation import WindSimulation
-from controllers.autopilot import Autopilot
+from controllers.autopilot_fixedWing import Autopilot
 #from controllers.autopilot_tecs import Autopilot
 #from controllers.lqr_with_rate_damping import Autopilot
 from viewers.view_manager import ViewManager
@@ -37,7 +37,7 @@ viewers = ViewManager(data=True,
                       animation=True)
 
 # autopilot commands
-from message_types.msg_autopilot import MsgAutopilot
+from message_types.msg_autopilot_fixedWing import MsgAutopilot
 commands = MsgAutopilot()
 Va_command = Signals(dc_offset=25.0,
                      amplitude=0.0,
@@ -59,6 +59,10 @@ end_time = SIM.end_time
 
 #creates a vector to store the state through all the time steps, and so we can compare it to mavsim
 stateStorageVector = np.ndarray((13,0))
+
+
+#creates a vector to store the wrench for the aircraft here
+wrenchStorageVector = np.ndarray((6,0))
 
 # main simulation loop
 print("Press 'Esc' to exit...")
@@ -89,6 +93,11 @@ while sim_time < end_time:
 
     #concatenates on the state
     stateStorageVector = np.concatenate((stateStorageVector, quad._state), axis=1)
+
+    #gets the calculated wrench
+    wrench = quad._forces_moments(delta=delta)
+    #concatenates onto the wrench storage vector
+    wrenchStorageVector = np.concatenate((wrenchStorageVector, wrench), axis=1)
        
     # -------Check to Quit the Loop-------
     # if quitter.check_quit():
@@ -100,9 +109,14 @@ while sim_time < end_time:
 
 viewers.close(dataplot_name="ch6_data_plot")
 
-outputPath = "/home/dben1182/Documents/vtolsim/outputFiles/Dynamics_verification/vtolsimState.csv"
+stateOutputPath = "/home/dben1182/Documents/vtolsim/outputFiles/Dynamics_verification/vtolsimState.csv"
 
-df = pd.DataFrame(stateStorageVector)
+df_state = pd.DataFrame(stateStorageVector)
 
-df.to_csv(outputPath, header=False, index=False)
+df_state.to_csv(stateOutputPath, header=False, index=False)
+
+wrenchOutputPath = "/home/dben1182/Documents/vtolsim/outputFiles/lowLevelController/fixedWingTest/wrenchReference.csv"
+
+df_wrench = pd.DataFrame(wrenchStorageVector)
+df_wrench.to_csv(wrenchOutputPath, header=False, index=False)
 

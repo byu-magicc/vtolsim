@@ -14,7 +14,7 @@ from controllers.pd_control_with_rate import PDControlWithRate
 #from controllers.tf_control import TFControl
 from message_types.msg_state import MsgState
 from message_types.msg_delta import MsgDelta
-from message_types.msg_autopilot import MsgAutopilot
+from message_types.msg_autopilot_fixedWing import MsgAutopilot
 from tools.transfer_function import TransferFunction
 from tools.wrap import wrap
 from tools.saturate import saturate

@@ -11,7 +11,7 @@ import numpy as np
 from math import sin, cos
 from message_types.msg_state import MsgState
 from message_types.msg_path import MsgPath
-from message_types.msg_autopilot import MsgAutopilot
+from message_types.msg_autopilot_fixedWing import MsgAutopilot
 from tools.wrap import wrap
 from tools.saturate import saturate
 

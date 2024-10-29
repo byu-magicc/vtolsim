@@ -39,7 +39,7 @@ viewers = ViewManager(mav=True,
                       video=False, video_name='chap8.mp4')
 
 # autopilot commands
-from message_types.msg_autopilot import MsgAutopilot
+from message_types.msg_autopilot_fixedWing import MsgAutopilot
 commands = MsgAutopilot()
 Va_command = Signals(dc_offset=25.0,
                      amplitude=3.0,

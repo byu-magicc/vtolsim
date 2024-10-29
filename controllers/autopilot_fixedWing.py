@@ -9,12 +9,12 @@ autopilot block for mavsim_python
 import numpy as np
 import parameters.control_parameters as AP
 from controllers.pi_control import PIControl
-from controllers.pid_control import PIDControl
+from controllers.pid_control import PidControl
 from controllers.pd_control_with_rate import PDControlWithRate
 #from controllers.tf_control import TFControl
 from message_types.msg_state import MsgState
 from message_types.msg_delta import MsgDelta
-from message_types.msg_autopilot import MsgAutopilot
+from message_types.msg_autopilot_fixedWing import MsgAutopilot
 from tools.transfer_function import TransferFunction
 from tools.wrap import wrap
 from tools.saturate import saturate
@@ -120,7 +120,11 @@ class Autopilot:
         delta = MsgDelta(elevator=delta_e,
                          aileron=delta_a,
                          rudder=delta_r,
-                         forwardThrottle=delta_t)
+                         forwardThrottle=delta_t,
+                         verticalThrottle_1=0.0,
+                         verticalThrottle_2=0.0,
+                         verticalThrottle_3=0.0,
+                         verticalThrottle_4=0.0)
         self.commanded_state.altitude = cmd.altitude_command
         self.commanded_state.Va = cmd.airspeed_command
         self.commanded_state.phi = phi_c

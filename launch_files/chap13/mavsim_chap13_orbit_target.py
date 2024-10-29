@@ -19,7 +19,7 @@ from models.target_dynamics import TargetDynamics
 from models.mav_dynamics_camera import MavDynamics
 from models.camera import Camera
 from models.gimbal import Gimbal
-from controllers.autopilot import Autopilot
+from controllers.autopilot_fixedWing import Autopilot
 from estimators.observer import Observer
 from estimators.geolocation import Geolocation
 from planners.path_follower import PathFollower

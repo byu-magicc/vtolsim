@@ -18,7 +18,7 @@ import parameters.simulation_parameters as SIM
 import parameters.planner_parameters as PLAN
 from models.mav_dynamics_sensors import MavDynamics
 from models.wind_simulation import WindSimulation
-from controllers.autopilot import Autopilot
+from controllers.autopilot_fixedWing import Autopilot
 from estimators.observer import Observer
 #from estimators.observer_full import Observer
 from planners.path_follower import PathFollower

@@ -18,7 +18,7 @@ import numpy as np
 import parameters.simulation_parameters as SIM
 from models.mav_dynamics_sensors import MavDynamics
 from models.wind_simulation import WindSimulation
-from controllers.autopilot import Autopilot
+from controllers.autopilot_fixedWing import Autopilot
 from estimators.observer_full import Observer
 #from estimators.observer import Observer
 from planners.path_follower import PathFollower

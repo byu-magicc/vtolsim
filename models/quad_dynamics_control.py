@@ -87,6 +87,11 @@ class QuadDynamicsControl(QuadDynamics):
         else:
             self._beta = np.arcsin(vr/tmp)
 
+        #updates for the true state
+        self.true_state.v_air = self.v_air
+        self.true_state.Va = self._Va
+
+
     def _forces_moments(self, delta: MsgDelta) -> np.ndarray: 
         """
         return the forces on the UAV based on the state, wind, and control surfaces

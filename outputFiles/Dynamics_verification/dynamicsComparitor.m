@@ -3,7 +3,7 @@ vtolsimState = csvread('vtolsimState.csv');
 
 
 %compares the north position
-plot(1);
+figure(1);
 mavsimNorth = mavsimState(1,:);
 vtolsimNorth = vtolsimState(1,:);
 plot(mavsimNorth);
@@ -15,7 +15,7 @@ legend('mavsim', 'vtolsim');
 
 
 %compares the altitude position
-plot(2);
+figure(2);
 mavsimAltitude = mavsimState(2,:);
 vtolsimAltitude = vtolsimState(2,:);
 plot(mavsimAltitude);
