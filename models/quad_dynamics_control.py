@@ -19,8 +19,8 @@ from tools.rotations import quaternion_to_rotation, quaternion_to_euler
 
 
 class QuadDynamicsControl(QuadDynamics):
-    def __init__(self, Ts: float):
-        super().__init__(Ts)
+    def __init__(self, Ts: float, quadrotorsEnabled: bool = True):
+        super().__init__(Ts, quadrotorsEnabled=quadrotorsEnabled)
         # store wind data for fast recall since it is used at various points in simulation
         self._wind = np.array([[0.], [0.], [0.]])  # wind in NED frame in meters/sec
         # store forces to avoid recalculation in the sensors function
@@ -36,6 +36,7 @@ class QuadDynamicsControl(QuadDynamics):
 
         #creates an airspeed vector and initializes it to the groundspeed portion
         self.v_air = self._state[3:6]
+
 
 
     ###################################
@@ -54,6 +55,9 @@ class QuadDynamicsControl(QuadDynamics):
         self._update_velocity_data(wind)
         # update the message class for the true state
         self._update_true_state()
+
+        #increments the counter
+        self.counter += 1
 
     ###################################
     # private functions
@@ -172,46 +176,56 @@ class QuadDynamicsControl(QuadDynamics):
                 + QUAD.C_n_delta_r * delta.rudder
         )
 
-
+        if self.counter % 67 == 0:
+            banana = 0
         #creates the array of the throttles
         throttles = np.array([[delta.forwardThrottle],
                               [delta.verticalThrottle_1],
                               [delta.verticalThrottle_2],
                               [delta.verticalThrottle_3],
                               [delta.verticalThrottle_4]])
+        
 
 
         #iterates through the five propellers and obtains their respective contribution to the dynamics
         for i in range(QUAD.num_rotors):
+            
 
-            #gets the airspeed through the current propeller
-            Va_Prop = ((QUAD.normalVectors)[i]).T @ self.v_air
+            #case is the pusher rotor, or the quadrotors are enabled
+            if (i==0) or (self.quadrotorsEnabled):
+                #gets the airspeed through the current propeller
+                Va_Prop = ((QUAD.normalVectors)[i]).T @ self.v_air
 
-            #gets the rotor thrusts and moment
-            thrust_rotor, moment_rotor = self._motor_thrust_torque(Va_Prop, throttles[i][0])
+                #gets the rotor thrusts and moment
+                thrust_rotor, moment_rotor = self._motor_thrust_torque(Va_Prop, throttles[i][0])
 
-            #gets the force, the thrust times the unit vector in the out direction
-            Force_rotor = thrust_rotor*((QUAD.normalVectors)[i])
+                #gets the force, the thrust times the unit vector in the out direction
+                Force_rotor = thrust_rotor*((QUAD.normalVectors)[i])
 
-            #obtains the aerodynamic moment
-            aero_moment = ((QUAD.propDirections)[i])*moment_rotor*((QUAD.rotorPositions)[i])
+                #obtains the aerodynamic moment
+                aero_moment = ((QUAD.propDirections)[i])*moment_rotor*((QUAD.normalVectors)[i])
 
-            #obtains the lever moment
-            lever_moment = thrust_rotor*((QUAD.leverArms)[i])
+                #obtains the lever moment
+                lever_moment = thrust_rotor*((QUAD.leverArms)[i])
 
-            #gets the total moment
-            total_moment = lever_moment + aero_moment
+                #gets the total moment
+                total_moment = lever_moment + aero_moment
 
-            #adds the forces and moments
-            fx += Force_rotor.item(0)
-            fy += Force_rotor.item(1)
-            fz += Force_rotor.item(2)
-            #does the same for the moments
-            Mx += total_moment.item(0)
-            My += total_moment.item(1)
-            Mz += total_moment.item(2)
+                #adds the forces and moments
+                fx += Force_rotor.item(0)
+                fy += Force_rotor.item(1)
+                fz += Force_rotor.item(2)
+                #does the same for the moments
+                Mx += total_moment.item(0)
+                My += total_moment.item(1)
+                Mz += total_moment.item(2)
+
+                if self.counter % 67 == 0:
+                    pineapple = 0
 
 
+        if self.counter % 67 == 0:
+            pineapple = 0
 
         self._forces[0] = fx
         self._forces[1] = fy

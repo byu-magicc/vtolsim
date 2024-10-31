@@ -20,10 +20,10 @@ class MsgDelta:
                  aileron=0.0,
                  rudder=0.0,
                  forwardThrottle=0.5,
-                 verticalThrottle_1=0.5,
-                 verticalThrottle_2=0.5,
-                 verticalThrottle_3=0.5,
-                 verticalThrottle_4=0.5):
+                 verticalThrottle_1=0.0,
+                 verticalThrottle_2=0.0,
+                 verticalThrottle_3=0.0,
+                 verticalThrottle_4=0.0):
         self.elevator = float(elevator)  # elevator command
         self.aileron = float(aileron)  # aileron command
         self.rudder = float(rudder)  # rudder command

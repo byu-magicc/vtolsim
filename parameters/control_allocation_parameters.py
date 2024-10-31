@@ -26,6 +26,17 @@ init_actuators = np.array([0.0, #delta Elevator
                            0.6])#delta Throttle Front Starboard
 
 
+#initial guesses for the airplane actuators
+airplaneInit_actuators = np.array([0, #Initial Elevator
+                                   0, #Initial Aileron
+                                   0, #Initial rudder
+                                   0.5, #Initial Forward Prop
+                                   0, #initial v1
+                                   0, #initial v2
+                                   0, #initial v3
+                                   0]) #initial v4
+
+
 #creates the initial guess for the airplane control
 init_plane_control = init_actuators[0:4]
 #creates the initial guess for the quadrotor control

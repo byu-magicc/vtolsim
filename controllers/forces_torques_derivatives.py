@@ -97,7 +97,7 @@ class wrenchCalculation:
         wrenchOutput = np.array([[fx],[fz],[Mx],[My],[Mz]])
 
         #creates breakpoint to see where things go.
-        if (self.counter % 200 == 0):
+        if (self.counter % 67 == 0):
             a = 0
 
         #gets the Jacobian for the output
@@ -151,9 +151,11 @@ class wrenchCalculation:
                 Mx += Moment.item(0)
                 My += Moment.item(1)
                 Mz += Moment.item(2)
-                if self.counter % 200 == 0:
+                if self.counter % 67 == 0:
                     a = 0
 
+        if self.counter % 67 == 0:
+            pineapple = 0
 
         #gets the aerodynamic forces and torques
         #these are already in body frame
@@ -175,7 +177,7 @@ class wrenchCalculation:
         My += My_aerodynamic
         Mz += Mz_aerodynamic
 
-        if self.counter % 200 == 0:
+        if self.counter % 67 == 0:
             a = 0
 
         #creates the wrench return vector

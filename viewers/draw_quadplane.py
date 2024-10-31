@@ -429,7 +429,7 @@ class DrawQuadplane():
                                                           R_bi @ self.R_rotor,
                                                           quad_position + R_bi @ self.forwardPropulsion_rotorPosition)
         
-        banana = 0
+
 
     #function to add object
     def add_object(self, points, index, colors, R, position):
