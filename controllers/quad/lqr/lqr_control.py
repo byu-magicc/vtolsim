@@ -1,45 +1,23 @@
+#creates the two seperate lqr controllers. I am going to do two things as preliminaries to making the 
+#whole simulation thing run. In this case, I am going to create two LQR controllers, one for VTOL and
+#one for the standard plane. I first want to get the simulation running on each of them individually
+#before I start building the rest of the controller
+
 import numpy as np
-import scipy
-from message_types.msg_convert import *
+from scipy.linalg import solve_continuous_are, inv
+from tools.transfer_function import TransferFunction
+import parameters.quad.fixed_wing_lqr_parameters as AP
 
 
+#creates an LQR controller 
+#the purpose of this controller is to provide us with a desired force and torque
+#which will in turn be fed into the low level controller.
 
-#creates the Lqr control class
 class LqrControl:
+    def __init__(self, ts_control):
 
-    #creates the initialization fnction
-    def __init__(self, Ts):
-        self.Ts = Ts
+        #saves the time sample
+        self.Ts = ts_control
+        #creates a 
 
-        #saves the number of actuators
-        numActuators = 8
-        #stores the previous input
-        self.u_prev = np.zeros((numActuators, 1))
-        #saves the alpha
-        self.alpha = 0.5
-        #saves the epsilon
-        self.epsilon = 0.001
 
-        #creates the Q matrix
-        self.Q = np.diag([1/10.0, # north position
-                          1/10.0, # east position
-                          1/10.0, # down position
-                          1/10.0, # x body velocity
-                          1/10.0, # y body velocity
-                          1/10.0, # z body velocity
-                          2.0,    # q_tilde 0
-                          2.0,    # q_tilde 1
-                          2.0])   # q_tilde 2
-        
-        #creates the R matrix
-        self.R = np.diag([1.0,
-                          1.0,
-                          1.0,
-                          1.0,
-                          1.0,
-                          1.0,
-                          1.0,
-                          1.0])
-        
-    #creates the update function
-    def update(self, x, x_desired, u_desired, df_traj):

@@ -1,0 +1,136 @@
+iPrint:
+  desc: Print File Output Unit (override internally in snopt?)
+
+iSumm:
+  desc: Summary File Output Unit (override internally in snopt?)
+
+Print file:
+  desc: Print file name
+
+Summary file:
+  desc: Summary file name
+
+Minor print level:
+  desc: Minor iterations print level
+
+Start:
+  desc: This value is directly passed to the SNOPT kernel, and will be overwritten if another option, e.g. ``Cold start`` is supplied, in accordance with SNOPT options precedence.
+  Cold: Cold start
+  Warm: Warm start
+  Hot: Hot start
+
+Problem Type:
+  desc: >
+    This specifies the problem type for SNOPT.
+  Minimize: minimization problem.
+  Maximize: maximization problem.
+  Feasible point: compute a feasible point only.
+
+Derivative level:
+  desc: >
+    The SNOPT derivative level. Only "3" is tested, where all derivatives are provided to SNOPT.
+
+Iterations limit:
+  desc: >
+    The limit on the total number of minor iterations, summed over all major iterations.
+    This option is set to a very large number to prevent premature termination of SNOPT.
+
+Minor iterations limit:
+  desc: >
+    The limit on the number of minor iterations *for each major iteration*.
+    This option is set to a very large number to prevent premature termination of SNOPT.
+
+Proximal iterations limit:
+  desc: >
+    The iterations limit for solving the proximal point problem.
+    We set this by default to a very large value in order to fully solve the proximal point problem to optimality
+
+Total character workspace:
+  desc: >
+    The total character workspace length.
+    If ``None``, a default value of ``500`` is used, as recommended by SNOPT.
+    If SNOPT determines that the default value is too small, the Python wrapper will overwrite the defaults with estimates for the required workspace lengths from SNOPT and initialize the optimizer for a second time.
+    SNOPT might still exit with ``82``, ``83``, or ``84``, but this should automate the storage allocation for most cases.
+    User-specified values are not overwritten.
+
+Total integer workspace:
+  desc: >
+    The total integer workspace length.
+    If ``None``, a default value of ``500 + 100 * (ncon + nvar)`` is used, as recommended by SNOPT.
+    If SNOPT determines that the default value is too small, the Python wrapper will overwrite the defaults with estimates for the required workspace lengths from SNOPT and initialize the optimizer for a second time.
+    SNOPT might still exit with ``82``, ``83``, or ``84``, but this should automate the storage allocation for most cases.
+    User-specified values are not overwritten.
+
+Total real workspace:
+  desc: >
+    The total real workspace length.
+    If ``None``, a default value of ``500 + 200 * (ncon + nvar)`` is used, as recommended by SNOPT.
+    If SNOPT determines that the default value is too small, the Python wrapper will overwrite the defaults with estimates for the required workspace lengths from SNOPT and initialize the optimizer for a second time.
+    SNOPT might still exit with ``82``, ``83``, or ``84``, but this should automate the storage allocation for most cases.
+    User-specified values are not overwritten.
+
+Save major iteration variables:
+  desc: |
+    This option is unique to the Python wrapper, and takes a list of values which can be saved at each major iteration to the History file.
+    The possible values are
+
+    - ``Hessian``
+    - ``slack``
+    - ``lambda``
+    - ``nS``
+    - ``BSwap``
+    - ``maxVi``
+    - ``penalty_vector``
+
+    In addition, a set of default parameters are saved to the history file and cannot be changed. These are
+
+    - ``nMajor``
+    - ``nMinor``
+    - ``step``
+    - ``feasibility``
+    - ``optimality``
+    - ``merit``
+    - ``condZHZ``
+    - ``penalty``
+
+Return work arrays:
+  desc: >
+    This option is unique to the Python wrapper.
+    If True, internal SNOPT work arrays are also returned at the end of the optimization.
+    These arrays can be used to hot start a subsequent optimization.
+    The SNOPT option 'Sticky parameters' will also be automatically set to 'Yes' to facilitate the hot start.
+
+Work arrays save file:
+  desc: >
+    This option is unique to the Python wrapper.
+    The SNOPT work arrays will be pickled and saved to this file after each major iteration.
+    This file is useful if you want to restart an optimization that did not exit cleanly.
+    If None, the work arrays are not saved.
+
+snSTOP function handle:
+  desc: >
+    This option is unique to the Python wrapper.
+    A function handle can be supplied which is called at the end of each major iteration.
+    The following is an example of a callback function that saves the restart dictionary
+    to a different file after each major iteration.
+
+      .. code-block:: python
+
+        def snstopCallback(iterDict, restartDict):
+            # Get the major iteration number
+            nMajor = iterDict["nMajor"]
+
+            # Save the restart dictionary
+            writePickle(f"restart_{nMajor}.pickle", restartDict)
+
+            return 0
+
+snSTOP arguments:
+  desc: |
+    This option is unique to the Python wrapper.
+    It specifies a list of arguments that will be passed to the snSTOP function handle.
+    ``iterDict`` is always passed as an argument.
+    Additional arguments are passed in the same order as this list.
+    The possible values are
+
+    - ``restartDict``

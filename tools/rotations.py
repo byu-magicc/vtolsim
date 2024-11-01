@@ -1,6 +1,8 @@
 """
 various tools to be used in mavPySim
 """
+from numpy import array, sin, cos, sinc, arctan2, arcsin, arccos, trace, sqrt, eye, sign
+from numpy.linalg import norm, det
 import numpy as np
 #import scipy.linalg as linalg
 
@@ -53,7 +55,7 @@ def euler_to_quaternion(phi, theta, psi):
 
     return quat
 
-def euler_to_rotation(phi, theta, psi):
+def euler_to_rotation(phi: float, theta: float, psi: float):
     """
     Converts euler angles to rotation matrix (R_b^i): body to inertial
     """
@@ -175,3 +177,54 @@ def hat(omega):
 def vee(mat3):
     """Create vec3 from skew-symmetric matrix mat3"""
     return np.array([mat3[2,1], mat3[0,2], mat3[1,0]])
+
+
+def logR(R):
+    """
+    Log of a rotation matrix
+    """
+    tmp1 = sat((trace(R) - 1) / 2, +1, -1)
+    theta = arccos(tmp1)
+    tmp = sinc(theta)
+    log_of_R = 0.5 * (R - R.T) / tmp
+    # if tmp != 0:
+    #     log_of_R = 0.5 * ( R - R.T ) / tmp
+    # else:
+    #     print("log of R is not defined")
+    #     log_of_R = float("nan")
+    return log_of_R
+
+def leftJacobian(r):
+    """
+    the left Jacobian of the rotation vector r
+    """
+    phi = norm(r)
+    u = r/phi
+    J = eye(3) \
+        + sin(phi/2) * sinc(phi/2) * hat(u) \
+        + (1 - sinc(phi)) * hat(u) @ hat(u)
+    return J
+
+def leftJacobianInv(r):
+    """
+    the inverse of the left Jacobian of rotation vector r
+    """
+    phi = norm(r)
+    if phi == 0:
+        u = 0 * r
+    else:
+        u = r/phi
+    Jinv = eye(3) \
+           - phi/2 * hat(u) \
+           + (1 - cos(phi/2) / sinc(phi/2)) * hat(u) @ hat(u)
+    return Jinv
+
+
+def sat(x, up, low):
+    if x > up:
+        y=up
+    elif x < low:
+        y = low
+    else:
+        y = x
+    return y

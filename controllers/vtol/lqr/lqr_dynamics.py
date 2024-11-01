@@ -10,7 +10,7 @@ import numpy as np
 
 from tools.quaternions import q_circleTimes, q_conj, q_rotate, q_boxPlus, q_boxMinus, state_boxMinus, state_boxPlus
 from tools.rotations import hat
-from message_types.msg_controls import MsgControls
+from message_types.vtol.msg_controls import MsgControls
 import parameters.vtol.convergence_parameters as VTOL
 import parameters.vtol.control_allocation_parameters as CP
 

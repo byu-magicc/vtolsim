@@ -8,10 +8,10 @@ import pyqtgraph as pg
 from viewers.vtol.vtol_viewer import VtolViewer
 from viewers.vtol.data_viewer import DataViewer
 #from viewers.sensor_viewer import SensorViewer
-import parameters.simulation_parameters as SIM
-from message_types.msg_state import MsgState
-from message_types.msg_sensors import MsgSensors
-from message_types.msg_delta import MsgDelta
+import parameters.vtol.simulation_parameters as SIM
+from message_types.vtol.msg_state import MsgState
+from message_types.vtol.msg_sensors import MsgSensors
+from message_types.vtol.msg_delta import MsgDelta
 
 class ViewManager:
     def __init__(self, 
@@ -28,8 +28,8 @@ class ViewManager:
         self.save_plots_flag = save_plots
         # initialize video 
         if self.video_flag is True:
-            from viewers.video_writer import VideoWriter
-            self.video = VideoWriter(
+            from viewers.vtol.video_writer import videoWriter
+            self.video = videoWriter(
                 video_name=video_name,
                 bounding_box=(0, 0, 1000, 1000),
                 output_rate=SIM.ts_video)

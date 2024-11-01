@@ -1,6 +1,5 @@
 import numpy as np
 
-
 #the controls are as follows:
 #elevator
 #aileron
@@ -16,27 +15,35 @@ import numpy as np
 class MsgDelta:
 
     #creates the initialization function
-    def __init__(self):
+    def __init__(self,
+                 elevator=0.0,
+                 aileron=0.0,
+                 rudder=0.0,
+                 forwardThrottle=0.0,
+                 verticalThrottle_1=0.0,
+                 verticalThrottle_2=0.0,
+                 verticalThrottle_3=0.0,
+                 verticalThrottle_4=0.0):
         #control surfaces are defines between -1.0 to 1.0
         #elevator like normal
-        self.elevator = 0.0
+        self.elevator = float(elevator)
         #aileron like normal
-        self.aileron = 0.0
+        self.aileron = float(aileron)
         #rudder like normal
-        self.rudder = 0.0
+        self.rudder = float(rudder)
 
         #throttles are defined between 0.0 to 1.0
 
         #sets the forward throttle, which is the main propulsion throttle
-        self.forwardThrottle = 0.0
+        self.forwardThrottle = float(forwardThrottle)
         #sets the vertical throttle 1, which is the port rear throttle
-        self.verticalThrottle_1 = 0.0
+        self.verticalThrottle_1 = float(verticalThrottle_1)
         #sets the vertical throttle 2, which is the port front throttle
-        self.verticalThrottle_2 = 0.0
+        self.verticalThrottle_2 = float(verticalThrottle_2)
         #sets the vertical throttle 3, which is the starboard front throttle
-        self.verticalThrottle_3 = 0.0
+        self.verticalThrottle_3 = float(verticalThrottle_3)
         #sets the vertical throttle 4, which is the starboard rear throttle
-        self.verticalThrottle_4 = 0.0
+        self.verticalThrottle_4 = float(verticalThrottle_4)
 
 
     #creates the helper function to go to from array to set the deltas

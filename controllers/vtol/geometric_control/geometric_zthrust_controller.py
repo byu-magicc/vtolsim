@@ -7,8 +7,8 @@ import numpy as np
 from scipy.linalg import expm
 sys.path.append('..')
 from tools.rotations import Quaternion2Rotation, vee, hat
-import parameters.convergence_parameters as VTOL
-import parameters.geometric_control_parameters as GEOM
+import parameters.vtol.convergence_parameters as VTOL
+import parameters.vtol.geometric_control_parameters as GEOM
 
 
 class GeometricZThrustController:

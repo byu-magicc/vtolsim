@@ -11,15 +11,15 @@ import os, sys
 from pathlib import Path
 sys.path.insert(0,os.fspath(Path(__file__).parents[2]))
 import numpy as np
-import parameters.simulation_parameters as SIM
-import parameters.spline_parameters as SPLP
-from message_types.msg_convert import *
+import parameters.vtol.simulation_parameters as SIM
+import parameters.vtol.spline_parameters as SPLP
+from message_types.vtol.msg_convert import *
 from models.vtol.vtol_dynamics import VtolDynamics
 from controllers.vtol.lqr.lqr_control import LqrControl
 from controllers.vtol.low_level_control import LowLevelControl
 from planners.trajectory.spline_trajectory import SplineTrajectory
 from planners.trajectory.differential_flatness import DifferentialFlatness
-from message_types.msg_delta import MsgDelta
+from message_types.vtol.msg_delta import MsgDelta
 from viewers.vtol.view_manager import ViewManager
 
 # initialize elements of the architecture
@@ -84,4 +84,6 @@ while sim_time < SIM.end_time:
     
     #-------increment time-------------
     sim_time += SIM.ts_simulation
+
+
 input("Press a key to exit")

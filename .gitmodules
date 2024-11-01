@@ -1,0 +1,9 @@
+[submodule "controllers/vtol/pyoptsparse"]
+	path = controllers/vtol/pyoptsparse
+	url = https://github.com/mdolab/pyoptsparse.git
+[submodule "controllers/quad/controllers/quad/pyoptsparse"]
+	path = controllers/quad/controllers/quad/pyoptsparse
+	url = https://github.com/mdolab/pyoptsparse.git
+[submodule "controllers/quad/pyoptsparse"]
+	path = controllers/quad/pyoptsparse
+	url = https://github.com/mdolab/pyoptsparse.git

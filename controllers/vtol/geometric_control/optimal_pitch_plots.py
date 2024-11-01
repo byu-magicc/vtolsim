@@ -32,7 +32,7 @@ else:
 
 
 from geometric_control.optimal_pitch import *
-import parameters.convergence_parameters as VTOL
+import parameters.vtol.convergence_parameters as VTOL
 
 def plot_constant_F_V_changing_gamma(save=False, nsamples=200):
     # Same force, same velocity, changing gamma
@@ -326,10 +326,8 @@ def plot_CLCD_model_comparison(save=False):
 
     if save:
         fig.savefig("sim_data/CL_over_CD" + file_type, dpi=600)
-
-
-plot_constant_F_gamma_increasing_V(save=True)
-plot_constant_F_V_changing_gamma(save=True)
-plot_constant_V_gamma_changing_F(save=True)
-plot_CLCD_model_comparison(save=True)
-plt.show()
+        plot_constant_F_gamma_increasing_V(save=True)
+        plot_constant_F_V_changing_gamma(save=True)
+        plot_constant_V_gamma_changing_F(save=True)
+        plot_CLCD_model_comparison(save=True)
+        plt.show()
