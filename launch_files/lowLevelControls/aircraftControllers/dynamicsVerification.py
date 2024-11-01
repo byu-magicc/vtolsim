@@ -24,13 +24,13 @@ import pandas as pd
 from controllers.forces_torques_derivatives import wrenchCalculation
 
 #imports the calculated wrench vector
-calculator = wrenchCalculation(quadrotorsEnabled=False)
+calculator = wrenchCalculation(quadrotorsExist=False)
 
 #quitter = QuitListener()
 
 # initialize elements of the architecture
 wind = WindSimulation(SIM.ts_simulation)
-quad = QuadDynamicsControl(SIM.ts_simulation, quadrotorsEnabled=False)
+quad = QuadDynamicsControl(SIM.ts_simulation, quadrotorsExist=False)
 autopilot = Autopilot(SIM.ts_simulation)
 viewers = ViewManager(data=True,
                       animation=True)
@@ -80,7 +80,7 @@ while sim_time < end_time:
     delta, commanded_state = autopilot.update(commands, estimated_state)
 
     # -------physical system-------------
-    current_wind = wind.update()  # get the new wind vector
+    current_wind = np.array([[0.0],[0.0],[0.0],[0.0],[0.0],[0.0]]) # get the new wind vector
     quad.update(delta, current_wind)  # propagate the MAV dynamics
 
     # ------- update viewers -------

@@ -19,10 +19,10 @@ from tools.rotations import euler_to_rotation
 
 class wrenchCalculation:
     #creates the initialization function
-    def __init__(self, quadrotorsEnabled: bool = True):
+    def __init__(self, quadrotorsExist: bool = True):
         
         #saves whether the quadrotors are enabled
-        self.quadrotorsEnabled = quadrotorsEnabled
+        self.quadrotorsEnabled = quadrotorsExist
         #creates the counter
         self.counter = 0
     

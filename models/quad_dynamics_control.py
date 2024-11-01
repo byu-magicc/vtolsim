@@ -19,8 +19,8 @@ from tools.rotations import quaternion_to_rotation, quaternion_to_euler
 
 
 class QuadDynamicsControl(QuadDynamics):
-    def __init__(self, Ts: float, quadrotorsEnabled: bool = True):
-        super().__init__(Ts, quadrotorsEnabled=quadrotorsEnabled)
+    def __init__(self, Ts: float, quadrotorsExist: bool = True):
+        super().__init__(Ts, quadrotorsEnabled=quadrotorsExist)
         # store wind data for fast recall since it is used at various points in simulation
         self._wind = np.array([[0.], [0.], [0.]])  # wind in NED frame in meters/sec
         # store forces to avoid recalculation in the sensors function
@@ -37,6 +37,8 @@ class QuadDynamicsControl(QuadDynamics):
         #creates an airspeed vector and initializes it to the groundspeed portion
         self.v_air = self._state[3:6]
 
+        self.forces_moments = np.zeros((6,1))
+
 
 
     ###################################
@@ -49,8 +51,8 @@ class QuadDynamicsControl(QuadDynamics):
             Ts is the time step between function calls.
         '''
         # get forces and moments acting on rigid bod
-        forces_moments = self._forces_moments(delta)
-        super()._rk4_step(forces_moments)
+        self.forces_moments = self._forces_moments(delta)
+        super()._rk4_step(self.forces_moments)
         # update the airspeed, angle of attack, and side slip angles using new state
         self._update_velocity_data(wind)
         # update the message class for the true state

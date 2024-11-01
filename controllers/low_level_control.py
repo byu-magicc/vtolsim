@@ -482,7 +482,6 @@ class LowLevelControl_aircraftControl:
         #stores the wind
         self.wind = wind
 
-        Force_desired = np.zeros((2,1))
 
         #case, we are doing direct torque control
         if self.torqueControl:
@@ -498,7 +497,7 @@ class LowLevelControl_aircraftControl:
                               [self.r_ctrl.update(omega_d.item(2), state.r)]])
         
         #gets the wrench desired 
-        wrenchDesired = np.concatenate((Force_desired, tau_d), axis=0)
+        wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
 
         #gets the delta solution
         delta = self.computeOptimization(wrenchDesired=wrenchDesired)
@@ -517,11 +516,11 @@ class LowLevelControl_aircraftControl:
 
         self.objectiveCounter = 0
         #calls the minimization function from the 
-        delta_result = minimize(fun=self.objectiveFunction,
+        delta_result = minimize(fun=self.objectiveFunctionGradient,
                                 x0=x0_delta_c,
                                 args=(wrenchDesired),
                                 bounds=CAP.actuatorBounds_delta_c,
-                                jac=False,
+                                jac=True,
                                 options={'maxiter': CAP.max_iter})
         
         deltaArray = delta_result.x
@@ -535,6 +534,23 @@ class LowLevelControl_aircraftControl:
         #saves the wrench error
         wrenchError = wrenchDesired - self.wrenchActual
         self.error = np.concatenate((self.error, wrenchError), axis=1)
+
+
+        trimDeltaArray = (trimDelta.to_array())[:,0]
+
+        ##################################################################
+        #subsection for testing the gradient from the jacobian, to make sure
+        #that we are calculating it correctly
+        objective, objectiveGradient = self.objectiveFunctionGradient(deltaArray=trimDeltaArray,
+                                                                      wrenchDesired=wrenchDesired)
+        
+        #calculates the gradient 
+        scipyGradient = spo.approx_fprime(trimDeltaArray, self.objectiveFunction, np.float64(1.4901161193847656e-08),  wrenchDesired)
+
+        #gets the error of the scipy and objective gradient
+        gradientError = objectiveGradient[:,0] - scipyGradient
+        ##################################################################
+
 
         #returns the delta final
         return deltaFinal
@@ -569,15 +585,50 @@ class LowLevelControl_aircraftControl:
         self.wrenchActual = wrench_actual
 
 
-        #gets the gradient of the objective function 
-        # (A vector of the derivative of the objective function with respect to
-        # each of the 8 delta control inputs)
-        objective_gradient = -wrench_actualJacobian @ K_Wrench @ wrenchError
 
         self.objectiveCounter += 1
         #returns the objective and the objective gradient
-        return objective#TODO, objective_gradient
+        return objective[0]
     
+    #defines the objective function with the gradient
+    def objectiveFunctionGradient(self, deltaArray: np.ndarray, wrenchDesired: np.ndarray):
+
+        #gets the delta message
+        deltaMessage = MsgDelta()
+        deltaMessage.from_array(u=deltaArray)
+
+
+        #saves the mixing matrix to mix the moments with the forces with the right weights
+        K_Wrench = CAP.K_Wrench
+
+        #gets the wrench and the wrench Jacobian
+        wrench_actual, wrench_actualJacobian = \
+            self.wrenchCalculator.forces_moments_derivatives(delta=deltaMessage,
+                                                             state=self.state)
+
+        #gets the wrench error
+        wrenchError = wrench_actual - wrenchDesired
+
+
+        #gets the objective, which is the magnitude of the wrench error,
+        #with the scaling factor of the K_Tau matrix
+        #(1x1) = (1x1) * (1x5) * (5x5) * (5x1)
+        objective = 0.5 * wrenchError.T @ K_Wrench @ wrenchError
+        
+        #saves the actual wrench
+        self.wrenchActual = wrench_actual
+
+
+        #gets the gradient of the objective function 
+        # (A vector of the derivative of the objective function with respect to
+        # each of the 8 delta control inputs)
+        objective_gradient = wrench_actualJacobian @ K_Wrench @ wrenchError
+
+
+        self.objectiveCounter += 1
+        #returns the objective and the objective gradient
+        return objective, objective_gradient
+
     #defines function to get wrench error
     def getWrenchError(self):
         return self.error

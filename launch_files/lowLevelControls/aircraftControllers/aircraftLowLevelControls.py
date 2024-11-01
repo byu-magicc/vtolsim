@@ -21,15 +21,17 @@ from controllers.forces_torques_derivatives import wrenchCalculation
 
 import pandas as pd
 
+quadrotorsExist = True
+
 #instantiates the quad
-quad = QuadDynamicsControl(Ts=SIM.ts_simulation, quadrotorsEnabled=False)
+quad = QuadDynamicsControl(Ts=SIM.ts_simulation, quadrotorsExist=quadrotorsExist)
 
 #creates the view manager
 
 #creates the view manager
 viewers = ViewManager(animation=True, data=True)
 
-wrenchCalculator = wrenchCalculation(quadrotorsEnabled=False)
+wrenchCalculator = wrenchCalculation(quadrotorsExist=quadrotorsExist)
 
 #creates the low level controller
 lowLevelController = LowLevelControl_aircraftControl(ts=SIM.ts_simulation, torqueControl=True)
