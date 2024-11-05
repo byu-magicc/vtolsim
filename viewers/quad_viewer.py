@@ -88,3 +88,10 @@ class QuadViewer():
         self.window.close()
 
 
+#creates the class to draw the trajectories
+class drawTrajectory:
+    
+    #creates the init function
+    def __init__(self, )
+
+
