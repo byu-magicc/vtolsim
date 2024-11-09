@@ -118,8 +118,8 @@ class LowLevelControl_simultaneousControl:
     def update(self, f_d: np.ndarray,#desired force 2x1 vector
                      state: MsgState, #Quad state
                      wind: np.ndarray, #the wind in the inertial frame
-                     omega_d: np.ndarray, #desired angular velocity 3x1 vector
-                     tau_desired: np.ndarray): #the desired torque array
+                     tau_desired: np.ndarray, #the desired torque array
+                     omega_d: np.ndarray = np.array([[0],[0],[0]])): #desired angular velocity 3x1 vector
         
         #stores the state
         self.state = state
@@ -163,8 +163,8 @@ class LowLevelControl_simultaneousControl:
         delta_result = minimize(fun=self.objectiveFunction,
                                 x0=x0_delta_c,
                                 args=(wrenchDesired),
-                                bounds=CAP.actuatorBounds_delta_c,
-                                jac=False,
+                                bounds=CAP.actuatorBounds,
+                                jac=True,
                                 options={'maxiter': CAP.max_iter})
         
         deltaArray = delta_result.x
@@ -189,7 +189,7 @@ class LowLevelControl_simultaneousControl:
 
         #gets the delta message
         deltaMessage = MsgDelta()
-        deltaMessage.from_array(delta_array=deltaArray)
+        deltaMessage.from_array(deltaArray)
 
 
         #saves the mixing matrix to mix the moments with the forces with the right weights
@@ -216,16 +216,15 @@ class LowLevelControl_simultaneousControl:
         #gets the gradient of the objective function 
         # (A vector of the derivative of the objective function with respect to
         # each of the 8 delta control inputs)
-        objective_gradient = -wrench_actualJacobian @ K_Wrench @ wrenchError
+        objective_gradient = wrench_actualJacobian @ K_Wrench @ wrenchError
 
         self.objectiveCounter += 1
         #returns the objective and the objective gradient
-        return objective#TODO, objective_gradient
+        return objective, objective_gradient
     
     #defines function to get wrench error
     def getWrenchError(self):
         return self.error
-
 
 #creates the low level control class, where we first find the delta c 
 # and then the delta t vertical vector after that
@@ -233,7 +232,8 @@ class LowLevelControl_successiveControl:
 
     #creates the initialization function
     def __init__(self,
-                 ts: float=0.01):
+                 ts: float=0.01,
+                 torqueControl = False):
         
         #instantiates the wrench calculation class
         self.wrenchCalculator = wrenchCalculation()
@@ -274,15 +274,15 @@ class LowLevelControl_successiveControl:
         #stores the whole previous solution
         self.previous_solution = np.ndarray((8,1))
 
-
-
-
+        #saves the torque control
+        self.torqueControl = torqueControl
 
     #creates the update function
     def update(self, f_d: np.ndarray,#desired force 2x1 vector
-                     omega_d: np.ndarray, #desired angular velocity 3x1 vector
                      state: MsgState, #Quad state
-                     wind: np.ndarray): #the wind in the inertial frame
+                     wind: np.ndarray, #the wind in the inertial frame
+                     tau_desired: np.ndarray, #the desired torque array
+                     omega_d: np.ndarray = np.array([[0],[0],[0]])): #desired angular velocity 3x1 vector
         
         #stores the state
         self.state = state
@@ -290,19 +290,26 @@ class LowLevelControl_successiveControl:
         #stores the wind
         self.wind = wind
 
-        #get the desired torque vector from:
-        #1. The desired omega input and
-        #2. The actual omega input
-        #by updating the proportional controllers for each variable
-        tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
-                          [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
-                          [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
+        #case, we are doing direct torque control
+        if self.torqueControl:
+            tau_d = tau_desired
+        #otherwise we are going to use the omegas thing
+        else:
+            #get the desired torque vector from:
+            #1. The desired omega input and
+            #2. The actual omega input
+            #by updating the proportional controllers for each variable
+            tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
+                              [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
+                              [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
         
         #gets the wrench desired 
         wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
 
         #gets the delta solution
         delta = self.computeOptimization(wrenchDesired=wrenchDesired)
+
+
 
         #returns the delta
         return delta
@@ -380,7 +387,7 @@ class LowLevelControl_successiveControl:
 
         #gets the delta message
         deltaMessage = MsgDelta()
-        deltaMessage.from_array(delta_array=deltaArray)
+        deltaMessage.from_array(deltaArray)
 
 
         #saves the mixing matrix to mix the moments with the forces with the right weights
@@ -404,12 +411,10 @@ class LowLevelControl_successiveControl:
         #gets the gradient of the objective function 
         # (A vector of the derivative of the objective function with respect to
         # each of the 8 delta control inputs)
-        objective_gradient = -wrench_actualJacobian @ K_Wrench @ wrenchError
+        objective_gradient = wrench_actualJacobian @ K_Wrench @ wrenchError
 
         #returns the objective and the objective gradient
         return objective, objective_gradient
-
-
 
 #creates low level control for just the aircraft controls
 class LowLevelControl_aircraftControl:
@@ -634,6 +639,10 @@ class LowLevelControl_aircraftControl:
         return self.error
 
 
+
+
+
+
 #creates a low level control class, where we use the actual QuadDynamics file to
 #implement the force and torque calculator. Then we can try to see how fishy things are
 class LowLevelControl_reference:
@@ -811,10 +820,4 @@ class LowLevelControl_reference:
     def getWrenchError(self):
         return self.error
 
-
-
-
-
-
-  
         

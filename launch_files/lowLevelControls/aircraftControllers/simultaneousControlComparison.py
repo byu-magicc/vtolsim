@@ -14,7 +14,7 @@ from viewers.view_manager import ViewManager
 from message_types.msg_autopilot_fixedWing import MsgAutopilot
 from tools.signals import Signals
 
-from controllers.low_level_control import LowLevelControl_aircraftControl
+from controllers.low_level_control import LowLevelControl_simultaneousControl
 
 #gets the wrench calculation
 from controllers.forces_torques_derivatives import wrenchCalculation
@@ -34,7 +34,7 @@ viewers = ViewManager(animation=True, data=True)
 wrenchCalculator = wrenchCalculation(quadrotorsExist=quadrotorsExist)
 
 #creates the low level controller
-lowLevelController = LowLevelControl_aircraftControl(ts=SIM.ts_simulation, torqueControl=True)
+lowLevelController = LowLevelControl_simultaneousControl(ts=SIM.ts_simulation, torqueControl=True)
 
 #reads in the data matrix from the file
 wrenchDataObject = pd.read_csv("/home/benjamin/Documents/vtolsim/outputFiles/lowLevelController/fixedWingTest/wrenchReference.csv")

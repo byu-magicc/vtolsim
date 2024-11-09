@@ -46,9 +46,9 @@ Va_command = Signals(dc_offset=25.0,
 altitude_command = Signals(dc_offset=100.0,
                            amplitude=10.0,
                            start_time=0.0,
-                           frequency=0.02)
+                           frequency=0.05)
 course_command = Signals(dc_offset=np.radians(0.0),
-                         amplitude=np.radians(10.0),
+                         amplitude=np.radians(0.0),
                          start_time=5.0,
                          frequency=0.015)
 
@@ -109,13 +109,13 @@ while sim_time < end_time:
 
 viewers.close(dataplot_name="ch6_data_plot")
 
-stateOutputPath = "/home/dben1182/Documents/vtolsim/outputFiles/Dynamics_verification/vtolsimState.csv"
+stateOutputPath = "/home/benjamin/Documents/vtolsim/outputFiles/lowLevelController/fixedWingTest/vtolsimState.csv"
 
 df_state = pd.DataFrame(stateStorageVector)
 
 df_state.to_csv(stateOutputPath, header=False, index=False)
 
-wrenchOutputPath = "/home/dben1182/Documents/vtolsim/outputFiles/lowLevelController/fixedWingTest/wrenchReference.csv"
+wrenchOutputPath = "/home/benjamin/Documents/vtolsim/outputFiles/lowLevelController/fixedWingTest/wrenchReference.csv"
 
 df_wrench = pd.DataFrame(wrenchStorageVector)
 df_wrench.to_csv(wrenchOutputPath, header=False, index=False)
