@@ -15,7 +15,7 @@ from message_types.msg_state import MsgState
 import parameters.anaconda_parameters as QUAD
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler
 
-class   QuadDynamics:
+class QuadDynamics:
     def __init__(self, Ts: float, quadrotorsEnabled: bool = True):
         self._ts_simulation = Ts
         # set initial states based on parameter file

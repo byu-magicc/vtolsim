@@ -62,7 +62,7 @@ class ViewManager:
                estimated_state: MsgState, 
                commanded_state: MsgState, 
                delta: MsgDelta,
-               measurements: MsgSensors):
+               measurements: MsgSensors = MsgSensors()):
         if self.animation_flag: 
             self.vtol_view.update(true_state) 
         if self.data_plot_flag:
@@ -87,30 +87,3 @@ class ViewManager:
                 self.sensor_view.save_plot_image(sensorplot_name)
         if self.video_flag: 
             self.video.close()
-
-    def addTrajectory(self, points):
-        blue = np.array([[30, 144, 255, 255]])/255.
-        self.trajectory = drawTrajectory(points, blue, self.window)
-
-
-
-
-class drawTrajectory:
-    def __init__(self, points, color, window):
-        R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
-        points = R @ np.copy(points)
-        
-        points = points.T
-        self.color = color
-        path_color = np.tile(color, (points.shape[0], 1))
-        self.path_plot_object =  gl.GLLinePlotItem(pos=points,
-                                                   color=path_color,
-                                                   width=2,
-                                                   antialias=True,
-                                                   mode='line_strip')
-        window.addItem(self.path_plot_object)
-
-    def update(self, points):
-        R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
-        points = R @ np.copy(points)
-        self.path_plot_object.setData(pos=points)
