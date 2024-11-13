@@ -6,7 +6,7 @@ from scipy.linalg import expm
 sys.path.append('..')
 import parameters.geometric_control_parameters as CTRL
 import parameters.anaconda_parameters as QUAD
-from tools.rotations import hat, Euler2Rotation
+from tools.rotations import hat, euler_to_rotation
 
 class PitchControl():
 

@@ -29,7 +29,7 @@ class TrajectoryGenerator():
 
     def get_position_pts(self, time_scale):
         t = 0
-        positions = np.array([[],[],[]])
+        positions = np.ndarray((3,1))
         while t < self.end_time:
             position = self.position(t)
             positions = np.append(positions, position, axis=1)
