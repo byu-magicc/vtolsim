@@ -14,7 +14,7 @@ pe0 = 0.  # initial east position
 pd0 = -100.0  # initial down position
 u0 = 25.  # initial velocity along body x-axis
 v0 = 0.  # initial velocity along body y-axis
-w0 = 0.  # initial velocity along body z-axis
+w0 = -0.0001  # initial velocity along body z-axis
 phi0 = 0.  # initial roll angle
 theta0 = 0.  # initial pitch angle
 psi0 = 0.0  # initial yaw angle
@@ -30,6 +30,11 @@ e2 = e.item(2)
 e3 = e.item(3)
 
 
+#creates the array of all the initial conditions
+initState = np.transpose(np.array([[pn0,pe0,pd0,u0,v0,w0,e0,e1,e2,e3,p0,q0,r0]]))
+
+#creates the array of all the initial conditions for quadrotor 
+quadInitState = np.transpose(np.array([[pn0,pe0,0,0,v0,w0,e0,e1,e2,e3,p0,q0,r0]]))
 
 ######################################################################################
                 #Physical Parameters

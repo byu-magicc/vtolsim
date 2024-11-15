@@ -2,17 +2,11 @@ import pyqtgraph as pg
 from viewers.quad_viewer import QuadViewer
 from viewers.data_viewer import DataViewer
 
-import numpy as np
-
 #imports the simulation parameters
 import parameters.simulation_parameters as SIM
 from message_types.msg_state import MsgState
 from message_types.msg_sensors import MsgSensors
 from message_types.msg_delta import MsgDelta
-
-from PyQt5 import QtWidgets
-import pyqtgraph.opengl as gl
-import pyqtgraph.Vector as Vector
 
 
 #creates the view manager class
@@ -29,15 +23,12 @@ class ViewManager:
         self.sensor_plot_flag = sensors
         self.animation_flag = animation
         self.save_plots_flag = save_plots
-        self.window = gl.GLViewWidget()  # initialize the view object
-        self.window.setWindowTitle('VTOL Viewer')
-        self.window.setGeometry(0, 0, 1000, 1000)  # args: upper_left_x, upper_right_y, width, height
         # initialize video 
         # initialize the other visualization
         if self.animation_flag or self.data_plot_flag or self.sensor_plot_flag: 
             self.app = pg.QtWidgets.QApplication([]) 
             if self.animation_flag:
-                self.vtol_view = QuadViewer(app=self.app, 
+                self.quad_view = QuadViewer(app=self.app, 
                                             dt=SIM.ts_simulation,
                                             plot_period=SIM.ts_plot_refresh)
             if self.data_plot_flag: 
@@ -64,7 +55,7 @@ class ViewManager:
                delta: MsgDelta,
                measurements: MsgSensors = MsgSensors()):
         if self.animation_flag: 
-            self.vtol_view.update(true_state) 
+            self.quad_view.update(true_state) 
         if self.data_plot_flag:
             self.data_view.update(
                 true_state,  # true states

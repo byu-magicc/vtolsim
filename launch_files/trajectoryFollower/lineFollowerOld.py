@@ -43,7 +43,7 @@ def main():
     SIM.end_time = traj.end_time
     trajectory_position_points = traj.get_position_pts(.01)
 
-    viewers.addTrajectory(trajectory_position_points[:3,:])
+    viewers.quad_view.addTrajectory(trajectory_position_points[:3,:])
 
     # initialize geometric controller
     traj_tracker = PitchFreeTrajectoryTracker()
@@ -108,14 +108,10 @@ def main():
         #gets the commanded tau based on the commanded and actual roll rates
         tau_c = rate_control.update(omega_c, omega)
         #gets the delta commands from the control allocation
-        delta = control_alloc.update(T, tau_c, estimated_state, quad._Va)
+        delta = control_alloc.update(T, tau_c, estimated_state, quad.true_state.Va)
         ctrl_end_time = time.time()
 
-        #gets the motor electrical vectors
-        V_in, I_in, P_in = quad.getMotorElectricals()
 
-        #writes down the arrays in the performance matrix
-        performance.energyTracker.update(V_in=V_in, I_in=I_in, P_in=P_in)
 
 
         #-------update physical system-------------

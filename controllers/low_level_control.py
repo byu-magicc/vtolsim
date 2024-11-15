@@ -127,6 +127,9 @@ class LowLevelControl_simultaneousControl:
         #stores the wind
         self.wind = wind
 
+        #reshapes the force desired vector
+        f_d = np.reshape(f_d,(2,1))
+
         #case, we are doing direct torque control
         if self.torqueControl:
             tau_d = tau_desired
@@ -136,9 +139,9 @@ class LowLevelControl_simultaneousControl:
             #1. The desired omega input and
             #2. The actual omega input
             #by updating the proportional controllers for each variable
-            tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.omega.item(0))],
-                              [self.q_ctrl.update(omega_d.item(1), state.omega.item(1))],
-                              [self.r_ctrl.update(omega_d.item(2), state.omega.item(2))]])
+            tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.p)],
+                              [self.q_ctrl.update(omega_d.item(1), state.q)],
+                              [self.r_ctrl.update(omega_d.item(2), state.r)]])
         
         #gets the wrench desired 
         wrenchDesired = np.concatenate((f_d, tau_d), axis=0)

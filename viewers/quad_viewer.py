@@ -87,6 +87,31 @@ class QuadViewer():
     def close(self):
         self.window.close()
 
+    def addTrajectory(self, points):
+        blue = np.array([[30, 144, 255, 255]])/255.
+        self.trajectory = drawTrajectory(points, blue, self.window)
+
+
+#creates a class to draw trajectories
+class drawTrajectory:
+    def __init__(self, points, color, window):
+        R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
+        points = R @ np.copy(points)
+        
+        points = points.T
+        self.color = color
+        path_color = np.tile(color, (points.shape[0], 1))
+        self.path_plot_object =  gl.GLLinePlotItem(pos=points,
+                                                   color=path_color,
+                                                   width=2,
+                                                   antialias=True,
+                                                   mode='line_strip')
+        window.addItem(self.path_plot_object)
+
+    def update(self, points):
+        R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
+        points = R @ np.copy(points)
+        self.path_plot_object.setData(pos=points)
 
 
 

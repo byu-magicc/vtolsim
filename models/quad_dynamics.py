@@ -16,7 +16,9 @@ import parameters.anaconda_parameters as QUAD
 from tools.rotations import quaternion_to_rotation, quaternion_to_euler
 
 class QuadDynamics:
-    def __init__(self, Ts: float, quadrotorsEnabled: bool = True):
+    def __init__(self, Ts: float,
+                       initialState: np.ndarray,
+                       quadrotorsEnabled: bool = True):
         self._ts_simulation = Ts
         # set initial states based on parameter file
         # _state is the 13x1 internal state of the aircraft that is being propagated:
@@ -24,20 +26,7 @@ class QuadDynamics:
         # We will also need a variety of other elements that are functions of the _state and the wind.
         # self.true_state is a 19x1 vector that is estimated and used by the autopilot to control the aircraft:
         # true_state = [pn, pe, h, Va, alpha, beta, phi, theta, chi, p, q, r, Vg, wn, we, psi, gyro_bx, gyro_by, gyro_bz]
-        self._state = np.array([[QUAD.pn0],  # (0)
-                               [QUAD.pe0],   # (1)
-                               [QUAD.pd0],   # (2)
-                               [QUAD.u0],    # (3)
-                               [QUAD.v0],    # (4)
-                               [QUAD.w0],    # (5)
-                               [QUAD.e0],    # (6)
-                               [QUAD.e1],    # (7)
-                               [QUAD.e2],    # (8)
-                               [QUAD.e3],    # (9)
-                               [QUAD.p0],    # (10)
-                               [QUAD.q0],    # (11)
-                               [QUAD.r0],    # (12)
-                               ])
+        self._state = initialState
         # initialize true_state message
         self.true_state = MsgState()
 

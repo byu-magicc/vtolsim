@@ -19,8 +19,10 @@ from tools.rotations import quaternion_to_rotation, quaternion_to_euler
 
 
 class QuadDynamicsControl(QuadDynamics):
-    def __init__(self, Ts: float, quadrotorsExist: bool = True):
-        super().__init__(Ts, quadrotorsEnabled=quadrotorsExist)
+    def __init__(self, Ts: float, 
+                       quadrotorsExist: bool = True,
+                       initialState: np.ndarray = QUAD.initState):
+        super().__init__(Ts, quadrotorsEnabled=quadrotorsExist, initialState=initialState)
         # store wind data for fast recall since it is used at various points in simulation
         self._wind = np.array([[0.], [0.], [0.]])  # wind in NED frame in meters/sec
         # store forces to avoid recalculation in the sensors function
@@ -80,7 +82,7 @@ class QuadDynamicsControl(QuadDynamics):
         vr = self.v_air.item(1)
         wr = self.v_air.item(2)
         # compute airspeed
-        self._Va = np.sqrt(ur**2 + vr**2 + wr**2)
+        self._Va = np.sqrt(ur**2 + vr**2 + wr**2) + 0.001
         # compute angle of attack
         if ur == 0:
             self._alpha = np.sign(wr)*np.pi/2.
