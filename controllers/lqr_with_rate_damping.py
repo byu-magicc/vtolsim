@@ -8,7 +8,7 @@ autopilot block for mavsim_python
 """
 import numpy as np
 from scipy.linalg import solve_continuous_are, inv
-import parameters.control_parameters as AP
+import parameters.control_parameters_airplane as AP
 import models.model_coef as M
 from message_types.msg_state import MsgState
 from message_types.msg_delta import MsgDelta

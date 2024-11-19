@@ -8,7 +8,7 @@ import sys
 import numpy as np
 from scipy import stats
 sys.path.append('..')
-import parameters.control_parameters as CTRL
+import parameters.control_parameters_airplane as CTRL
 import parameters.simulation_parameters as SIM
 import parameters.sensor_parameters as SENSOR
 from tools.wrap import wrap

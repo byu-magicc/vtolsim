@@ -7,7 +7,7 @@ autopilot block for mavsim_python
         3/20/2024 - RWB
 """
 import numpy as np
-import parameters.control_parameters as AP
+import parameters.control_parameters_airplane as AP
 from controllers.pi_control import PIControl
 from controllers.pid_control import PidControl
 from controllers.pd_control_with_rate import PDControlWithRate

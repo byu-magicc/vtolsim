@@ -161,6 +161,9 @@ C_n_delta_r = -0.069
 # # Prop parameters
 D_prop = 20*(0.0254)     # prop diameter in m
 
+#coefficient of drag of the propeller
+C_drag_prop = 0.01
+
 
 # Motor parameters
 KV_rpm_per_volt = 145.                            # Motor speed constant from datasheet in RPM/V

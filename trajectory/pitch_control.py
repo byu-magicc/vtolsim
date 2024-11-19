@@ -11,6 +11,7 @@ from tools.rotations import hat, euler_to_rotation
 class PitchControl():
 
     def __init__(self):
+        #creates the arrays to store the needed information
         pass
 
     def exp(self, omega):

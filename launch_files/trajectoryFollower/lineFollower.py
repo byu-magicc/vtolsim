@@ -1,4 +1,3 @@
-
 import os, sys
 
 from pathlib import Path
@@ -64,7 +63,9 @@ def main():
     SIM.end_time = traj.end_time
     trajectory_position_points = traj.get_position_pts(.01)
     viewers.quad_view.addTrajectory(trajectory_position_points[:3,:])
+    
 
+    #creates the arrays to store the desired thrust and 
 
 
     # initialize geometric controller

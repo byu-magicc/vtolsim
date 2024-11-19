@@ -6,7 +6,7 @@ autopilot block for mavsim_python - Total Energy Control System
         7/13/2023 - RWB
 """
 import numpy as np
-import parameters.control_parameters as AP
+import parameters.control_parameters_airplane as AP
 import parameters.anaconda_parameters as QUAD
 from controllers.pi_control import PIControl
 from controllers.pd_control_with_rate import PDControlWithRate

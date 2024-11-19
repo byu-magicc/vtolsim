@@ -10,6 +10,10 @@ import parameters.geometric_control_parameters as CTRL
 class PitchFreeTrajectoryTracker():
 
     def __init__(self):
+        self.pos_errs = []
+        self.vel_errs = []
+        self.F_ds = []
+        self.R = []
         pass
 
     def update(self, state, trajectory):
@@ -53,4 +57,14 @@ class PitchFreeTrajectoryTracker():
 
         R = np.concatenate((x_di, y_di, z_di), axis=1)
 
+        #appends all the information
+        (self.pos_errs).append(pos_err)
+        (self.vel_errs).append(vel_err)
+        (self.F_ds).append(F_d)
+        (self.R).append(R)
+
         return F_d, R
+    
+    #helper function to get all of the information buildup
+    def getInfo(self):
+        return self.pos_errs, self.vel_errs, self.F_ds, self.R

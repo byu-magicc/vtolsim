@@ -7,7 +7,7 @@ observer
 """
 import numpy as np
 from scipy import stats
-import parameters.control_parameters as CTRL
+import parameters.control_parameters_airplane as CTRL
 import parameters.sensor_parameters as SENSOR
 from tools.wrap import wrap
 from message_types.msg_state import MsgState

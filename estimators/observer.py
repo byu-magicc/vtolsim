@@ -6,7 +6,7 @@ observer
         3/4/2024 - RWB
 """
 import numpy as np
-import parameters.control_parameters as CTRL
+import parameters.control_parameters_airplane as CTRL
 import parameters.sensor_parameters as SENSOR
 from tools.wrap import wrap
 from message_types.msg_state import MsgState
