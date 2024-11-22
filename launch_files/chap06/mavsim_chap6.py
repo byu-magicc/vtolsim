@@ -27,6 +27,8 @@ from message_types.msg_sensors import MsgSensors
 
 import pandas as pd
 
+from copy import copy
+
 #quitter = QuitListener()
 
 # initialize elements of the architecture
@@ -61,6 +63,8 @@ end_time = SIM.end_time
 stateStorageVector = np.ndarray((13,0))
 
 
+stateVector = []
+
 #creates a vector to store the wrench for the aircraft here
 wrenchStorageVector = np.ndarray((6,0))
 
@@ -68,6 +72,7 @@ wrenchStorageVector = np.ndarray((6,0))
 print("Press 'Esc' to exit...")
 while sim_time < end_time:
 
+    stateVector.append(copy(quad._state))
     # -------autopilot commands-------------
     commands.airspeed_command = Va_command.square(sim_time)
     commands.course_command = course_command.square(sim_time)
@@ -76,6 +81,7 @@ while sim_time < end_time:
     # -------autopilot-------------
     estimated_state = quad.true_state  # uses true states in the control
     delta, commanded_state = autopilot.update(commands, estimated_state)
+
 
     # -------physical system-------------
     current_wind = wind.update()  # get the new wind vector

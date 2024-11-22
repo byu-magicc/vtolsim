@@ -3,6 +3,7 @@ various tools to be used in mavPySim
 """
 import numpy as np
 import scipy.linalg as linalg
+from numpy import pi
 
 def quaternion_to_euler(quaternion):
     """

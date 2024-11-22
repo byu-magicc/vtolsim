@@ -53,3 +53,32 @@ class Autopilot_Quadrotor:
         phi = state.phi
         theta = state.theta
         psi = state.psi
+
+        #creates the rotation from the body frame to the inertial frame
+        R_body_to_inertial = euler_to_rotation(phi=phi, theta=theta, psi=psi)
+
+        #because we represent the velocities in the Body frame,
+        #we need to rotate from body frame to inertial frame for the velocities
+        
+        #creates the body frame commanded actual velocity vector
+        v_body_commanded = np.array([[cmd.u],
+                                     [cmd.v],
+                                     [cmd.w]])
+
+        #creates the body frame actual velocity vector
+        v_body_actual = np.array([[state.u],
+                                  [state.v],
+                                  [state.w]])
+        
+        #gets the two v vectors in the inertial frame
+        v_inertial_commanded = R_body_to_inertial @ v_body_commanded
+
+        v_inertial_actual = R_body_to_inertial @ v_body_actual
+
+        
+
+        #lateral Autopilot Section
+        #north positional controller
+        u_n = self.north_ctrl.update_with_ff(y_ref=cmd.north, #north command postion
+                                             y=state.north, #north actual position
+                                             y_ref_dot=v_inertial_commanded.item(0))

@@ -20,7 +20,7 @@ from trajectory.attitude_control import AttitudeControl
 from tools.rotations import quaternion_to_euler, rotation_to_quaternion, rotation_to_euler, quaternion_to_rotation
 import pandas as pd
 
-from trajectory.plannedTrajectories.lineTrajectories import lineFlight
+from trajectory.plannedTrajectories.lineTrajectories import VTOL_Line_Flight
 
 from tools.performanceMeasures import performanceMeasures
 
@@ -35,7 +35,7 @@ def main():
     quad = QuadDynamics(SIM.ts_simulation)
 
     # INITIALIZE TRAJECTORIES
-    traj = lineFlight
+    traj = VTOL_Line_Flight
     
     ## ---------------------------------
 

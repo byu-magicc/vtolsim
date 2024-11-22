@@ -27,7 +27,7 @@ from controllers.forces_torques_derivatives import wrenchCalculation
 
 import pandas as pd
 
-from trajectory.plannedTrajectories.lineTrajectories import lineFlight
+from trajectory.plannedTrajectories.lineTrajectories import straight_line_flight
 from tools.performanceMeasures import performanceMeasures
 
 #imports the message types
@@ -35,6 +35,9 @@ from message_types.msg_delta import MsgDelta
 from message_types.msg_state import MsgState
 
 import parameters.anaconda_parameters as QUAD
+from copy import copy
+
+#creates list to store the state
 
 
 #creates the main function
@@ -42,7 +45,7 @@ def main():
     quadrotorsExist = True
 
     #creates the initial state
-    initialState = QUAD.quadInitState
+    initialState = QUAD.initState
 
     #instantiates the quad
     quad = QuadDynamicsControl(Ts=SIM.ts_simulation, 
@@ -55,7 +58,7 @@ def main():
     viewers = ViewManager(animation=True, data=True)
 
     # INITIALIZE TRAJECTORIES
-    traj = lineFlight
+    traj = straight_line_flight
     
     ## ---------------------------------
 
@@ -79,6 +82,9 @@ def main():
 
     #initializes the command message
     delta = MsgDelta()
+    
+    #creates the array to store the state
+    stateArray = []
 
     #sets the sim time
     sim_time = SIM.start_time
@@ -91,6 +97,10 @@ def main():
         estimated_state = quad._state
 
 
+        #saves the current state vector
+        stateArray.append(copy(quad._state))
+
+
         #creates the control start time
         ctrl_start_time = time.time()
         #gets the trajectory derivatives
@@ -100,7 +110,6 @@ def main():
         actualPosition = estimated_state[0:3,:]
         #commanded position
         commandedPosition = traj_derivatives_at_t[0:3,0].reshape((3,1))
-
 
         #------- High Level controller-------------
         #from the trajectory tracker, based on our estimated state, we get a Thrust desired (Fx, Fz)
@@ -143,11 +152,17 @@ def main():
                        estimated_state=quad.true_state,
                        commanded_state=quad.true_state,
                        delta=delta)
-
-
+        
         #-------increment time-------------
         sim_time += Ts
 
+
+    #saves the state information into an output file
+    np.savez("/home/dben1182/Documents/vtolsim/launch_files/trajectoryFollower/outputFiles/state.npz", stateArray)
+    #gets the vectors from the pitch free trajectory tracker, and then saves them
+    pos_errs, vel_errs, F_ds, R = traj_tracker.getInfo()
+    #saves themout
+    np.savez("/home/dben1182/Documents/vtolsim/launch_files/trajectoryFollower/outputFiles/PitchFreeInfo.npz", pos_errs, vel_errs, F_ds, R)
 
 
 #calls the main function
