@@ -6,6 +6,7 @@ sys.path.append('..')
 
 import parameters.anaconda_parameters as QUAD
 import parameters.geometric_control_parameters as CTRL
+from copy import copy
 
 class PitchFreeTrajectoryTracker():
 
@@ -58,10 +59,10 @@ class PitchFreeTrajectoryTracker():
         R = np.concatenate((x_di, y_di, z_di), axis=1)
 
         #appends all the information
-        (self.pos_errs).append(pos_err)
-        (self.vel_errs).append(vel_err)
-        (self.F_ds).append(F_d)
-        (self.R).append(R)
+        (self.pos_errs).append(copy(pos_err))
+        (self.vel_errs).append(copy(vel_err))
+        (self.F_ds).append(copy(F_d))
+        (self.R).append(copy(R))
 
         return F_d, R
     

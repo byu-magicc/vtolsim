@@ -6,13 +6,13 @@ from scipy.linalg import expm
 sys.path.append('..')
 import parameters.geometric_control_parameters as CTRL
 import parameters.anaconda_parameters as QUAD
-from tools.rotations import hat, euler_to_rotation
+from tools.rotations import hat, euler_to_rotation, rotation_to_euler
 
 class PitchControl():
 
     def __init__(self):
         #creates the arrays to store the needed information
-        
+        self.counter = 0
         pass
 
     def exp(self, omega):
@@ -25,12 +25,14 @@ class PitchControl():
         if v_body.item(0) == 0:
             alpha = 0
         else:
-            alpha = np.arctan(v_body.item(1)/v_body.item(0))
+            ur = v_body.item(0)
+            vr = v_body.item(1)
+            wr = v_body.item(2)
+            alpha = np.arctan2(wr, ur)
         Va = np.linalg.norm(v_body)
         sigma = (1 + np.exp(-QUAD.M*(alpha-QUAD.alpha0)) + np.exp(QUAD.M*(alpha+QUAD.alpha0))) / \
             ((1 + np.exp(-QUAD.M*(alpha-QUAD.alpha0))) * (1 + np.exp(QUAD.M*(alpha+QUAD.alpha0)))) 
-        CL = (1-sigma)*(QUAD.C_L_0+QUAD.C_L_alpha*alpha) + \
-            sigma*2*np.sign(alpha)*(np.sin(alpha)**2)*np.cos(alpha)
+        CL = (1-sigma)*(QUAD.C_L_0+QUAD.C_L_alpha*alpha) + sigma*2*np.sign(alpha)*(np.sin(alpha)**2)*np.cos(alpha)
         CD = QUAD.C_D_p + ((QUAD.C_L_0 + QUAD.C_L_alpha*alpha)**2) / (np.pi*QUAD.e*QUAD.AR)
         # compute Lift and Drag Forces
         F_lift = (1/2)*QUAD.rho*(Va**2)*QUAD.S_wing*CL
@@ -50,7 +52,15 @@ class PitchControl():
         # return T_d, R_p2i
         
         # return T_d, R_d2i
-        return self.solve_pitch(T_d, R_d2i, Va)
+        T_d_return, R_p2i_return = self.solve_pitch(T_d, R_d2i, Va)
+
+        phi, theta, psi = rotation_to_euler(R_p2i_return)
+
+        if self.counter % 50 == 0:
+            pineapple = 0
+
+        self.counter += 1
+        return T_d_return, R_p2i_return
 
     def solve_pitch(self, T, R_d2i, Va):
         # if Va < 2:

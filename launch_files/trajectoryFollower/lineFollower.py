@@ -16,6 +16,7 @@ from tools.signals import Signals
 
 #imports the controllers
 from controllers.low_level_control import LowLevelControl_simultaneousControl
+from controllers.low_level_control import LowLevelControl_successiveControl
 from controllers.rate_control import RateControl
 from trajectory.pitch_free_trajectory_tracker import PitchFreeTrajectoryTracker
 from trajectory.pitch_control import PitchControl
@@ -78,7 +79,7 @@ def main():
 
     #initialize low level control
     rate_control = RateControl(ts_control=SIM.ts_control)
-    control_alloc = LowLevelControl_simultaneousControl(torqueControl=False)
+    control_alloc = LowLevelControl_successiveControl(torqueControl=False)
 
     #initializes the command message
     delta = MsgDelta()

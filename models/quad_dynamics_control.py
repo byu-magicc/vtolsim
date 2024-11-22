@@ -87,7 +87,7 @@ class QuadDynamicsControl(QuadDynamics):
         if ur == 0:
             self._alpha = np.sign(wr)*np.pi/2.
         else:
-            self._alpha = np.arctan(wr/ur)
+            self._alpha = np.arctan2(wr, ur)
         # compute sideslip angle
         tmp = np.sqrt(ur**2 + wr**2)
         if tmp == 0:
@@ -130,8 +130,7 @@ class QuadDynamicsControl(QuadDynamics):
         tmp1 = np.exp(-QUAD.M * (self._alpha - QUAD.alpha0))
         tmp2 = np.exp(QUAD.M * (self._alpha + QUAD.alpha0))
         sigma = (1 + tmp1 + tmp2) / ((1 + tmp1) * (1 + tmp2))
-        CL = (1 - sigma) * (QUAD.C_L_0 + QUAD.C_L_alpha * self._alpha) \
-             + sigma * 2 * np.sign(self._alpha) * sa**2 * ca
+        CL = (1 - sigma) * (QUAD.C_L_0 + QUAD.C_L_alpha * self._alpha) + sigma * 2 * np.sign(self._alpha) * sa**2 * ca
         CD = QUAD.C_D_p + ((QUAD.C_L_0 + QUAD.C_L_alpha * self._alpha)**2)/(np.pi * QUAD.e * QUAD.AR)
         # compute Lift and Drag Forces
         F_lift = qbar * QUAD.S_wing * (
@@ -180,8 +179,8 @@ class QuadDynamicsControl(QuadDynamics):
                 + QUAD.C_n_delta_r * delta.rudder
         )
 
-        if self.counter % 67 == 0:
-            banana = 0
+        if self.counter % 50 == 0:
+             banana = 0
         #creates the array of the throttles
         throttles = np.array([[delta.forwardThrottle],
                               [delta.verticalThrottle_1],
