@@ -42,6 +42,6 @@ straight_line_flight = TrajectoryGenerator()
 straight_line_flight.add_line_segment(LineSegment(
     start_pos=np.array([[0, 0, -100]]).T,
     start_vel=25,
-    end_pos=np.array([[200, 0, -100]]).T,
+    end_pos=np.array([[1000, 0, -100]]).T,
     end_vel=25
 ))

@@ -37,7 +37,7 @@ wrenchCalculator = wrenchCalculation(quadrotorsExist=quadrotorsExist)
 lowLevelController = LowLevelControl_aircraftControl(ts=SIM.ts_simulation, torqueControl=True)
 
 #reads in the data matrix from the file
-wrenchDataObject = pd.read_csv("/home/dben1182/Documents/vtolsim/outputFiles/lowLevelController/fixedWingTest/wrenchReference.csv")
+wrenchDataObject = pd.read_csv("/home/benjamin/Documents/vtolsim/outputFiles/lowLevelController/fixedWingTest/wrenchReference.csv")
 
 #gets the array
 wrenchData = wrenchDataObject.to_numpy()

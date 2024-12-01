@@ -79,7 +79,7 @@ def main():
 
     #initialize low level control
     rate_control = RateControl(ts_control=SIM.ts_control)
-    control_alloc = LowLevelControl_successiveControl(torqueControl=False)
+    control_alloc = LowLevelControl_simultaneousControl(torqueControl=False)
 
     #initializes the command message
     delta = MsgDelta()

@@ -506,6 +506,9 @@ class LowLevelControl_aircraftControl:
             tau_d = np.array([[self.p_ctrl.update(omega_d.item(0), state.p)],
                               [self.q_ctrl.update(omega_d.item(1), state.q)],
                               [self.r_ctrl.update(omega_d.item(2), state.r)]])
+            
+        f_d = np.reshape(f_d,(2,1))
+        tau_d = np.reshape(tau_d, (3,1))
         
         #gets the wrench desired 
         wrenchDesired = np.concatenate((f_d, tau_d), axis=0)
