@@ -7,12 +7,15 @@ sys.path.append('..')
 import parameters.geometric_control_parameters as CTRL
 import parameters.anaconda_parameters as QUAD
 from tools.rotations import hat, euler_to_rotation, rotation_to_euler
+from copy import copy
 
 class PitchControl():
 
     def __init__(self):
         #creates the arrays to store the needed information
         self.counter = 0
+        #creates array to store the thrust desired
+        self.thrustDesiredArray = []
         pass
 
     def exp(self, omega):
@@ -58,6 +61,10 @@ class PitchControl():
 
         if self.counter % 50 == 0:
             pineapple = 0
+
+        
+        #appends the thrust desired array
+        self.thrustDesiredArray.append(copy(T_d))
 
         self.counter += 1
         return T_d_return, R_p2i_return
