@@ -450,10 +450,10 @@ class LowLevelControl_aircraftControl:
         p_kp = 0.15
 
         # control gains: q-channel
-        q_kp = 0.08
+        q_kp = 0.15
 
         # control gains: r-channel
-        r_kp = 0.1       
+        r_kp = 0.15      
 
 
         #stores the time sample rate of the simulation parameters
@@ -484,7 +484,7 @@ class LowLevelControl_aircraftControl:
     def update(self, f_d: np.ndarray,#desired force 2x1 vector, but we correct if we pass in the incorrect one
                      state: MsgState, #Quad state
                      wind: np.ndarray, #the wind in the inertial frame
-                     tau_desired: np.ndarray, #the desired torque array
+                     tau_desired: np.ndarray = np.array([[0],[0],[0]]), #the desired torque array
                      omega_d: np.ndarray = np.array([[0],[0],[0]])): #desired angular velocity 3x1 vector
         
         #stores the state

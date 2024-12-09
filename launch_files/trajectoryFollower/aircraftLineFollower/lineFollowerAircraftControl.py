@@ -129,13 +129,9 @@ def main():
         omega_c = omega_c.reshape(-1)
 
         #------- Low Level Controller -------------
-        #gets the actual roll rates vector
-        omega = estimated_state[10:13,0]
-        #gets the commanded tau based on the commanded and actual roll rates
-        tau_c = rate_control.update(omega_c, omega)
         #gets the delta commands from the control allocation
-        delta = control_alloc.update(f_d=T_d, 
-                                     tau_desired=tau_c, 
+        delta = control_alloc.update(f_d=T_d,
+                                     omega_d=omega_c,
                                      state=quad.true_state,
                                      wind=wind)
         ctrl_end_time = time.time()
