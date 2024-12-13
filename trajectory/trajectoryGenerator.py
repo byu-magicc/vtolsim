@@ -1,6 +1,8 @@
 #This file implements the generators that create the trajectories for plane
 import numpy as np
 
+from message_types.msg_trajectory import 
+
 class TrajectoryGenerator():
 
     def __init__(self):

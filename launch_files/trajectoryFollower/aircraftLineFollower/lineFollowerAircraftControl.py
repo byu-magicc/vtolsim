@@ -102,6 +102,8 @@ def main():
         #sets the estimated state to the true state
         estimated_state = quad._state
 
+        true_state = quad.true_state
+
 
         #saves the current state vector
         stateArray.append(copy(quad._state))
