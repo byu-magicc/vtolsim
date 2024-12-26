@@ -44,6 +44,12 @@ Jx = 0.8244 #kg m^2
 Jy = 1.135
 Jz = 1.759
 Jxz = 0.1204
+
+#creates the whole J rotational inertia matrix
+J = np.array([[Jx, 0, Jxz],
+              [0, Jy, 0],
+              [Jxz, 0, Jz]])
+
 S_wing = 0.55 #surface are of the wing
 b = 2.8956 #wingspan
 c = 0.18994 #mean chord of the QUAD Wing
