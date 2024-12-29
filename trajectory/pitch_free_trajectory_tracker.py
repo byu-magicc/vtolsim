@@ -5,7 +5,7 @@ import sys
 sys.path.append('..')
 
 import parameters.anaconda_parameters as QUAD
-import parameters.geometric_control_parameters as CTRL
+import parameters.geometric_control_parameters as GEO_CTRL
 from copy import copy
 
 class PitchFreeTrajectoryTracker():
@@ -44,7 +44,7 @@ class PitchFreeTrajectoryTracker():
         # desired force vector computation
         acc_r = trajectory[0:3,2].reshape((3,1))
         e3 = np.array([[0, 0, 1]]).T
-        f_di = QUAD.mass * (acc_r - QUAD.gravity*e3 - CTRL.Kp @ pos_err - CTRL.Kd @ vel_err)
+        f_di = QUAD.mass * (acc_r - QUAD.gravity*e3 - GEO_CTRL.Kp @ pos_err - GEO_CTRL.Kd @ vel_err)
 
         # Desired rotation and body force computation
         y_di = np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)) / \

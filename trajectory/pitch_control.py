@@ -4,7 +4,7 @@ import numpy as np
 import sys
 from scipy.linalg import expm
 sys.path.append('..')
-import parameters.geometric_control_parameters as CTRL
+import parameters.geometric_control_parameters as GEO_CTRL
 import parameters.anaconda_parameters as QUAD
 from tools.rotations import hat, euler_to_rotation, rotation_to_euler
 from copy import copy

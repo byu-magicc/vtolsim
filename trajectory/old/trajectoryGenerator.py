@@ -13,14 +13,14 @@ class TrajectoryGenerator():
         self.segments.append([line_segment, self.end_time, self.end_time + line_segment.time])
         self.end_time = self.end_time + line_segment.time
 
-    def traj_msg(self, t)->MsgTrajectory:
+    def traj_msg(self, t):
         i = 0
         while t > self.segments[i][2]:
             i += 1
             assert i < len(self.segments)
         segment_t = t - self.segments[i][1]
 
-
+        
         return self.segments[i][0].traj_msg(segment_t)
 
     def position(self, t):
@@ -66,17 +66,13 @@ class LineSegment():
     def acceleration(self, t):
         return self.acc
 
-    #returns the actual trajectory message for the current time period
-    def traj_msg(self, t)->MsgTrajectory:
+    def traj_msg(self, t):
         pos = self.position(t)
         vel = self.velocity(t)
         accel = self.acceleration(t)
         yaw = 0
         data = np.concatenate((pos, vel, accel), axis=1)
-        return MsgTrajectory(pos_des_inertial=pos,
-                             vel_des_inertial=vel,
-                             accel_des_inertial=accel,
-                             psi=yaw)
+        return np.concatenate((np.concatenate((data, np.zeros((3,2))), axis=1), np.zeros((1,5))), axis=0)
 
     def get_position_pts(self, time_scale):
         t = 0
@@ -91,7 +87,4 @@ class LineSegment():
     def __str__(self):
         str = f'time: {self.time}\n' + \
             f'acceleration: {self.acceleration}\n'
-        return str\
-        
-
-
+        return str

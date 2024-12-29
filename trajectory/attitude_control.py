@@ -3,7 +3,7 @@
 import numpy as np
 import sys
 sys.path.append('..')
-import parameters.geometric_control_parameters as CTRL
+import parameters.geometric_control_parameters as GEO_CTRL
 
 class AttitudeControl():
 
@@ -18,5 +18,5 @@ class AttitudeControl():
 
     def update(self, R_b2i, R_d2i):
         R_d2b = R_b2i.T @ R_d2i
-        omega_c = CTRL.omega_Kp @ self.inv_skew(self.Pa(R_d2b))
+        omega_c = GEO_CTRL.omega_Kp @ self.inv_skew(self.Pa(R_d2b))
         return omega_c
