@@ -117,10 +117,9 @@ wrenchList = np.array(wrenchList)[:,:,0].T
 
 #writes the wrench List to a file in the trajectory follower path
 dataFrame = pd.DataFrame(wrenchList)
-dataFrame.to_csv(absolutePath + "/trueWrenches.csv")
+dataFrame.to_csv(absolutePath + "/trueWrenches.csv", header=False, index=False)
 
 #writes it to the low level controls file
-dataFrame.to_csv('launch_files/lowLevelControls/aircraftControllers/wrenchReference.csv')
-
+dataFrame.to_csv('launch_files/lowLevelControls/aircraftControllers/wrenchReference.csv', header=False, index=False)
 potato = 0
 
