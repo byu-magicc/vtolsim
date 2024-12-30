@@ -199,7 +199,9 @@ def main():
     forcesMomentsActualAll = np.array(forcesMomentsActualAll)[:,:,0].T
 
 
-
+    #puts together the desired forces and moments
+    wrenchDesired = np.concatenate((F_ds, M_ds), axis=0)
+    #writes it all out to the 
 
 
     #plots the positional errors

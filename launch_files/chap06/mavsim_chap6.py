@@ -46,7 +46,7 @@ Va_command = Signals(dc_offset=25.0,
                      start_time=2.0,
                      frequency=0.01)
 altitude_command = Signals(dc_offset=100.0,
-                           amplitude=10.0,
+                           amplitude=0.0,
                            start_time=0.0,
                            frequency=0.05)
 course_command = Signals(dc_offset=np.radians(0.0),
@@ -59,20 +59,16 @@ sim_time = SIM.start_time
 end_time = SIM.end_time
 
 
-#creates a vector to store the state through all the time steps, and so we can compare it to mavsim
-stateStorageVector = np.ndarray((13,0))
+#creates the list to store the state through time
+stateList = []
 
-
-stateVector = []
-
-#creates a vector to store the wrench for the aircraft here
-wrenchStorageVector = np.ndarray((6,0))
+#creates the list to store the wrench through time
+wrenchList = []
 
 # main simulation loop
 print("Press 'Esc' to exit...")
 while sim_time < end_time:
 
-    stateVector.append(copy(quad._state))
     # -------autopilot commands-------------
     commands.airspeed_command = Va_command.square(sim_time)
     commands.course_command = course_command.square(sim_time)
@@ -98,31 +94,33 @@ while sim_time < end_time:
     )
 
     #concatenates on the state
-    stateStorageVector = np.concatenate((stateStorageVector, quad._state), axis=1)
+    stateList.append(quad.true_state)
 
     #gets the calculated wrench
     wrench = quad._forces_moments(delta=delta)
     #concatenates onto the wrench storage vector
-    wrenchStorageVector = np.concatenate((wrenchStorageVector, wrench), axis=1)
-       
+    wrenchList.append(wrench)
     # -------Check to Quit the Loop-------
     # if quitter.check_quit():
     #     break
 
     # -------increment time-------------
     sim_time += SIM.ts_simulation
-    time.sleep(0.002) # slow down the simulation for visualization
 
-viewers.close(dataplot_name="ch6_data_plot")
+#writes the forces and moments on the aircraft to the output file
 
-stateOutputPath = "/home/benjamin/Documents/vtolsim/outputFiles/lowLevelController/fixedWingTest/vtolsimState.csv"
+#gets the absolutePath of the trajectory follower folder
+absolutePath = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/referenceData")
 
-df_state = pd.DataFrame(stateStorageVector)
+#changes the wrench list to a numpy array
+wrenchList = np.array(wrenchList)[:,:,0].T
 
-df_state.to_csv(stateOutputPath, header=False, index=False)
+#writes the wrench List to a file in the trajectory follower path
+dataFrame = pd.DataFrame(wrenchList)
+dataFrame.to_csv(absolutePath + "/trueWrenches.csv")
 
-wrenchOutputPath = "/home/benjamin/Documents/vtolsim/outputFiles/lowLevelController/fixedWingTest/wrenchReference.csv"
+#writes it to the low level controls file
+dataFrame.to_csv('launch_files/lowLevelControls/aircraftControllers/wrenchReference.csv')
 
-df_wrench = pd.DataFrame(wrenchStorageVector)
-df_wrench.to_csv(wrenchOutputPath, header=False, index=False)
+potato = 0
 
