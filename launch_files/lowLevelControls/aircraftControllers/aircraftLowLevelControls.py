@@ -40,7 +40,7 @@ lowLevelController = LowLevelControl_aircraftControl(ts=SIM.ts_simulation, torqu
 absolute_path = os.path.abspath(os.path.dirname('data.csv'))
 
 #reads in the data matrix from the file launch_files/lowLevelControls/aircraftControllers/wrenchReference.csv
-wrenchDataObject = pd.read_csv(absolute_path + "/launch_files/lowLevelControls/aircraftControllers/wrenchReference.csv")
+wrenchDataObject = pd.read_csv(absolute_path + "/launch_files/lowLevelControls/aircraftControllers/wrenchReference.csv", header=None, index_col=False)
 
 #gets the array
 wrenchData = wrenchDataObject.to_numpy()
@@ -64,11 +64,11 @@ while counter < wrenchDataLength:
 
     #creates the force desired
     Force_desired = np.array([[currentWrench.item(0)],
-                              [currentWrench.item(1)]])
+                              [currentWrench.item(2)]])
 
-    tau_desired = np.array([[currentWrench.item(2)],
-                            [currentWrench.item(3)],
-                            [currentWrench.item(4)]])
+    tau_desired = np.array([[currentWrench.item(3)],
+                            [currentWrench.item(4)],
+                            [currentWrench.item(5)]])
 
 
     #################################################################################################################

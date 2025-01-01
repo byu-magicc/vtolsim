@@ -35,7 +35,6 @@ from message_types.msg_state import MsgState
 #imports the matplot library
 import matplotlib.pyplot as plt
 
-
 import parameters.anaconda_parameters as QUAD
 from copy import copy
 
@@ -201,7 +200,11 @@ def main():
 
     #puts together the desired forces and moments
     wrenchDesired = np.concatenate((F_ds, M_ds), axis=0)
-    #writes it all out to the 
+    #writes it all out to a csv file
+    wrenchDataFrame = pd.DataFrame(forcesMomentsActualAll)
+
+    path = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/referenceData")
+    wrenchDataFrame.to_csv(path + "/GeometricControllerOutput.csv", header=False, index=False)
 
 
     #plots the positional errors

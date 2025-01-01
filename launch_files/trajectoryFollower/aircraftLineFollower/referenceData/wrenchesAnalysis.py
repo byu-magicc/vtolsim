@@ -16,25 +16,40 @@ import pandas as pd
 
 #gets the csv file
 #gets the absolute path
-absPath = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/referenceData")
-tempPath = absPath + "/trueWrenches.csv"
+absPathTrueWrenches = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/referenceData")
+tempPathTrueWrenches = absPathTrueWrenches + "/trueWrenches.csv"
 
 actualPath = "/home/benjamin/Documents/vtolsim/launch_files/trajectoryFollower/aircraftLineFollower/referenceData/trueWrenches.csv"
 
-trueWrenchesFile = (pd.read_csv(absPath + "/trueWrenches.csv"))
+trueWrenchesFile = (pd.read_csv(tempPathTrueWrenches))
+
+tempPathGeometricControllerOutput = absPathTrueWrenches + "/GeometricControllerOutput.csv"
+
+#gets the Geometric controller wrench output
+GeoCtrlWrenchFile = pd.read_csv(tempPathGeometricControllerOutput)
+
 
 #gets the trueWrenches
 trueWrenches = trueWrenchesFile.values
 
+#gets the geometric controller wrenches
+GeoCtrlWrenches = GeoCtrlWrenchFile.values
 
 #plots each of the forces
 
-plt.figure(0)
-plt.plot(trueWrenches[0,:], label="Fx")
-plt.plot(trueWrenches[1,:], label="Fy")
-plt.plot(trueWrenches[2,:], label="Fz")
-plt.legend()
-plt.title("True Steady State Forces comparison")
-plt.show()
+for i in range(3):
+    plt.figure(0)
+    if i == 0:
+        mainLabel = 'Fx'
+    elif i == 1:
+        mainLabel = 'Fy'
+    elif i == 2:
+        mainLabel = 'Fz'
+    plt.plot(trueWrenches[i,:], label='True Wrench')
+    plt.plot(GeoCtrlWrenches[i,:], label='Geometric Control Wrench')
+    plt.title(mainLabel + " forces")
+    plt.legend()
+    plt.show()
+
 
 potato = 0

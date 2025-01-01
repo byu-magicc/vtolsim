@@ -77,6 +77,9 @@ class TrajectoryTracker:
         self.y_hat_inertial = np.array([[0],[1],[0]])
         self.z_hat_inertial = np.array([[0],[0],[1]])
 
+
+        #creates the counter for testing purposes
+        self.counter = 0
     #creates the update function
     #arguments:
     #1. State: the vector low level state of the plane
@@ -97,6 +100,7 @@ class TrajectoryTracker:
                              [state.v],
                              [state.w]])
         
+        
         #gets the rotation matrix to rotate from body back to inertial 
         Rotation_body_to_inertial = euler_to_rotation(phi=state.phi, theta=state.theta, psi=state.psi)
 
@@ -112,13 +116,13 @@ class TrajectoryTracker:
 
 
         #gets the positional error in the inertial frame
-        pos_error_inertial = pos_inertial - pos_des_inertial
+        pos_error_inertial = pos_des_inertial - pos_inertial
 
         #gets the velocity error in the inertial frame
-        vel_error_inertial = vel_inertial - vel_des_inertial
+        vel_error_inertial = vel_des_inertial - vel_inertial
 
         #gets the desired acceleration in the inertial frame, summation and controlled
-        accel_total_des = accel_des_inertial - self.K_p @ pos_error_inertial - self.K_d @ vel_error_inertial - self.z_hat_inertial*AIR_CTRL.gravity
+        accel_total_des = accel_des_inertial + self.K_p @ pos_error_inertial + self.K_d @ vel_error_inertial
 
         self.pos_errs.append(pos_error_inertial)
         self.vel_errs.append(vel_error_inertial)
@@ -132,21 +136,15 @@ class TrajectoryTracker:
         i_hat_desired_inertial = i_hat_body_inertial
 
         #Now that we have the i_hat desired, we can project the total acceleration vector onto it and obtain the net force in the X Direction
-        F_x_des = np.transpose(i_hat_desired_inertial) @ accel_total_des
+        F_x_des = QUAD.mass*np.transpose(i_hat_desired_inertial) @ accel_total_des
 
-        #next, we know that because we will have no forces directly in the body frame y direction, that means that we can create the matrix which projects
-        #a force onto the space orthogonal to the i_hat_desired
-        
-        #gets projection matrix
-        z_projection_matrix = np.eye(numDimensions) - i_hat_desired_inertial @ np.transpose(i_hat_desired_inertial)
+        #creates the alternative for finding the F_z desired vector
+        F_z_des_vector = QUAD.mass * accel_total_des - F_x_des.item(0) * i_hat_desired_inertial
 
-        #gets the F_z vector
-        F_z_des_vector = z_projection_matrix @ accel_total_des
-
-        #gets the force in the z direction
+        #gets the alternative F_z_desired
         F_z_des = np.linalg.norm(F_z_des_vector)
 
-        #gets the k_hat_desired_inertial vector
+        #gets the alternative k_hat_desired
         k_hat_desired_inertial = F_z_des_vector / F_z_des
 
 
@@ -157,11 +155,18 @@ class TrajectoryTracker:
         #stores the desired forces
         self.F_ds.append(F_des)
 
+
         #gets the j_hat_desired_inertial, using the cross product rule in the appropriate order
         j_hat_desired_inertial = skew(k_hat_desired_inertial) @ i_hat_desired_inertial
 
         #puts all three together to get the appropriate Rotation matrix
         R_desired_inertial = np.concatenate((i_hat_desired_inertial, j_hat_desired_inertial, k_hat_desired_inertial), axis=1)
+
+        #converts the desired Rotation matrix to convert to three euler angles
+        phi_desired, theta_desired, psi_desired = rotation_to_euler(R=R_desired_inertial)
+
+        if self.counter % 150 == 0:
+            potato = 0
 
         #calls the function to get the derivative of the above matrix
         R_desired_inertial_dot = self.RotationDerivative(R_des_inert=R_desired_inertial)
@@ -183,6 +188,10 @@ class TrajectoryTracker:
         #stores the rotation and moments vectors
         self.R.append(R_desired_inertial)
         self.M_ds.append(Moments_desired)
+
+
+        #increments the counter by one
+        self.counter += 1
 
         #returns the desired forces, the desired Rotation, and the desired moments in that order
         return F_des, R_desired_inertial, Moments_desired
