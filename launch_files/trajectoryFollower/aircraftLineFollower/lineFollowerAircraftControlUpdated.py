@@ -71,7 +71,7 @@ def main():
 
 
     #instantiates the trajectory controller.
-    traj_tracker = TrajectoryTracker(K_p=10*np.eye(3), K_d=1*np.eye(3))
+    traj_tracker = TrajectoryTracker(K_p=1*np.eye(3), K_d=1.0*np.eye(3))
 
     #initializes the low level control
     rate_control = RateControl(ts_control=SIM.ts_control)
@@ -221,13 +221,58 @@ def main():
     
     #plots the desired forces compared with the actual forces in the z direction
     #'''
+    #plots the stuff from Fx
     plt.figure(1)
+    plt.plot(F_ds[0,:], label='Fx Desired')
+    plt.plot(forcesMomentsActualAll[0,:], label='Fx Actual')
+    plt.legend()
+    plt.title("x Forces")
+    plt.show()
+
+
+    #plots the stuff from Fy
+    plt.figure(2)
+    plt.plot(forcesMomentsActualAll[1,:], label='Fy Actual')
+    plt.legend()
+    plt.title("y Forces")
+    plt.show()
+
+    #plots the stuff from Fz
+    plt.figure(3)
     plt.plot(F_ds[1,:], label='Fz Desired')
     plt.plot(forcesMomentsActualAll[2,:], label='Fz Actual')
     plt.legend()
     plt.title("z Forces")
     plt.show()
 
+
+
+    #plots the stuff from the 
+    plt.figure(4)
+    plt.plot(M_ds[0,:], label='Mx Desired')
+    plt.plot(forcesMomentsActualAll[3,:], label='Mx Actual')
+    plt.legend()
+    plt.title('x Moments')
+    plt.show()
+
+
+    plt.figure(5)
+    plt.plot(M_ds[1,:], label='My Desired')
+    plt.plot(forcesMomentsActualAll[3,:], label='My Actual')
+    plt.legend()
+    plt.title('y Moments')
+    plt.show()
+
+
+    plt.figure(6)
+    plt.plot(M_ds[2,:], label='Mz Desired')
+    plt.plot(forcesMomentsActualAll[3,:], label='Mz Actual')
+    plt.legend()
+    plt.title('z Moments')
+    plt.show()
+
+    
+    
     #'''
 
     '''

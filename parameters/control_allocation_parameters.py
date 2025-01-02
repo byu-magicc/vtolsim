@@ -4,6 +4,9 @@
 
 import numpy as np
 
+
+scaling = 1.0
+
 Fx_bar = 100.0
 Fz_bar = 100.0
 Mx_bar = 50.0
@@ -13,7 +16,7 @@ Mz_bar = 50.0
 
 
 # weighting matrix for minimization of difference between desired and achieved force/torque
-K_Wrench = np.diag([1/(Fx_bar**2), 1/(Fz_bar**2), 1/(Mx_bar**2), 1/(My_bar**2), 1/(Mz_bar**2)])
+K_Wrench = scaling*np.diag([1/(Fx_bar**2), 1/(Fz_bar**2), 1/(Mx_bar**2), 1/(My_bar**2), 1/(Mz_bar**2)])
 
 # initial guesses for the actuators and where they should go to.
 init_actuators = np.array([0.0, #delta Elevator
@@ -30,7 +33,7 @@ init_actuators = np.array([0.0, #delta Elevator
 airplaneInit_actuators = np.array([0, #Initial Elevator
                                    0, #Initial Aileron
                                    0, #Initial rudder
-                                   0.5, #Initial Forward Prop
+                                   0.6, #Initial Forward Prop
                                    0, #initial v1
                                    0, #initial v2
                                    0, #initial v3

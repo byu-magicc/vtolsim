@@ -148,6 +148,39 @@ def rotation_to_euler(R):
             phi = -psi + np.arctan2(-R[0][1], -R[0][2])
     return phi, theta, psi
 
+
+
+#creates the function to go from rotation to axis angle
+#arguments:
+#R: the 3x3 rotation matrix in question
+#Returns:
+#axis: the axis about which the rotation occurs
+#angle: the angle of rotation
+def rotation_to_axisAngle(R: np.ndarray):
+
+    #gets the components of the Rotation matrix
+    r_11 = R[0,0]
+    r_12 = R[0,1]
+    r_13 = R[0,2]
+    r_21 = R[1,0]
+    r_22 = R[1,1]
+    r_23 = R[1,2]
+    r_31 = R[2,0]
+    r_32 = R[2,1]
+    r_33 = R[2,2]
+
+    #uses the arc cosine to find the angle, in radians
+    angle = np.arccos((r_11 + r_22 + r_33 - 1)/(2))
+    
+    #gets the axis of the rotation
+    axis = ((1)/(2*np.sin(angle)))*np.array([[r_32 - r_23],
+                                             [r_13 - r_31],
+                                             [r_21 - r_12]])
+    
+    #returns them
+    return axis, angle
+    
+
 def hat(omega):
     """
     vector to skew symmetric matrix associated with cross product

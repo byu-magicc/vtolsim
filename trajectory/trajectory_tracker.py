@@ -136,36 +136,73 @@ class TrajectoryTracker:
         i_hat_desired_inertial = i_hat_body_inertial
 
         #Now that we have the i_hat desired, we can project the total acceleration vector onto it and obtain the net force in the X Direction
-        F_x_des = QUAD.mass*np.transpose(i_hat_desired_inertial) @ accel_total_des
+        F_x_des = QUAD.mass * (np.transpose(i_hat_desired_inertial) @ accel_total_des).item(0)
 
         #creates the alternative for finding the F_z desired vector
-        F_z_des_vector = QUAD.mass * accel_total_des - F_x_des.item(0) * i_hat_desired_inertial
+        F_z_des_vector = QUAD.mass * accel_total_des - F_x_des * i_hat_desired_inertial
 
-        #gets the alternative F_z_desired
-        F_z_des = np.linalg.norm(F_z_des_vector)
+
+        #--------------------------------------First Solution Section --------------------------------------------------
+        #gets the first solution for the Fz desired, and the k_hat desired
+        F_z_des_firstSolution = np.linalg.norm(F_z_des_vector)
 
         #gets the alternative k_hat_desired
-        k_hat_desired_inertial = F_z_des_vector / F_z_des
+        k_hat_desired_inertial_firstSolution = F_z_des_vector / F_z_des_firstSolution
+
+        #gets the j_hat_desired_inertial, using the cross product rule in the appropriate order
+        j_hat_desired_inertial_firstSolution = skew(k_hat_desired_inertial_firstSolution) @ i_hat_desired_inertial
+
+        #puts all three together to get the appropriate Rotation matrix, first solution
+        R_desired_inertial_firstSolution = np.concatenate((i_hat_desired_inertial, j_hat_desired_inertial_firstSolution, k_hat_desired_inertial_firstSolution), axis=1)
+
+
+        #--------------------------------------Second Solution Section --------------------------------------------------
+        #gets the second solution for the Fz desired the k hat desired, which is just multiplied by negative one
+        F_z_des_secondSolution = -F_z_des_firstSolution
+        k_hat_desired_inertial_secondSolution = -k_hat_desired_inertial_firstSolution
+
+        #gets the corresponding j hat for the second solution
+        j_hat_desired_inertial_secondSolution = skew(k_hat_desired_inertial_secondSolution) @ i_hat_desired_inertial
+
+        #gets the second solution for the R desired
+        R_desired_inertial_secondSolution = np.concatenate((i_hat_desired_inertial, j_hat_desired_inertial_secondSolution, k_hat_desired_inertial_secondSolution), axis=1)
+
+
+        #--------------------------------------Axis Angle Comparison Section --------------------------------------------
+
+        #gets the rotation from the inertial frame to the body
+        Rotation_inertial_to_body = np.transpose(Rotation_body_to_inertial)
+        #gets the Rotation matrix from the desired frame 1 to the body
+        Rotation_body_to_desired_firstSolution = Rotation_inertial_to_body @ R_desired_inertial_firstSolution
+        #gets the corresponding second solution
+        Rotation_body_to_desired_secondSolution = Rotation_inertial_to_body @ R_desired_inertial_secondSolution
+
+        #gets the first axis and first angle
+        axis_firstSolution, angle_firstSolution = rotation_to_axisAngle(R=Rotation_body_to_desired_firstSolution)
+        #gets the second axis and second angle
+        axis_secondSolution, angle_secondSolution = rotation_to_axisAngle(R=Rotation_body_to_desired_secondSolution)
+
+
+        #compares the magnitudes of the rotations, and selects the lowest one
+        #case first solution is larger by absolute value
+        if np.abs(angle_firstSolution) >= np.abs(angle_secondSolution):
+            #then we choose the second solution for everything.
+            F_z_des = F_z_des_secondSolution
+            R_desired_inertial = R_desired_inertial_secondSolution
+        #case the second solution is larger by absolute value
+        else:
+            F_z_des = F_z_des_firstSolution
+            R_desired_inertial = R_desired_inertial_firstSolution
 
 
         #creates the desired forces vector
-        F_des = np.array([[F_x_des.item(0)],
+        F_des = np.array([[F_x_des],
                           [F_z_des]])
         
         #stores the desired forces
         self.F_ds.append(F_des)
 
-
-        #gets the j_hat_desired_inertial, using the cross product rule in the appropriate order
-        j_hat_desired_inertial = skew(k_hat_desired_inertial) @ i_hat_desired_inertial
-
-        #puts all three together to get the appropriate Rotation matrix
-        R_desired_inertial = np.concatenate((i_hat_desired_inertial, j_hat_desired_inertial, k_hat_desired_inertial), axis=1)
-
-        #converts the desired Rotation matrix to convert to three euler angles
-        phi_desired, theta_desired, psi_desired = rotation_to_euler(R=R_desired_inertial)
-
-        if self.counter % 150 == 0:
+        if self.counter % 50 == 0:
             potato = 0
 
         #calls the function to get the derivative of the above matrix
@@ -186,7 +223,7 @@ class TrajectoryTracker:
         Moments_desired = QUAD.J @ omega_dot + skew(omega) @ (QUAD.J @ omega)
 
         #stores the rotation and moments vectors
-        self.R.append(R_desired_inertial)
+        self.R.append(R_desired_inertial_firstSolution)
         self.M_ds.append(Moments_desired)
 
 
@@ -194,7 +231,7 @@ class TrajectoryTracker:
         self.counter += 1
 
         #returns the desired forces, the desired Rotation, and the desired moments in that order
-        return F_des, R_desired_inertial, Moments_desired
+        return F_des, R_desired_inertial_firstSolution, Moments_desired
 
     
 
