@@ -205,6 +205,23 @@ class TrajectoryTracker:
         if self.counter % 50 == 0:
             potato = 0
 
+        #gets the moments desired using the function
+        Moments_desired = self.getMomentsDesired(R_desired_inertial=R_desired_inertial)
+
+        #stores the rotation and moments vectors
+        self.R.append(R_desired_inertial_firstSolution)
+        self.M_ds.append(Moments_desired)
+
+
+        #increments the counter by one
+        self.counter += 1
+
+        #returns the desired forces, the desired Rotation, and the desired moments in that order
+        return F_des, R_desired_inertial_firstSolution, Moments_desired
+    
+
+    #creates the function that obtains the moments desired
+    def getMomentsDesired(self, R_desired_inertial: np.ndarray):
         #calls the function to get the derivative of the above matrix
         R_desired_inertial_dot = self.RotationDerivative(R_des_inert=R_desired_inertial)
 
@@ -222,16 +239,9 @@ class TrajectoryTracker:
         #It could be in the desired frame, not the current body frame, so we may need to use the Rotation matrix we just found
         Moments_desired = QUAD.J @ omega_dot + skew(omega) @ (QUAD.J @ omega)
 
-        #stores the rotation and moments vectors
-        self.R.append(R_desired_inertial_firstSolution)
-        self.M_ds.append(Moments_desired)
+        #returns the Moments desired
+        return Moments_desired     
 
-
-        #increments the counter by one
-        self.counter += 1
-
-        #returns the desired forces, the desired Rotation, and the desired moments in that order
-        return F_des, R_desired_inertial_firstSolution, Moments_desired
 
     
 

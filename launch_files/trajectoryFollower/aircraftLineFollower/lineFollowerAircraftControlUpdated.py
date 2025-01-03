@@ -71,7 +71,7 @@ def main():
 
 
     #instantiates the trajectory controller.
-    traj_tracker = TrajectoryTracker(K_p=1*np.eye(3), K_d=1.0*np.eye(3))
+    traj_tracker = TrajectoryTracker(K_p=0.1*np.eye(3), K_d=0.1*np.eye(3))
 
     #initializes the low level control
     rate_control = RateControl(ts_control=SIM.ts_control)
