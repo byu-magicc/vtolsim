@@ -71,7 +71,7 @@ def main():
 
 
     #instantiates the trajectory controller.
-    traj_tracker = TrajectoryTracker(K_p=0.1*np.eye(3), K_d=0.1*np.eye(3))
+    traj_tracker = TrajectoryTracker(K_p=1.0*np.eye(3), K_d=1.0*np.eye(3))
 
     #initializes the low level control
     rate_control = RateControl(ts_control=SIM.ts_control)
@@ -194,6 +194,11 @@ def main():
     pitches = np.array(pitches)
     yaws = np.array(yaws)
 
+    #converts the three euler angle vectors into degrees
+    rolls_degrees = (180/np.pi)*rolls
+    pitches_degrees = (180/np.pi)*pitches
+    yaws_degrees = (180/np.pi)*yaws
+
     #converts the actual forces Moments list into a numpy array
     forcesMomentsActualAll = np.array(forcesMomentsActualAll)[:,:,0].T
 
@@ -270,6 +275,19 @@ def main():
     plt.legend()
     plt.title('z Moments')
     plt.show()
+
+
+    #plots the three euler angles for the desired rotation matrix
+    plt.figure(7)
+    plt.plot(rolls_degrees, label='phi desired')
+    plt.plot(pitches_degrees, label='theta desired')
+    plt.plot(yaws_degrees, label='psi desired')
+    plt.legend()
+    plt.title('euler angles desired')
+    plt.show()
+
+
+    #plots the 
 
     
     

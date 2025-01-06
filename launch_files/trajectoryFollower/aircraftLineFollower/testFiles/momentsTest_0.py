@@ -25,8 +25,8 @@ import matplotlib.pyplot as plt
 
 #creates the time linspace
 
-startTime = 0
-endTime = 10
+startTime = 0.0
+endTime = 10.0
 numSamples = 1000
 t = np.linspace(start=startTime, stop=endTime, num=numSamples)
 

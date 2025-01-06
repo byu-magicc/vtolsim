@@ -21,7 +21,7 @@ from spatialmath.base import skewa, skew
 
 
 #sets the simga
-sigma = 0.05
+sigma = 0.01
 
 #sets the dimensionality of the problem
 numDimensions = 3
