@@ -88,6 +88,9 @@ def main():
     #initializes the command message
     delta = MsgDelta()
 
+    #creates the list to store the deltas through time for post analysis
+    deltaList = []
+
     #creates the list to store the state through time for post analysis
     stateArray = []
 
@@ -148,6 +151,9 @@ def main():
                                      state=quad.true_state,
                                      wind=wind,
                                      omega_d=omega_c)
+
+        #appends the delta to the deltas list
+        deltaList.append(copy(delta))
         
         #-------update physical system-------------
         #updates the quad based on the delta input and the current wind conditions (0)
@@ -186,173 +192,27 @@ def main():
         #increments the time by Ts seconds
         sim_time += Ts
 
-    #gets the trajectory history
-    pos_errs, vel_errs, accel_des = traj_tracker.getTrajectoryHistory()
-    #gets the force control historyu
-    F_ds, R_ds, M_ds = traj_tracker.getControlHistory()
-
-    #converts the lists to useful arrays
-    pos_errs = np.array(pos_errs)[:,:,0].T
-    vel_errs = np.array(vel_errs)[:,:,0].T
-    accel_des = np.array(accel_des)[:,:,0].T
-
-    F_ds = np.array(F_ds)[:,:,0].T
-    M_ds = np.array(M_ds)[:,:,0].T
-
-    #iterates through all of the Rotation matrices and converts them to euler angles
-    rolls = []
-    pitches = []
-    yaws = []
-    for i in range(len(R_ds)):
-        roll, pitch, yaw = rotation_to_euler(R=R_ds[i])
-        #appends all of them
-        rolls.append(roll)
-        pitches.append(pitch)
-        yaws.append(yaw)
-
-    #converts them to arrays
-    rolls = np.array(rolls)
-    pitches = np.array(pitches)
-    yaws = np.array(yaws)
-
-    #converts the three euler angle vectors into degrees
-    rolls_degrees = (180/np.pi)*rolls
-    pitches_degrees = (180/np.pi)*pitches
-    yaws_degrees = (180/np.pi)*yaws
-
-    #converts the actual forces Moments list into a numpy array
-    forcesMomentsActualAll = np.array(forcesMomentsActualAll)[:,:,0].T
-
-
-    #puts together the desired forces and moments
-    wrenchDesired = np.concatenate((F_ds, M_ds), axis=0)
-    #writes it all out to a csv file
-    wrenchDataFrame = pd.DataFrame(forcesMomentsActualAll)
-
-    path = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/referenceData")
-    wrenchDataFrame.to_csv(path + "/GeometricControllerOutput.csv", header=False, index=False)
-
-
-    #plots the positional errors
-    plt.figure(0)
-    plt.plot(pos_errs[0,:], label='x error')
-    plt.plot(pos_errs[1,:], label='y error')
-    plt.plot(pos_errs[2,:], label='z error')
-    plt.legend()
-    plt.title("Position Errors")
-    plt.xlabel('Error (Meters)')
-    plt.show()
-
-
-    
-    #plots the desired forces compared with the actual forces in the z direction
-    #'''
-    #plots the stuff from Fx
-    plt.figure(1)
-    plt.plot(F_ds[0,:], label='Fx Desired')
-    plt.plot(forcesMomentsActualAll[0,:], label='Fx Actual')
-    plt.legend()
-    plt.title("x Forces")
-    plt.show()
-
-
-    #plots the stuff from Fy
-    plt.figure(2)
-    plt.plot(forcesMomentsActualAll[1,:], label='Fy Actual')
-    plt.legend()
-    plt.title("y Forces")
-    plt.show()
-
-    #plots the stuff from Fz
-    plt.figure(3)
-    plt.plot(F_ds[1,:], label='Fz Desired')
-    plt.plot(forcesMomentsActualAll[2,:], label='Fz Actual')
-    plt.legend()
-    plt.title("z Forces")
-    plt.show()
 
 
 
-    #plots the stuff from the 
-    plt.figure(4)
-    plt.plot(M_ds[0,:], label='Mx Desired')
-    plt.plot(forcesMomentsActualAll[3,:], label='Mx Actual')
-    plt.legend()
-    plt.title('x Moments')
-    plt.show()
+    path = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/seperatedControlOutputs")
 
+    #creates the full delta array
+    deltaArray = np.ndarray((8,0))
+    #converts the delta message to a 2d array
+    for delta in deltaList:
+        #converts the delta list to an array
+        deltaTemp = delta.to_array()
+        #concatenates it onto the delta array
+        deltaArray = np.concatenate((deltaArray, deltaTemp), axis=1)
 
-    plt.figure(5)
-    plt.plot(M_ds[1,:], label='My Desired')
-    plt.plot(forcesMomentsActualAll[3,:], label='My Actual')
-    plt.legend()
-    plt.title('y Moments')
-    plt.show()
-
-
-    plt.figure(6)
-    plt.plot(M_ds[2,:], label='Mz Desired')
-    plt.plot(forcesMomentsActualAll[3,:], label='Mz Actual')
-    plt.legend()
-    plt.title('z Moments')
-    plt.show()
-
-
-    #plots the three euler angles for the desired rotation matrix
-    plt.figure(7)
-    plt.plot(rolls_degrees, label='phi desired')
-    plt.plot(pitches_degrees, label='theta desired')
-    plt.plot(yaws_degrees, label='psi desired')
-    plt.legend()
-    plt.title('euler angles desired')
-    plt.show()
-
-
-    #plots the 
-
-    
-    
-    #'''
-
-    '''
-    #plots the desired forces
-    plt.figure(1)
-    plt.plot(F_ds[0,:], label='Fx')
-    plt.plot(F_ds[1,:], label='Fz')
-    plt.title("Desired Forces`")
-    plt.show()
-
-    #plots the actual forces
-    plt.figure(2)
-    plt.plot(forcesMomentsActualAll[0,:], label='Fx')
-    plt.plot(forcesMomentsActualAll[1,:], label='Fy')
-    plt.plot(forcesMomentsActualAll[2,:], label='Fz')
-    plt.title("Actual Forces")
-    plt.show()
-    #'''
+    #converts it to a data frame
+    deltaDataFrame = pd.DataFrame(deltaArray)
+    #writes it out to a csv
+    deltaDataFrame.to_csv(path + "/geometricControllerTuning/deltaOutputs/deltaOutputs_1.csv", header=False, index=False)
 
 
 
-    potato = 0
-    
-    '''
-    #writes them to a csv file
-    pos_df = pd.DataFrame(data=(pos_errs))
-    vel_df = pd.DataFrame(data=(vel_errs))
-    accel_df = pd.DataFrame(data=(accel_des))
-
-    F_df = pd.DataFrame(data=(F_ds))
-    R_df = pd.DataFrame(data=R_ds)
-    M_df = pd.DataFrame(data=M_ds)
-
-    pos_df.to_csv("/home/benjamin/Documents/vtolsim/launch_files/trajectoryFollower/aircraftLineFollower/outputs/pos.csv")
-    vel_df.to_csv("/home/benjamin/Documents/vtolsim/launch_files/trajectoryFollower/aircraftLineFollower/outputs/vel.csv")
-    accel_df.to_csv("/home/benjamin/Documents/vtolsim/launch_files/trajectoryFollower/aircraftLineFollower/outputs/accel.csv")
-
-    F_df.to_csv("/home/benjamin/Documents/vtolsim/launch_files/trajectoryFollower/aircraftLineFollower/outputs/Forces.csv")
-    R_df.to_csv("/home/benjamin/Documents/vtolsim/launch_files/trajectoryFollower/aircraftLineFollower/outputs/Rotations.csv")
-    M_df.to_csv("/home/benjamin/Documents/vtolsim/launch_files/trajectoryFollower/aircraftLineFollower/outputs/.csv")
-    #'''
 
 
 #calls the main function

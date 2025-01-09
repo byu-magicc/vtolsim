@@ -8,7 +8,6 @@ import parameters.anaconda_parameters as QUAD
 import parameters.geometric_control_parameters as GEO_CTRL
 from copy import copy
 
-
 from message_types.msg_state import MsgState
 from message_types.msg_trajectory import MsgTrajectory
 
@@ -27,29 +26,29 @@ class PitchFreeTrajectoryTracker():
         
         # position error
         #the actual position (pn, pe, pd)
-        pos_i = np.array([[state.north],
+        pos_inert = np.array([[state.north],
                           [state.east],
                           [-state.altitude]])
         #the commanded position (pn, pe, pd)
-        pos_r = trajectory.pos_des_inertial
+        pos_ref_inert = trajectory.pos_des_inertial
         #position error (pn, pe, pd)
-        pos_err = pos_i - pos_r
+        pos_err = pos_ref_inert - pos_inert
 
         # velocity error
         #actual body frame velocity (u, v, w)
-        vel_i = np.array([[state.u],
+        vel_inert = np.array([[state.u],
                           [state.v],
                           [state.w]])
         #desired body frame velocity (u, v, w)
-        vel_r_inertial = trajectory.vel_des_inertial
+        vel_ref_inertial = trajectory.vel_des_inertial
         #gets the rotation from the the body to the inertial
         R_body2inert = euler_to_rotation(phi=state.phi, theta=state.theta, psi=state.psi)
         #gets the Rotatiom from inertial to body
         R_inert2body = R_body2inert.T
         #gets the velocity in the body grame
-        vel_r_body = R_inert2body @ vel_r_inertial
+        vel_ref_body = R_inert2body @ vel_ref_inertial
         #error body frame velocity (u, v, w)
-        vel_err = vel_i - vel_r_body
+        vel_err = vel_ref_body - vel_inert
 
         # heading error
         #gets the desired psi trajectory
@@ -60,7 +59,7 @@ class PitchFreeTrajectoryTracker():
         # desired force vector computation
         acc_r = trajectory.accel_des_inertial
         e3 = np.array([[0, 0, 1]]).T
-        f_di = QUAD.mass * (acc_r - QUAD.gravity*e3 - GEO_CTRL.Kp @ pos_err - GEO_CTRL.Kd @ vel_err)
+        f_di = QUAD.mass * (acc_r - QUAD.gravity*e3 + GEO_CTRL.Kp @ pos_err + GEO_CTRL.Kd @ vel_err)
 
         # Desired rotation and body force computation
         y_di = np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)) / \
