@@ -8,6 +8,12 @@ import parameters.anaconda_parameters as QUAD
 import parameters.geometric_control_parameters as GEO_CTRL
 from copy import copy
 
+
+from message_types.msg_state import MsgState
+from message_types.msg_trajectory import MsgTrajectory
+
+from tools.rotations import *
+
 class PitchFreeTrajectoryTracker():
 
     def __init__(self):
@@ -17,32 +23,42 @@ class PitchFreeTrajectoryTracker():
         self.R = []
         pass
 
-    def update(self, state, trajectory):
+    def update(self, state: MsgState, trajectory: MsgTrajectory):
         
         # position error
         #the actual position (pn, pe, pd)
-        pos_i = state[0:3,:]
+        pos_i = np.array([[state.north],
+                          [state.east],
+                          [-state.altitude]])
         #the commanded position (pn, pe, pd)
-        pos_r = trajectory[0:3,0].reshape((3,1))
+        pos_r = trajectory.pos_des_inertial
         #position error (pn, pe, pd)
         pos_err = pos_i - pos_r
 
         # velocity error
         #actual body frame velocity (u, v, w)
-        vel_i = state[3:6,:]
+        vel_i = np.array([[state.u],
+                          [state.v],
+                          [state.w]])
         #desired body frame velocity (u, v, w)
-        vel_r = trajectory[0:3,1].reshape((3,1))
+        vel_r_inertial = trajectory.vel_des_inertial
+        #gets the rotation from the the body to the inertial
+        R_body2inert = euler_to_rotation(phi=state.phi, theta=state.theta, psi=state.psi)
+        #gets the Rotatiom from inertial to body
+        R_inert2body = R_body2inert.T
+        #gets the velocity in the body grame
+        vel_r_body = R_inert2body @ vel_r_inertial
         #error body frame velocity (u, v, w)
-        vel_err = vel_i - vel_r
+        vel_err = vel_i - vel_r_body
 
         # heading error
         #gets the desired psi trajectory
-        psi_r = trajectory[3,0]
+        psi_r = trajectory.psi
         #
         x_di = np.array([[np.cos(psi_r), np.sin(psi_r), 0]]).T
 
         # desired force vector computation
-        acc_r = trajectory[0:3,2].reshape((3,1))
+        acc_r = trajectory.accel_des_inertial
         e3 = np.array([[0, 0, 1]]).T
         f_di = QUAD.mass * (acc_r - QUAD.gravity*e3 - GEO_CTRL.Kp @ pos_err - GEO_CTRL.Kd @ vel_err)
 
