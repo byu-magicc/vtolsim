@@ -209,7 +209,7 @@ def main():
     #converts it to a data frame
     deltaDataFrame = pd.DataFrame(deltaArray)
     #writes it out to a csv
-    deltaDataFrame.to_csv(path + "/geometricControllerTuning/deltaOutputs/deltaOutputs_2.csv", header=False, index=False)
+    deltaDataFrame.to_csv(path + "/geometricControllerTuning/deltaOutputs/deltaOutputs_1.csv", header=False, index=False)
 
 
 

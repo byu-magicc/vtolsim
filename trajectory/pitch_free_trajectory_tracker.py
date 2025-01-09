@@ -36,7 +36,7 @@ class PitchFreeTrajectoryTracker():
 
         # velocity error
         #actual body frame velocity (u, v, w)
-        vel_inert = np.array([[state.u],
+        vel_body = np.array([[state.u],
                           [state.v],
                           [state.w]])
         #desired body frame velocity (u, v, w)
@@ -48,7 +48,15 @@ class PitchFreeTrajectoryTracker():
         #gets the velocity in the body grame
         vel_ref_body = R_inert2body @ vel_ref_inertial
         #error body frame velocity (u, v, w)
-        vel_err = vel_ref_body - vel_inert
+        vel_err_body = vel_ref_body - vel_body
+
+
+        #lets go through and get the velocity error in the inertial, and try that and see if that changes anything.
+        #gets the velocity actual of the craft in the inertial frame
+        vel_inert = R_body2inert @ vel_body
+        #gets the velocity  error in the inertial frame
+        vel_err_inert = vel_ref_inertial - vel_inert
+
 
         # heading error
         #gets the desired psi trajectory
@@ -59,7 +67,7 @@ class PitchFreeTrajectoryTracker():
         # desired force vector computation
         acc_r = trajectory.accel_des_inertial
         e3 = np.array([[0, 0, 1]]).T
-        f_di = QUAD.mass * (acc_r - QUAD.gravity*e3 + GEO_CTRL.Kp @ pos_err + GEO_CTRL.Kd @ vel_err)
+        f_di = QUAD.mass * (acc_r - QUAD.gravity*e3 + GEO_CTRL.Kp @ pos_err + GEO_CTRL.Kd @ vel_err_inert   )
 
         # Desired rotation and body force computation
         y_di = np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)) / \
@@ -75,7 +83,7 @@ class PitchFreeTrajectoryTracker():
 
         #appends all the information
         (self.pos_errs).append(copy(pos_err))
-        (self.vel_errs).append(copy(vel_err))
+        (self.vel_errs).append(copy(vel_err_body))
         (self.F_ds).append(copy(F_d))
         (self.R).append(copy(R))
 
