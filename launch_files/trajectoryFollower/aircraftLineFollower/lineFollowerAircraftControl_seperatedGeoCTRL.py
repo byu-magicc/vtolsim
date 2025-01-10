@@ -98,10 +98,19 @@ def main():
     trueStateArray = []
 
     #stores the force desired vector
-    Force_Desired = []
+    Forces_Desired_Desired = []
+
+    #stores the desired forces in the inertial frame
+    Forces_Desired_inertial = []
+
+    #stores the desired angular velocities
+    omega_desired = []
 
     #stores the actual forces on the quad
     forcesMomentsActualAll = []
+
+    #stores the trajectory data
+    trajectoryData = []
 
     #sets the simulation time
     sim_time = SIM.start_time
@@ -131,10 +140,13 @@ def main():
         #commanded position
         commandedPosition = currentTrajectory.pos_des_inertial
 
+        #stores the current trajecotry in the list
+        trajectoryData.append(currentTrajectory)
+
         #gets the force and rotation desired
-        F_des, R_des2inert = traj_tracker.update(state=quad.true_state, trajectory=currentTrajectory)
+        F_des_des, R_des2inert = traj_tracker.update(state=quad.true_state, trajectory=currentTrajectory)
         #puts that through the pitch control
-        F_des, R_des2inert = pitch_ctrl.update(thrust_input=F_des, 
+        F_des_des, R_des2inert = pitch_ctrl.update(thrust_input=F_des_des, 
                                                R_d2i=R_des2inert, 
                                                v_body=np.array([[quad.true_state.u],
                                                                 [quad.true_state.v],
@@ -148,10 +160,23 @@ def main():
         omega_c = attitude_ctrl.update(R_b2i=R_body2inert, R_d2i = R_des2inert)
 
 
-        Force_Desired.append(F_des)
+        Forces_Desired_Desired.append(F_des_des)
+
+        #gets the desired force in the inertial frame
+
+        temp_F_des_des = np.array([[F_des_des.item(0)],
+                                   [0],
+                                   [F_des_des.item(1)]])
+        
+        #gets the F desired in the inertial frame
+        F_des_inert = R_des2inert @ temp_F_des_des
+        #appends that to the list
+        Forces_Desired_inertial.append(F_des_inert)
+
+        omega_desired.append(omega_c)
         #from the desired force and Moment, we can run the control allocation piece,
         #at least on the aircraft low level controls.
-        delta = control_alloc.update(f_d=F_des,
+        delta = control_alloc.update(f_d=F_des_des,
                                      state=quad.true_state,
                                      wind=wind,
                                      omega_d=omega_c)
@@ -204,9 +229,11 @@ def main():
     #converts to an array
     stateArray = np.array(stateArray)[:,:,0].T
 
+    
+
     #writes it out now
     stateArrayDataFrame = pd.DataFrame(stateArray)
-    stateArrayDataFrame.to_csv(path + "/verticalTest_3meters.csv", index=False, header=False)
+    stateArrayDataFrame.to_csv(path + "/stateOutputArray_103.csv", index=False, header=False)
 
 
     #'''
@@ -222,11 +249,53 @@ def main():
     #converts it to a data frame
     deltaDataFrame = pd.DataFrame(deltaArray)
     #writes it out to a csv
-    deltaDataFrame.to_csv(path + "/deltaOutputArray.csv", header=False, index=False)
+    deltaDataFrame.to_csv(path + "/deltaOutputArray_104.csv", header=False, index=False)
     #'''
 
+    #puts together the trajectory data into an array and saves it as a csv
+    #creates the array
+    trajectoryArray = np.ndarray((9,0))
+    for trajectoryMessage in trajectoryData:
+        temp = trajectoryMessage.pos_des_inertial
+        temp = np.concatenate((temp, trajectoryMessage.vel_des_inertial), axis=0)
+        temp = np.concatenate((temp, trajectoryMessage.accel_des_inertial),axis=0)
+
+        #concatenates it onto the full array
+        trajectoryArray = np.concatenate((trajectoryArray, temp), axis=1)
+
+    trajectoryDataFrame = pd.DataFrame(trajectoryArray)
+    trajectoryDataFrame.to_csv(path + '/trajectoryOutputArray_104.csv', index=False, header=False)
 
 
+    Forces_Desired_Desired = np.array(Forces_Desired_Desired)[:,:,0].T
+
+
+    forceDesDesDataFrame = pd.DataFrame(Forces_Desired_Desired)
+    forceDesDesDataFrame.to_csv(path + '/ForceDesired_104.csv', index=False, header=False)
+    #turns the omegas and the forces into arrays and sents them out to csv files
+    omega_desired = np.array(omega_desired)[:,:,0].T
+
+    omegaDataFrame = pd.DataFrame(omega_desired)
+    omegaDataFrame.to_csv(path + '/OmegaDesired_104.csv', index=False, header=False)
+
+
+
+    Forces_Desired_inertial = np.array(Forces_Desired_inertial)[:,:,0].T
+    #writes the forces in the inertial frame
+    forceDesInertDataFrame = pd.DataFrame(Forces_Desired_inertial)
+    forceDesInertDataFrame.to_csv(path + 'ForcesDesiredInertial_104.csv', index=False, header=False)
+
+
+    forcesMomentsActualAll = np.array(forcesMomentsActualAll)[:,:,0].T
+    #saves the forces moments actual out to the files
+    forcesMomentsActualFrame = pd.DataFrame(forcesMomentsActualAll)
+    forcesMomentsActualFrame.to_csv(path + '/ForcesMomentsActual_104.csv', index=False, header=False)
+
+
+    
+
+
+    tomato = 0
 
 
 #calls the main function
