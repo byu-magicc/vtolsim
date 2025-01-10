@@ -8,7 +8,7 @@ import numpy as np
 
 
 Kp = np.diag([3., 3., 5.])
-Kd = 2*np.diag([2., 2., 2.])
+Kd = np.diag([2., 2., 2.])
 Ki = 0.*np.diag([.1, .1, .1])
 omega_Kp = 5.*np.diag([1., 1., 1.])
 

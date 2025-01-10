@@ -36,7 +36,6 @@ plt.legend()
 plt.title("Elevator")
 plt.show()
 
-
 #aileron
 plt.figure(1)
 plt.plot(deltaOutputs_1[1,:], label='outputs 1')
@@ -61,8 +60,5 @@ plt.legend()
 plt.title("Forward Throttle")
 plt.show()
 
-
 potato = 0
-
-
 

@@ -94,6 +94,9 @@ def main():
     #creates the list to store the state through time for post analysis
     stateArray = []
 
+    #creates the list to store the true state messages
+    trueStateArray = []
+
     #stores the force desired vector
     Force_Desired = []
 
@@ -115,6 +118,7 @@ def main():
 
         #saves the current state vector
         stateArray.append(copy(quad._state))
+        trueStateArray.append(copy(true_state))
 
 
         #creates the control start time
@@ -195,8 +199,17 @@ def main():
 
 
 
-    path = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/seperatedControlOutputs")
+    path = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/seperatedControlOutputs/convergenceTuning")
 
+    #converts to an array
+    stateArray = np.array(stateArray)[:,:,0].T
+
+    #writes it out now
+    stateArrayDataFrame = pd.DataFrame(stateArray)
+    stateArrayDataFrame.to_csv(path + "/verticalTest_3meters.csv", index=False, header=False)
+
+
+    #'''
     #creates the full delta array
     deltaArray = np.ndarray((8,0))
     #converts the delta message to a 2d array
@@ -209,7 +222,8 @@ def main():
     #converts it to a data frame
     deltaDataFrame = pd.DataFrame(deltaArray)
     #writes it out to a csv
-    deltaDataFrame.to_csv(path + "/geometricControllerTuning/deltaOutputs/deltaOutputs_1.csv", header=False, index=False)
+    deltaDataFrame.to_csv(path + "/deltaOutputArray.csv", header=False, index=False)
+    #'''
 
 
 
