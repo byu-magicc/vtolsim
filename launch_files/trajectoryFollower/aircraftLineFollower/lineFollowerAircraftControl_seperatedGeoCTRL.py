@@ -229,11 +229,11 @@ def main():
     #converts to an array
     stateArray = np.array(stateArray)[:,:,0].T
 
-    
+    testNumber = '_104.csv'
 
     #writes it out now
     stateArrayDataFrame = pd.DataFrame(stateArray)
-    stateArrayDataFrame.to_csv(path + "/stateOutputArray_103.csv", index=False, header=False)
+    stateArrayDataFrame.to_csv(path + "/stateOutputArray" + testNumber, index=False, header=False)
 
 
     #'''
@@ -249,7 +249,7 @@ def main():
     #converts it to a data frame
     deltaDataFrame = pd.DataFrame(deltaArray)
     #writes it out to a csv
-    deltaDataFrame.to_csv(path + "/deltaOutputArray_104.csv", header=False, index=False)
+    deltaDataFrame.to_csv(path + "/deltaOutputArray" + testNumber, header=False, index=False)
     #'''
 
     #puts together the trajectory data into an array and saves it as a csv
@@ -264,36 +264,32 @@ def main():
         trajectoryArray = np.concatenate((trajectoryArray, temp), axis=1)
 
     trajectoryDataFrame = pd.DataFrame(trajectoryArray)
-    trajectoryDataFrame.to_csv(path + '/trajectoryOutputArray_104.csv', index=False, header=False)
+    trajectoryDataFrame.to_csv(path + '/trajectoryOutputArray' + testNumber, index=False, header=False)
 
 
     Forces_Desired_Desired = np.array(Forces_Desired_Desired)[:,:,0].T
 
 
     forceDesDesDataFrame = pd.DataFrame(Forces_Desired_Desired)
-    forceDesDesDataFrame.to_csv(path + '/ForceDesired_104.csv', index=False, header=False)
+    forceDesDesDataFrame.to_csv(path + '/ForceDesired' + testNumber, index=False, header=False)
     #turns the omegas and the forces into arrays and sents them out to csv files
     omega_desired = np.array(omega_desired)[:,:,0].T
 
     omegaDataFrame = pd.DataFrame(omega_desired)
-    omegaDataFrame.to_csv(path + '/OmegaDesired_104.csv', index=False, header=False)
+    omegaDataFrame.to_csv(path + '/OmegaDesired' + testNumber, index=False, header=False)
 
 
 
     Forces_Desired_inertial = np.array(Forces_Desired_inertial)[:,:,0].T
     #writes the forces in the inertial frame
     forceDesInertDataFrame = pd.DataFrame(Forces_Desired_inertial)
-    forceDesInertDataFrame.to_csv(path + 'ForcesDesiredInertial_104.csv', index=False, header=False)
+    forceDesInertDataFrame.to_csv(path + '/ForcesDesiredInertial' + testNumber, index=False, header=False)
 
 
     forcesMomentsActualAll = np.array(forcesMomentsActualAll)[:,:,0].T
     #saves the forces moments actual out to the files
     forcesMomentsActualFrame = pd.DataFrame(forcesMomentsActualAll)
-    forcesMomentsActualFrame.to_csv(path + '/ForcesMomentsActual_104.csv', index=False, header=False)
-
-
-    
-
+    forcesMomentsActualFrame.to_csv(path + '/ForcesMomentsActual' + testNumber, index=False, header=False)
 
     tomato = 0
 

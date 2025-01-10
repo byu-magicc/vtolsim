@@ -30,7 +30,6 @@ ForcesDesired_103 = pd.read_csv(absPath + '/ForceDesired_103.csv', index_col=Fal
 
 ForcesMomentsActual_103 = pd.read_csv(absPath + '/ForcesMomentsActual_103.csv', index_col=False, header=None).values
 
-ForcesDesiredInertial_103 = pd.read_csv(absPath + '/ForceDesired_103.csv', index_col=False, header=None).values
 
 #section to get the output for 104
 #gets the delta output file
@@ -45,7 +44,6 @@ omegaDesired_104 = pd.read_csv(absPath + '/OmegaDesired_104.csv', index_col=Fals
 ForcesDesired_104 = pd.read_csv(absPath + '/ForceDesired_104.csv', index_col=False, header=None).values
 
 ForcesMomentsActual_104 = pd.read_csv(absPath + '/ForcesMomentsActual_104.csv', index_col=False, header=None).values
-
 
 
 north_inertial_103 = stateOutput_103[0,:]
@@ -79,10 +77,34 @@ plt.show()
 
 #goes through and gets the 
 
+ForcesDesiredx_103 = ForcesDesired_103[0,:]
+ForcesDesiredz_103 = ForcesDesired_103[1,:]
+
+ForcesDesiredx_104 = ForcesDesired_104[0,:]
+ForcesDesiredz_104 = ForcesDesired_104[1,:]
+
+ForcesActualx_103 = ForcesMomentsActual_103[0,:]
+ForcesActualz_103 = ForcesMomentsActual_103[2,:]
+
+ForcesActualx_104 = ForcesMomentsActual_104[0,:]
+ForcesActualz_104 = ForcesMomentsActual_104[2,:]
 
 
+plt.figure(3)
+plt.plot(ForcesDesiredx_103[:cutoff], label='Force Desired x 103')
+plt.plot(ForcesActualx_103[:cutoff], label='Force Actual x 103')
+plt.legend()
+plt.title('103 X forces Analysis')
+plt.show()
 
-#plots a comparison of the desired to the actual forces
+plt.figure(4)
+plt.plot(ForcesDesiredx_104[:cutoff], label='Force Desired x 104')
+plt.plot(ForcesActualx_104[:cutoff], label='Force Actual x 104')
+plt.legend()
+plt.title('104 X forces Analysis')
+plt.show()
+
+plt.figure(5)
 
 
 

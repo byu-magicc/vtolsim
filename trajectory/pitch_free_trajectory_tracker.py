@@ -20,6 +20,9 @@ class PitchFreeTrajectoryTracker():
         self.vel_errs = []
         self.F_ds = []
         self.R = []
+
+
+        self.counter = 0
         pass
 
     def update(self, state: MsgState, trajectory: MsgTrajectory):
@@ -67,7 +70,9 @@ class PitchFreeTrajectoryTracker():
         # desired force vector computation
         acc_r = trajectory.accel_des_inertial
         e3 = np.array([[0, 0, 1]]).T
-        f_di = QUAD.mass * (acc_r - QUAD.gravity*e3 + GEO_CTRL.Kp @ pos_err + GEO_CTRL.Kd @ vel_err_inert   )
+        f_di = QUAD.mass * (acc_r - QUAD.gravity*e3 + GEO_CTRL.Kp @ pos_err + GEO_CTRL.Kd @ vel_err_inert)
+
+
 
         # Desired rotation and body force computation
         y_di = np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)) / \
@@ -86,6 +91,12 @@ class PitchFreeTrajectoryTracker():
         (self.vel_errs).append(copy(vel_err_body))
         (self.F_ds).append(copy(F_d))
         (self.R).append(copy(R))
+
+        if self.counter % 50 == 0:
+            potato = 0
+
+
+        self.counter += 1
 
         return F_d, R
     
