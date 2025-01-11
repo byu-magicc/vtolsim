@@ -74,23 +74,78 @@ class PitchFreeTrajectoryTracker():
 
 
 
+
+        #in order to obtain the correct solution to the rotation matrix, we need to solve for both
+        #the positive and negative solution
+
+
+
+
+        #--------------positive solution Section----------------------------------------
         # Desired rotation and body force computation
-        y_di = np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)) / \
+        y_di_posSln = np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)) / \
             np.linalg.norm(np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)))
-        z_di = np.cross(x_di.reshape(-1), y_di.reshape(-1)).reshape((3,1))
+        z_di_posSln = np.cross(x_di.reshape(-1), y_di_posSln.reshape(-1)).reshape((3,1))
 
 
-        Fx_d = (x_di.T @ f_di).item(0)
-        Fz_d = (z_di.T @ f_di).item(0)
-        F_d = np.array([[Fx_d, Fz_d]]).T
+        
 
-        R = np.concatenate((x_di, y_di, z_di), axis=1)
+        #saves the Positive Solution for the Rotation matrix
+        R_des2inert_posSln = np.concatenate((x_di, y_di_posSln, z_di_posSln), axis=1)
+
+        R_des2body_posSln = R_inert2body @ R_des2inert_posSln
+
+        #gets the axis angle for the positive solution
+        axis_posSln, angle_posSln = rotation_to_axisAngle(R=R_des2body_posSln)
+
+        #gets the forces for the positive solution
+        Fx_d_posSln = (x_di.T @ f_di).item(0)
+        Fz_d_posSln = (z_di_posSln.T @ f_di).item(0)
+        F_d_posSln = np.array([[Fx_d_posSln, Fz_d_posSln]]).T
+
+        #-------------negative solution Section-----------------------------------------
+        y_di_negSln = -np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)) / \
+            np.linalg.norm(np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)))
+        z_di_negSln = np.cross(x_di.reshape(-1), y_di_posSln.reshape(-1)).reshape((3,1))
+
+        #saves the rotation matrix for the negative solution
+        R_des2inert_negSln = np.concatenate((x_di, y_di_negSln, z_di_negSln), axis=1)
+
+        R_des2body_negSln = R_inert2body @ R_des2inert_negSln
+
+        axis_negSln, angle_negSln = rotation_to_axisAngle(R=R_des2body_negSln)
+
+        #gets the forces for the negative solution
+        Fx_d_negSln = (x_di.T @ f_di).item(0)
+        Fz_d_negSln = (z_di_negSln.T @ f_di).item(0)
+        F_d_negSln= np.array([[Fx_d_negSln, Fz_d_negSln]]).T
+
+
+        #------------comparison section--------------------------------------------------
+        
+        #checks which angle has the greater absolute value
+        #case the positive solution is greater than the negative solution in absolute value terms
+        if np.abs(angle_posSln) >= np.abs(angle_negSln):
+            #sets the desired Force vector
+            F_des = F_d_negSln
+            #sets the Rotation for the negative solution
+            R_des2inert = R_des2inert_negSln
+        #case we go with the positive solution
+        else:
+            F_des = F_d_posSln
+            R_des2inert = R_des2inert_posSln
+            
+
+
+
+
+
 
         #appends all the information
         (self.pos_errs).append(copy(pos_err))
         (self.vel_errs).append(copy(vel_err_body))
-        (self.F_ds).append(copy(F_d))
-        (self.R).append(copy(R))
+        (self.F_ds).append(copy(F_des))
+        (self.R).append(copy(R_des2inert))
 
         if self.counter % 50 == 0:
             potato = 0
@@ -98,7 +153,7 @@ class PitchFreeTrajectoryTracker():
 
         self.counter += 1
 
-        return F_d, R
+        return F_des, R_des2inert
     
     #helper function to get all of the information buildup
     def getInfo(self):
