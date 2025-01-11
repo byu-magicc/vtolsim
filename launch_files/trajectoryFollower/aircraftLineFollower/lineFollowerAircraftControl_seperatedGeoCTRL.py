@@ -117,6 +117,9 @@ def main():
     Ts = SIM.ts_simulation
     end_time = SIM.end_time
 
+    #creates the counter variable
+    counter = 0
+
     #creates the main simulation loop
     while sim_time < end_time:
 
@@ -218,6 +221,11 @@ def main():
                        commanded_state=commandedState,
                        delta=delta)
         
+
+        if counter % 25 == 0:
+            potato = 0
+
+        counter += 1
         #increments the time by Ts seconds
         sim_time += Ts
 
