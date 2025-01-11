@@ -13,6 +13,8 @@ from message_types.msg_trajectory import MsgTrajectory
 
 from tools.rotations import *
 
+from spatialmath.base import skewa, skew
+
 class PitchFreeTrajectoryTracker():
 
     def __init__(self):
@@ -79,46 +81,60 @@ class PitchFreeTrajectoryTracker():
         #the positive and negative solution
 
 
+        #primarily, we obtain the F_x desired
+        Fx_des = (x_di.T @ f_di).item(0)
+
+        #gets the main vector for the F_z desired
+        Fz_des_vector = f_di - Fx_des * x_di
 
 
-        #--------------positive solution Section----------------------------------------
-        # Desired rotation and body force computation
-        y_di_posSln = np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)) / \
-            np.linalg.norm(np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)))
-        z_di_posSln = np.cross(x_di.reshape(-1), y_di_posSln.reshape(-1)).reshape((3,1))
+        #------------------------------------Positive Solution Section------------------------------
 
+        #gets the positive solution for the magnitude of the Fz_desired
+        Fz_des_posSln = np.linalg.norm(Fz_des_vector)
 
-        
+        #gets the full length 2 desired forces
+        F_des_posSln = np.array([[Fx_des],
+                                 [Fz_des_posSln]])
 
-        #saves the Positive Solution for the Rotation matrix
+        #gets the z hat desired vector, expressed in the inertial frame, positive solution
+        z_di_posSln = Fz_des_vector / Fz_des_posSln
+
+        #gets the y di positive solution using the cross product matrix
+        y_di_posSln = skew(z_di_posSln) @ x_di
+
+        #puts together the Rotation positive solution matrix
         R_des2inert_posSln = np.concatenate((x_di, y_di_posSln, z_di_posSln), axis=1)
 
+        #gets the rotation from the desired to the body matrix
         R_des2body_posSln = R_inert2body @ R_des2inert_posSln
 
-        #gets the axis angle for the positive solution
+        #gets the axis and angle for the positive solution.
         axis_posSln, angle_posSln = rotation_to_axisAngle(R=R_des2body_posSln)
 
-        #gets the forces for the positive solution
-        Fx_d_posSln = (x_di.T @ f_di).item(0)
-        Fz_d_posSln = (z_di_posSln.T @ f_di).item(0)
-        F_d_posSln = np.array([[Fx_d_posSln, Fz_d_posSln]]).T
 
-        #-------------negative solution Section-----------------------------------------
-        y_di_negSln = -np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)) / \
-            np.linalg.norm(np.cross(x_di.reshape(-1), f_di.reshape(-1)).reshape((3,1)))
-        z_di_negSln = np.cross(x_di.reshape(-1), y_di_posSln.reshape(-1)).reshape((3,1))
+        #------------------------------------Negative Solution Section------------------------------
+        #gets the negative solution for the magnitude of the Fz_desired
+        Fz_des_negSln = -np.linalg.norm(Fz_des_vector)
 
-        #saves the rotation matrix for the negative solution
+        #gets the full length 2 desired forces
+        F_des_negSln = np.array([[Fx_des],
+                                 [Fz_des_negSln]])
+
+        #gets the z hat desired vector,  expressed in the inertial frame, negative solution
+        z_di_negSln = Fz_des_vector / Fz_des_negSln
+
+        #gets the y_di negative solution using the cross product matrix
+        y_di_negSln = skew(z_di_negSln) @ x_di
+
+        #puts together the Rotation negative solution matrix
         R_des2inert_negSln = np.concatenate((x_di, y_di_negSln, z_di_negSln), axis=1)
 
+        #gets the rotation from the desired to the body matrix
         R_des2body_negSln = R_inert2body @ R_des2inert_negSln
 
+        #gets the axis angle for the negative solution
         axis_negSln, angle_negSln = rotation_to_axisAngle(R=R_des2body_negSln)
-
-        #gets the forces for the negative solution
-        Fx_d_negSln = (x_di.T @ f_di).item(0)
-        Fz_d_negSln = (z_di_negSln.T @ f_di).item(0)
-        F_d_negSln= np.array([[Fx_d_negSln, Fz_d_negSln]]).T
 
 
         #------------comparison section--------------------------------------------------
@@ -127,12 +143,12 @@ class PitchFreeTrajectoryTracker():
         #case the positive solution is greater than the negative solution in absolute value terms
         if np.abs(angle_posSln) >= np.abs(angle_negSln):
             #sets the desired Force vector
-            F_des = F_d_negSln
+            F_des = F_des_negSln
             #sets the Rotation for the negative solution
             R_des2inert = R_des2inert_negSln
         #case we go with the positive solution
         else:
-            F_des = F_d_posSln
+            F_des = F_des_posSln
             R_des2inert = R_des2inert_posSln
             
 
