@@ -11,7 +11,7 @@ from tools.rotations import euler_to_quaternion
 #initial conditions for the QUAD
 pn0 = 0.  # initial north position
 pe0 = 0.  # initial east position
-pd0 = -95.0  # initial down position
+pd0 = -100.0  # initial down position
 u0 = 25.  # initial velocity along body x-axis
 v0 = 0.  # initial velocity along body y-axis
 w0 = 0.0001  # initial velocity along body z-axis

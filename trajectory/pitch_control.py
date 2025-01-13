@@ -59,7 +59,7 @@ class PitchControl():
 
         phi, theta, psi = rotation_to_euler(R_p2i_return)
 
-        if self.counter % 50 == 0:
+        if self.counter % 150 == 0:
             pineapple = 0
 
         

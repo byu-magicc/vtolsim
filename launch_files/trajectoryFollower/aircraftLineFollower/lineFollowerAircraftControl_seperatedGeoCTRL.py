@@ -222,7 +222,7 @@ def main():
                        delta=delta)
         
 
-        if counter % 25 == 0:
+        if counter % 150 == 0:
             potato = 0
 
         counter += 1

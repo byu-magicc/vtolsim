@@ -22,6 +22,7 @@ class PitchFreeTrajectoryTracker():
         self.vel_errs = []
         self.F_ds = []
         self.R = []
+        self.f_di = []
 
 
         self.counter = 0
@@ -163,7 +164,7 @@ class PitchFreeTrajectoryTracker():
         (self.F_ds).append(copy(F_des))
         (self.R).append(copy(R_des2inert))
 
-        if self.counter % 50 == 0:
+        if self.counter % 150 == 0:
             potato = 0
 
 
