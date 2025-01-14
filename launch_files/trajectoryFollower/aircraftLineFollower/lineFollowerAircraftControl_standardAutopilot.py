@@ -102,20 +102,18 @@ def main():
     #creates the list to store the true state messages
     trueStateArray = []
 
-    #stores the force desired vector
-    Forces_Desired_Desired = []
+    #stores the forces and moments
+    forcesMomentsList = []
 
-    #stores the desired forces in the inertial frame
-    Forces_Desired_inertial = []
-
-    #stores the desired angular velocities
-    omega_desired = []
-
-    #stores the actual forces on the quad
-    forcesMomentsActualAll = []
+    #stores the rotation matrix for the aircraft
+    eulerAnglesList = []
 
     #stores the trajectory data
     trajectoryData = []
+
+    Forces_Desired_Desired = []
+
+    Forces_Desired_inertial = []
 
     #sets the simulation time
     sim_time = SIM.start_time
@@ -128,26 +126,15 @@ def main():
     #creates the main simulation loop
     while sim_time < end_time:
 
-        #sets the estimated state to the true state
-        estimated_state = quad._state
-
         true_state = quad.true_state
 
         #saves the current state vector
         stateArray.append(copy(quad._state))
         trueStateArray.append(copy(true_state))
 
-
-
-        #creates the control start time
-        ctrl_start_time = time.time()
         #gets the trajectory derivatives
         currentTrajectory = traj.traj_msg(sim_time)
 
-        #gets the positional errors
-        actualPosition = estimated_state[0:3,:]
-        #commanded position
-        commandedPosition = currentTrajectory.pos_des_inertial
 
         #stores the current trajecotry in the list
         trajectoryData.append(currentTrajectory)
@@ -172,10 +159,11 @@ def main():
         F_des_des, R_des2inert = traj_tracker.update(state=quad.true_state, trajectory=currentTrajectory)
         #puts that through the pitch control
         F_des_des, R_des2inert = pitch_ctrl.update(thrust_input=F_des_des, 
-                                               R_d2i=R_des2inert, 
-                                               v_body=np.array([[quad.true_state.u],
-                                                                [quad.true_state.v],
-                                                                [quad.true_state.w]]))
+                                                   R_d2i=R_des2inert, 
+                                                   v_body=np.array([[quad.true_state.u],
+                                                                    [quad.true_state.v],
+                                                                    [quad.true_state.w]]))
+
         #gets the commanded angular rates vector. In this version, we will use angular rates
         #instead of desired moments
         #gets the current body frame rotation
@@ -185,39 +173,28 @@ def main():
         omega_c = attitude_ctrl.update(R_b2i=R_body2inert, R_d2i = R_des2inert)
 
 
-        Forces_Desired_Desired.append(F_des_des)
-
         #gets the desired force in the inertial frame
 
         temp_F_des_des = np.array([[F_des_des.item(0)],
                                    [0],
                                    [F_des_des.item(1)]])
+
+        Forces_Desired_Desired.append(temp_F_des_des)
+
+
         
         #gets the F desired in the inertial frame
         F_des_inert = R_des2inert @ temp_F_des_des
         #appends that to the list
         Forces_Desired_inertial.append(F_des_inert)
 
-        omega_desired.append(omega_c)
-        #from the desired force and Moment, we can run the control allocation piece,
-        #at least on the aircraft low level controls.
-        delta = control_alloc.update(f_d=F_des_des,
-                                     state=quad.true_state,
-                                     wind=wind,
-                                     omega_d=omega_c)
-
         #appends the delta to the deltas list
-        deltaList.append(copy(delta))
+        deltaList.append(copy(delta_autopilot))
         
         #-------update physical system-------------
         #updates the quad based on the delta input and the current wind conditions (0)
-        quad.update(delta=delta, wind=wind)
+        quad.update(delta=delta_autopilot, wind=wind)
 
-        #gets the actual forces and moments from the quadplane
-        actualForcesMoments = quad._forces_moments(delta=delta)
-        
-        #stores the actual forces and moments in the vector
-        forcesMomentsActualAll.append(actualForcesMoments)
 
 
         #-------update viewers-------------
@@ -234,14 +211,32 @@ def main():
         #sets the desired state Va
         commandedState.Va = Va_desired
 
-        #gets the desired roll pitch and yaw from the Rotational matrix
-        commandedState.phi, commandedState.theta, commandedState.psi = rotation_to_euler(R_des2inert)
+
+
+        #-------------------------Info Storage-------------------------------------------
+        #this section is used to store the information for the controller
+        
+        #gets the forces and moments on the aircraft
+        forcesMoments = quad._forces_moments(delta=delta_autopilot)
+        forcesMomentsList.append(forcesMoments)
+
+        #gets the rotation matrix for the current state
+        phi = quad.true_state.phi
+        theta = quad.true_state.theta
+        psi = quad.true_state.psi
+        eulerAngles = np.array([[phi],
+                                [theta],
+                                [psi]])
+
+        #stores the rotation matrices
+        eulerAnglesList.append(eulerAngles)
+
 
         viewers.update(sim_time=sim_time,
                        true_state=quad.true_state,
                        estimated_state=quad.true_state,
                        commanded_state=commandedState,
-                       delta=delta)
+                       delta=delta_autopilot)
         
 
         if counter % 150 == 0:
@@ -252,76 +247,28 @@ def main():
         sim_time += Ts
 
 
+    path = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/autopilotOutput")
 
+    #saves the euler angles
+    eulerAnglesList = np.array(eulerAnglesList)[:,:,0].T
+    eulerDataFrame = pd.DataFrame(eulerAnglesList)
+    eulerDataFrame.to_csv(path + '/eulerAngles.csv', index=False, header=False)
 
-    path = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/seperatedControlOutputs/convergenceTuning")
+    #saves the actual forces and Moments
+    forcesMomentsList = np.array(forcesMomentsList)[:,:,0].T
+    forcesMomentsDataFrame = pd.DataFrame(forcesMomentsList)
+    forcesMomentsDataFrame.to_csv(path + '/forcesMoments.csv', index=False, header=False)
 
-    #converts to an array
-    stateArray = np.array(stateArray)[:,:,0].T
-
-    testNumber = '_104.csv'
-
-    #writes it out now
-    stateArrayDataFrame = pd.DataFrame(stateArray)
-    stateArrayDataFrame.to_csv(path + "/stateOutputArray" + testNumber, index=False, header=False)
-
-
-    #'''
-    #creates the full delta array
-    deltaArray = np.ndarray((8,0))
-    #converts the delta message to a 2d array
-    for delta in deltaList:
-        #converts the delta list to an array
-        deltaTemp = delta.to_array()
-        #concatenates it onto the delta array
-        deltaArray = np.concatenate((deltaArray, deltaTemp), axis=1)
-
-    #converts it to a data frame
-    deltaDataFrame = pd.DataFrame(deltaArray)
-    #writes it out to a csv
-    deltaDataFrame.to_csv(path + "/deltaOutputArray" + testNumber, header=False, index=False)
-    #'''
-
-    #puts together the trajectory data into an array and saves it as a csv
-    #creates the array
-    trajectoryArray = np.ndarray((9,0))
-    for trajectoryMessage in trajectoryData:
-        temp = trajectoryMessage.pos_des_inertial
-        temp = np.concatenate((temp, trajectoryMessage.vel_des_inertial), axis=0)
-        temp = np.concatenate((temp, trajectoryMessage.accel_des_inertial),axis=0)
-
-        #concatenates it onto the full array
-        trajectoryArray = np.concatenate((trajectoryArray, temp), axis=1)
-
-    trajectoryDataFrame = pd.DataFrame(trajectoryArray)
-    trajectoryDataFrame.to_csv(path + '/trajectoryOutputArray' + testNumber, index=False, header=False)
-
-
+    #saves the desired forces from the geometric controller
     Forces_Desired_Desired = np.array(Forces_Desired_Desired)[:,:,0].T
-
-
-    forceDesDesDataFrame = pd.DataFrame(Forces_Desired_Desired)
-    forceDesDesDataFrame.to_csv(path + '/ForceDesired' + testNumber, index=False, header=False)
-    #turns the omegas and the forces into arrays and sents them out to csv files
-    omega_desired = np.array(omega_desired)[:,:,0].T
-
-    omegaDataFrame = pd.DataFrame(omega_desired)
-    omegaDataFrame.to_csv(path + '/OmegaDesired' + testNumber, index=False, header=False)
+    #saves it to a csv
+    forcesDesired = pd.DataFrame(Forces_Desired_Desired)
+    forcesDesired.to_csv(path + '/forcesDesired.csv', index=False, header=False)
 
 
 
-    Forces_Desired_inertial = np.array(Forces_Desired_inertial)[:,:,0].T
-    #writes the forces in the inertial frame
-    forceDesInertDataFrame = pd.DataFrame(Forces_Desired_inertial)
-    forceDesInertDataFrame.to_csv(path + '/ForcesDesiredInertial' + testNumber, index=False, header=False)
 
 
-    forcesMomentsActualAll = np.array(forcesMomentsActualAll)[:,:,0].T
-    #saves the forces moments actual out to the files
-    forcesMomentsActualFrame = pd.DataFrame(forcesMomentsActualAll)
-    forcesMomentsActualFrame.to_csv(path + '/ForcesMomentsActual' + testNumber, index=False, header=False)
-
-    tomato = 0
 
 
 #calls the main function
