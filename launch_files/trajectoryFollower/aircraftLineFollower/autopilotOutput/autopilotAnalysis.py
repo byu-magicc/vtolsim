@@ -13,13 +13,16 @@ from tools.rotations import *
 path = os.path.abspath("launch_files/trajectoryFollower/aircraftLineFollower/autopilotOutput")
 
 #gets the euler angles
-eulerAngles = pd.read_csv(path + '/eulerAngles.csv', header=None, index_col=False).values
+eulerAngles = pd.read_csv(path + '/eulerAnglesTrue.csv', header=None, index_col=False).values
 
 #gets the forces and moments
-forcesMomentsBodyFrame = pd.read_csv(path + '/forcesMoments.csv', header=None, index_col=False).values
+forcesMomentsBodyFrame = pd.read_csv(path + '/forcesMomentsTrue.csv', header=None, index_col=False).values
 
 #gets the desired forces and Moments
-forcesDesired = pd.read_csv(path + '/forcesDesired.csv', header=None, index_col=False).values
+forcesDesired_singular = pd.read_csv(path + '/forcesDesired_singular.csv', header=None, index_col=False).values
+
+#gets the desired forces and moments from the seperated controller
+forcesDesired_seperated = pd.read_csv(path + '/forcesDesired_seperated.csv', header=None, index_col=False).values
 
 
 #plots the two body frame x forces the actual forces experienced by the actual plane using
@@ -29,14 +32,16 @@ forcesDesired = pd.read_csv(path + '/forcesDesired.csv', header=None, index_col=
 
 plt.figure(0)
 plt.plot(forcesMomentsBodyFrame[0,:], label='Fx Actual')
-plt.plot(forcesDesired[0,:], label='Fx Desired')
+plt.plot(forcesDesired_singular[0,:], label='Fx Desired singular')
+plt.plot(forcesDesired_seperated[0,:], label='Fx Desired seperated')
 plt.legend()
 plt.title('X Forces')
 plt.show()
 
 plt.figure(1)
 plt.plot(forcesMomentsBodyFrame[1,:], label='Fy Actual')
-plt.plot(forcesDesired[1,:], label='Fy Desired')
+plt.plot(forcesDesired_singular[1,:], label='Fy Desired singular')
+plt.plot(forcesDesired_seperated[1,:], label='Fy Desired seperated')
 plt.legend()
 plt.title('Y Forces')
 plt.show()
@@ -44,7 +49,8 @@ plt.show()
 
 plt.figure(2)
 plt.plot(forcesMomentsBodyFrame[2,:], label='Fz Actual')
-plt.plot(forcesDesired[2,:], label='Fz Desired')
+plt.plot(forcesDesired_singular[2,:], label='Fz Desired singular')
+plt.plot(forcesDesired_seperated[2,:], label='Fz Desired seperated')
 plt.legend()
 plt.title('Z Forces')
 plt.show()

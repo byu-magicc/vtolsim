@@ -32,7 +32,7 @@ class TrajectoryTracker:
 
     #sets the two gain matrices,
     #K_p: the Proportional gain matrix, which maps the gain proportional to the 
-    def __init__(self, K_p: np.ndarray, K_d: np.ndarray):
+    def __init__(self, K_p: np.ndarray = GEO_CTRL.Kp, K_d: np.ndarray = GEO_CTRL.Kd):
         #the vector that stores the positional errors
         self.pos_errs = []
         #stores the velocity errors
@@ -209,7 +209,7 @@ class TrajectoryTracker:
         Moments_desired = self.getMomentsDesired(R_desired_inertial=R_desired_inertial)
 
         #stores the rotation and moments vectors
-        self.R.append(R_desired_inertial_firstSolution)
+        self.R.append(R_desired_inertial)
         self.M_ds.append(Moments_desired)
 
 
@@ -217,7 +217,7 @@ class TrajectoryTracker:
         self.counter += 1
 
         #returns the desired forces, the desired Rotation, and the desired moments in that order
-        return F_des, R_desired_inertial_firstSolution, Moments_desired
+        return F_des, R_desired_inertial, Moments_desired
     
 
     #creates the function that obtains the moments desired
